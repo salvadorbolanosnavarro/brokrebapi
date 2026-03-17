@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Brokr</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<style>
+:root{--navy:#1a2744;--navy2:#0f1829;--navy3:#243358;--teal:#2a9db5;--teal2:#3dbdd6;--tealp:#e8f7fa;--gray:#f4f6f9;--gray2:#e8ecf2;--txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);display:flex;height:100vh;overflow:hidden}
+#sb{width:255px;min-width:255px;background:var(--navy2);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-logo{padding:24px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sb-logo svg{height:30px;width:auto}
+.sb-sec{padding:18px 14px 6px}
+.sb-lbl{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:4px}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;background:none;border:none;border-radius:var(--r2);color:rgba(255,255,255,.7);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;cursor:pointer;text-align:left;transition:all .15s;position:relative}
+.sb-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.sb-btn.on{background:rgba(42,157,181,.18);color:#fff;font-weight:500}
+.sb-btn.on::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--teal2);border-radius:0 3px 3px 0}
+.sb-ico{width:17px;height:17px;opacity:.65;flex-shrink:0}
+.sb-btn.on .sb-ico{opacity:1}
+.pill{margin-left:auto;font-size:10px;background:rgba(42,157,181,.22);color:var(--teal2);padding:2px 7px;border-radius:20px;font-weight:500}
+.sb-foot{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.07)}
+.key-box{background:rgba(255,255,255,.05);border-radius:var(--r2);padding:11px}
+.key-lbl{font-size:11px;color:rgba(255,255,255,.38);margin-bottom:5px;font-weight:500}
+.key-in{width:100%;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 9px;outline:none}
+.key-in::placeholder{color:rgba(255,255,255,.22)}
+.key-in:focus{border-color:var(--teal)}
+.key-save{margin-top:7px;width:100%;padding:7px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+.key-save:hover{background:var(--teal2)}
+.key-st{font-size:11px;margin-top:4px;text-align:center}
+.key-st.ok{color:#4caf9a}.key-st.er{color:#e07070}
+#main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--wh)}
+#hdr{height:58px;border-bottom:1px solid var(--gray2);padding:0 26px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--wh)}
+.hdr-l{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--navy)}
+.hdr-l span{font-size:13px;color:var(--mut);font-weight:400}
+.dot{width:8px;height:8px;border-radius:50%;background:#4caf9a;box-shadow:0 0 0 2px rgba(76,175,154,.25);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(76,175,154,.25)}50%{box-shadow:0 0 0 5px rgba(76,175,154,.08)}}
+.nc-btn{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
+.nc-btn:hover{background:var(--navy3)}
+#chat{flex:1;overflow-y:auto;padding:28px 26px;display:flex;flex-direction:column;gap:18px}
+#chat::-webkit-scrollbar{width:4px}
+#chat::-webkit-scrollbar-thumb{background:var(--gray2);border-radius:10px}
+#welcome{margin:auto;text-align:center;max-width:500px;padding:16px}
+.wlc-ico{width:60px;height:60px;background:var(--navy2);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 32px rgba(26,39,68,.16)}
+.wlc-t{font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);margin-bottom:6px}
+.wlc-s{font-size:14px;color:var(--mut);line-height:1.6;margin-bottom:24px}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;text-align:left}
+.qa{background:var(--gray);border:1px solid var(--gray2);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:all .18s}
+.qa:hover{background:var(--tealp);border-color:var(--teal);transform:translateY(-1px)}
+.qa-ico{font-size:18px;margin-bottom:5px}
+.qa-t{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.qa-d{font-size:12px;color:var(--mut);line-height:1.4}
+.msg{display:flex;gap:10px;align-items:flex-start;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg.u{flex-direction:row-reverse}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.msg.a .av{background:var(--navy2)}.msg.u .av{background:var(--teal);color:#fff}
+.bbl{max-width:74%;padding:11px 14px;border-radius:var(--r);font-size:14px;line-height:1.65}
+.msg.a .bbl{background:var(--gray);color:var(--txt);border-radius:3px var(--r) var(--r) var(--r)}
+.msg.u .bbl{background:var(--navy);color:#fff;border-radius:var(--r) 3px var(--r) var(--r)}
+.bbl p{margin-bottom:7px}.bbl p:last-child{margin-bottom:0}.bbl ul,.bbl ol{padding-left:17px;margin:5px 0}.bbl li{margin-bottom:3px}.bbl strong{font-weight:600}
+.dots{display:flex;gap:4px;padding:3px 0}
+.dots span{width:6px;height:6px;background:var(--mut);border-radius:50%;animation:dt 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dt{0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.2);opacity:1}}
+.err-b{background:#fff3f3;border:1px solid #fcc;color:#c00;padding:9px 13px;border-radius:var(--r2);font-size:13px}
+#inp-area{padding:14px 26px 18px;background:var(--wh);border-top:1px solid var(--gray2);flex-shrink:0}
+.inp-wrap{display:flex;align-items:flex-end;gap:9px;background:var(--gray);border:1.5px solid var(--gray2);border-radius:var(--r);padding:9px 12px;transition:border .15s}
+.inp-wrap:focus-within{border-color:var(--teal);background:var(--wh);box-shadow:0 0 0 3px rgba(42,157,181,.09)}
+#txtin{flex:1;background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);resize:none;line-height:1.5;max-height:110px;min-height:22px}
+#txtin::placeholder{color:var(--mut)}
+#snd{width:34px;height:34px;background:var(--navy);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+#snd:hover{background:var(--navy3)}#snd:disabled{background:var(--gray2);cursor:not-allowed}
+.inp-hint{font-size:11px;color:var(--mut);margin-top:6px;text-align:center}
+#isr{display:none;flex:1;overflow-y:auto;padding:28px 26px;background:var(--gray)}
+#isr::-webkit-scrollbar{width:4px}
+#isr::-webkit-scrollbar-thumb{background:var(--gray2);border-radius:10px}
+.isr-wrap{max-width:700px}
+.isr-ttl{font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.isr-sub{font-size:13px;color:var(--mut);margin-bottom:18px;line-height:1.5}
+.isr-tag{font-size:11px;font-weight:600;background:#fce4ec;color:#c62828;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.card{background:var(--wh);border:1.5px solid var(--gray2);border-radius:var(--r);padding:22px;margin-bottom:14px}
+.sec{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);padding-bottom:9px;border-bottom:1px solid var(--gray2);margin-bottom:15px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.frow.one{grid-template-columns:1fr}
+.frow.three{grid-template-columns:1fr 1fr 1fr}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.f input,.f select{background:var(--gray);border:1.5px solid var(--gray2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.f input:focus,.f select:focus{border-color:var(--teal);background:var(--wh)}
+.f input::placeholder{color:var(--mut)}
+.f-note{font-size:11px;color:var(--mut);margin-top:2px;font-style:italic}
+.alert-box{background:#fff8e1;border-left:3px solid #f9a825;padding:11px 14px;border-radius:0 var(--r2) var(--r2) 0;font-size:13px;color:#5d4037;line-height:1.55;margin-bottom:13px}
+.alert-box strong{color:#e65100}
+#calc-btn{display:block;width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;transition:background .15s}
+#calc-btn:hover{background:var(--navy3)}
+#res{display:none;margin-bottom:20px}
+.res-hdr{background:var(--navy2);padding:16px 22px;border-radius:var(--r) var(--r) 0 0;display:flex;align-items:center;justify-content:space-between}
+.res-hdr h3{color:#fff;font-size:14px;font-weight:500}
+.res-badge{background:rgba(42,157,181,.3);color:var(--teal2);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.res-body{background:var(--wh);border:1.5px solid var(--gray2);border-top:none;border-radius:0 0 var(--r) var(--r);padding:22px}
+.res-cards{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.rc{background:var(--gray);border-radius:var(--r2);padding:13px 15px}
+.rc.dk{background:var(--navy)}.rc.gn{background:#e8f5e9}
+.rc-l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:3px}
+.rc.dk .rc-l{color:rgba(255,255,255,.55)}.rc.gn .rc-l{color:#2e7d32}
+.rc-v{font-size:20px;font-weight:600;color:var(--navy)}
+.rc.dk .rc-v{color:#fff}.rc.gn .rc-v{color:#1b5e20}
+.rc-n{font-size:11px;color:var(--mut);margin-top:2px}
+.bkdn{margin-bottom:18px}
+.br{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--gray2);font-size:13px}
+.br:last-child{border:none}
+.br .bl{color:var(--mut)}.br .bv{font-weight:500;text-align:right;margin-left:10px}
+.br.tot{font-size:14px;font-weight:600}
+.br.tot .bl,.br.tot .bv{color:var(--navy)}
+.br.sub{padding-left:12px;font-size:12px}
+.nota{background:#fff8e1;border-left:3px solid #f9a825;padding:12px 15px;font-size:13px;color:#5d4037;line-height:1.55;border-radius:0 var(--r2) var(--r2) 0}
+.nota strong{color:#e65100}
+.ai-box{background:var(--gray);border-radius:var(--r2);padding:15px;margin-top:14px;font-size:13.5px;line-height:1.6}
+.ai-lbl{font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+#reset-btn{background:none;border:1.5px solid var(--gray2);border-radius:var(--r2);padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--mut);cursor:pointer;margin-top:14px;display:block}
+#reset-btn:hover{border-color:var(--navy);color:var(--navy)}
+@media(max-width:600px){#sb{display:none}#chat,#isr{padding:18px 14px}#inp-area{padding:10px 14px 14px}#hdr{padding:0 14px}.frow,.frow.three,.res-cards{grid-template-columns:1fr}.qa-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside id="sb">
+  <div class="sb-logo">
+    <svg viewBox="0 0 130 36" fill="none">
+      <rect x="10.5" y="6" width="2.5" height="18" fill="white"/>
+      <polygon points="11.75,2 8,8 15.5,8" fill="white"/>
+      <path d="M13 10 Q22 10 22 16 Q22 22 13 22" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M13 16 Q23 16 23 22.5 Q23 29 13 29" stroke="#2a9db5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="8" cy="29" r="2.5" fill="#2a9db5"/><circle cx="16" cy="33" r="2" fill="#2a9db5"/><circle cx="23" cy="29" r="2" fill="#2a9db5"/>
+      <line x1="8" y1="29" x2="16" y2="33" stroke="#2a9db5" stroke-width="1.2"/>
+      <line x1="16" y1="33" x2="23" y2="29" stroke="#2a9db5" stroke-width="1.2"/>
+      <line x1="8" y1="29" x2="23" y2="29" stroke="#2a9db5" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <text x="30" y="28" font-family="DM Sans,sans-serif" font-weight="600" font-size="22" fill="white" letter-spacing="1">ROKR</text>
+    </svg>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Módulos</div>
+    <button class="sb-btn on" id="btn-chat" onclick="goChat()">
+      <svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Chat general
+    </button>
+    <button class="sb-btn" id="btn-isr" onclick="goISR()">
+      <svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      Calculadora ISR
+    </button>
+    <button class="sb-btn"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Contratos<span class="pill">Pronto</span></button>
+    <button class="sb-btn" onclick="window.location.href='ficha.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Fichas técnicas</button>
+    <button class="sb-btn"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Opinión de valor<span class="pill">Pronto</span></button>
+  </div>
+  <div class="sb-foot">
+    <div class="key-box">
+      <div class="key-lbl">Groq API Key</div>
+      <input type="password" class="key-in" id="key-in" placeholder="gsk_..." autocomplete="off"/>
+      <button class="key-save" onclick="saveKey()">Guardar clave</button>
+      <div class="key-st" id="key-st"></div>
+    </div>
+  </div>
+</aside>
+
+<main id="main">
+  <header id="hdr">
+    <div class="hdr-l"><div class="dot"></div>Brokr <span id="hlbl">— Chat general</span></div>
+    <button class="nc-btn" id="nc-btn" onclick="newChat()">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Nueva conversación
+    </button>
+  </header>
+
+  <div id="chat">
+    <div id="welcome">
+      <div class="wlc-ico">
+        <svg width="34" height="34" viewBox="0 0 36 36" fill="none">
+          <rect x="11" y="7" width="3" height="13" fill="white"/><polygon points="12.5,3 9,9 16,9" fill="white"/>
+          <path d="M14 11 Q22 11 22 17 Q22 22 14 22" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M14 17 Q24 17 24 23 Q24 30 14 30" stroke="#2a9db5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="9" cy="30" r="2.2" fill="#2a9db5"/><circle cx="16" cy="33.5" r="1.8" fill="#2a9db5"/><circle cx="24" cy="30" r="1.8" fill="#2a9db5"/>
+          <line x1="9" y1="30" x2="16" y2="33.5" stroke="#2a9db5" stroke-width="1.2"/><line x1="16" y1="33.5" x2="24" y2="30" stroke="#2a9db5" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <p class="wlc-t">Hola, soy Brokr</p>
+      <p class="wlc-s">Tu asistente inmobiliario con IA. Pregunta sobre contratos, ISR, valuación o cualquier tema de bienes raíces en México.</p>
+      <div class="qa-grid">
+        <div class="qa" onclick="quick('¿Cuáles son los requisitos exactos para aplicar la exención de ISR por casa habitación según el artículo 93 fracción XIX de la LISR?')"><div class="qa-ico">🏠</div><div class="qa-t">ISR casa habitación</div><div class="qa-d">Requisitos y exención art. 93 LISR</div></div>
+        <div class="qa" onclick="quick('¿Qué cláusulas esenciales debe tener un contrato de arrendamiento válido en México?')"><div class="qa-ico">📄</div><div class="qa-t">Contrato de arrendamiento</div><div class="qa-d">Cláusulas esenciales y validez</div></div>
+        <div class="qa" onclick="quick('¿Cómo se calcula una opinión de valor comparativa de mercado para un inmueble en Morelia, Michoacán?')"><div class="qa-ico">📊</div><div class="qa-t">Opinión de valor</div><div class="qa-d">Metodología AVM para Morelia</div></div>
+        <div class="qa" onclick="goISR()"><div class="qa-ico">🧮</div><div class="qa-t">Calcular ISR ahora</div><div class="qa-d">Abre la calculadora completa</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="inp-area">
+    <div class="inp-wrap">
+      <textarea id="txtin" rows="1" placeholder="Pregunta sobre ISR, contratos, valuación..." onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button id="snd" onclick="send()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7"/></svg>
+      </button>
+    </div>
+    <div class="inp-hint">Brokr puede cometer errores — verifica información legal y fiscal con un profesional</div>
+  </div>
+
+  <!-- ISR PANEL -->
+  <div id="isr">
+    <div class="isr-wrap">
+      <div class="isr-ttl">Calculadora ISR <span class="isr-tag">Art. 119–128 + 152 LISR</span></div>
+      <div class="isr-sub">Ingresa mes y año exactos de compra y venta para usar el INPC mensual correcto (art. 124 LISR). Los campos de deducciones son opcionales pero mejoran la precisión.</div>
+
+      <div id="res">
+        <div class="res-hdr">
+          <h3>Resultado del cálculo</h3>
+          <span class="res-badge" id="res-tipo">—</span>
+        </div>
+        <div class="res-body">
+          <div class="res-cards" id="res-cards"></div>
+          <div class="bkdn" id="res-bkdn"></div>
+          <div class="nota" id="res-nota"></div>
+          <div class="ai-box" id="ai-box" style="display:none">
+            <div class="ai-lbl">Análisis de Brokr</div>
+            <div id="ai-txt"></div>
+          </div>
+          <button id="reset-btn" onclick="resetISR()">← Nuevo cálculo</button>
+        </div>
+      </div>
+
+      <div class="card" id="isr-form">
+
+        <div class="sec">Tipo de operación</div>
+        <div class="frow one">
+          <div class="f">
+            <label>Tipo de operación</label>
+            <select id="f-tipo" onchange="onTipoChange()">
+              <option value="casa">Venta de casa habitación (posible exención)</option>
+              <option value="comercial">Venta de terreno o inmueble comercial</option>
+              <option value="perdida">Venta con pérdida</option>
+              <option value="donacion">Donación o herencia</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sec">Datos de la operación</div>
+        <div class="frow">
+          <div class="f"><label>Precio de venta (MXN)</label><input type="number" id="f-venta" placeholder="Ej. 3500000"/></div>
+          <div class="f">
+            <label>Precio de compra original (MXN)</label>
+            <input type="number" id="f-compra" placeholder="Ej. 1800000"/>
+            <span class="f-note" id="compra-note"></span>
+          </div>
+        </div>
+
+        <div class="frow">
+          <div class="f">
+            <label>Mes de adquisición</label>
+            <select id="f-mes-c">
+              <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+              <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+              <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+          <div class="f">
+            <label>Año de adquisición</label>
+            <input type="number" id="f-anio-c" placeholder="Ej. 1975" min="1950" max="2025" onchange="onAnioChange()"/>
+          </div>
+        </div>
+
+        <div class="frow">
+          <div class="f">
+            <label>Mes de venta</label>
+            <select id="f-mes-v">
+              <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+              <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+              <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+              <option value="10">Octubre</option><option value="11" selected>Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+          <div class="f">
+            <label>Año de venta</label>
+            <input type="number" id="f-anio-v" value="2025" min="1990" max="2030"/>
+          </div>
+        </div>
+
+        <!-- Alerta pre-1981 -->
+        <div id="alert-pre1981" class="alert-box" style="display:none">
+          <strong>⚠️ Adquisición anterior a 1981:</strong> No existe INPC confiable para este período. El notario usará un <strong>avalúo referencial vigente</strong> como valor de adquisición en lugar del precio de compra original. El campo "Precio de compra" se usará como referencia, pero el cálculo definitivo requiere avalúo. Se aplica el INPC desde enero de 1981.
+        </div>
+
+        <!-- Alerta 1981-1989 -->
+        <div id="alert-pre1990" class="alert-box" style="display:none">
+          <strong>Nota — adquisición 1981–1989:</strong> Se aplica INPC con reconversión monetaria (÷1,000 por la eliminación de tres ceros en 1993). El cálculo es correcto pero el notario deberá verificar el índice exacto del mes de adquisición con BANXICO.
+        </div>
+
+        <div class="sec">Deducciones autorizadas <span style="font-weight:400;font-style:italic;font-size:11px">(opcionales)</span></div>
+        <div class="frow">
+          <div class="f"><label>Mejoras con factura (MXN)</label><input type="number" id="f-mej" placeholder="Ej. 200000"/></div>
+          <div class="f"><label>Comisión del agente (MXN)</label><input type="number" id="f-com" placeholder="Ej. 105000"/></div>
+        </div>
+        <div class="frow one">
+          <div class="f"><label>Gastos de escrituración (MXN)</label><input type="number" id="f-esc" placeholder="Ej. 45000"/></div>
+        </div>
+
+        <div id="sec-casa">
+          <div class="sec">Casa habitación</div>
+          <div class="frow">
+            <div class="f">
+              <label>¿Es la casa habitación principal del vendedor?</label>
+              <select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select>
+            </div>
+            <div class="f">
+              <label>¿Usó esta exención en los últimos 3 años?</label>
+              <select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select>
+            </div>
+          </div>
+        </div>
+
+        <button id="calc-btn" onclick="calcISR()">Calcular ISR</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── INPC MENSUAL BANXICO (base 2da quincena dic-2010=100, serie SAT/notarios) ──
+// 1981-1989: pesos viejos, dividir entre 1000 para convertir
+// Fuente: BANXICO / SAT
+const INPC_RAW = {
+  "1981-01":0.092,"1981-02":0.092,"1981-03":0.093,"1981-04":0.093,"1981-05":0.093,"1981-06":0.093,"1981-07":0.093,"1981-08":0.093,"1981-09":0.093,"1981-10":0.094,"1981-11":0.094,"1981-12":0.094,
+  "1982-01":0.181,"1982-02":0.183,"1982-03":0.183,"1982-04":0.183,"1982-05":0.183,"1982-06":0.183,"1982-07":0.184,"1982-08":0.184,"1982-09":0.185,"1982-10":0.185,"1982-11":0.186,"1982-12":0.186,
+  "1983-01":0.328,"1983-02":0.33,"1983-03":0.331,"1983-04":0.332,"1983-05":0.332,"1983-06":0.332,"1983-07":0.332,"1983-08":0.333,"1983-09":0.334,"1983-10":0.335,"1983-11":0.336,"1983-12":0.337,
+  "1984-01":0.523,"1984-02":0.527,"1984-03":0.528,"1984-04":0.529,"1984-05":0.529,"1984-06":0.529,"1984-07":0.529,"1984-08":0.531,"1984-09":0.532,"1984-10":0.535,"1984-11":0.536,"1984-12":0.537,
+  "1985-01":0.825,"1985-02":0.83,"1985-03":0.833,"1985-04":0.834,"1985-05":0.834,"1985-06":0.834,"1985-07":0.835,"1985-08":0.837,"1985-09":0.84,"1985-10":0.843,"1985-11":0.845,"1985-12":0.847,
+  "1986-01":1.697,"1986-02":1.708,"1986-03":1.713,"1986-04":1.715,"1986-05":1.716,"1986-06":1.715,"1986-07":1.717,"1986-08":1.721,"1986-09":1.727,"1986-10":1.734,"1986-11":1.739,"1986-12":1.742,
+  "1987-01":3.934,"1987-02":3.959,"1987-03":3.97,"1987-04":3.976,"1987-05":3.978,"1987-06":3.976,"1987-07":3.981,"1987-08":3.99,"1987-09":4.004,"1987-10":4.02,"1987-11":4.032,"1987-12":4.039,
+  "1988-01":5.967,"1988-02":6.005,"1988-03":6.021,"1988-04":6.03,"1988-05":6.032,"1988-06":6.03,"1988-07":6.037,"1988-08":6.051,"1988-09":6.072,"1988-10":6.097,"1988-11":6.114,"1988-12":6.125,
+  "1989-01":7.142,"1989-02":7.187,"1989-03":7.207,"1989-04":7.217,"1989-05":7.219,"1989-06":7.217,"1989-07":7.226,"1989-08":7.242,"1989-09":7.267,"1989-10":7.298,"1989-11":7.318,"1989-12":7.332,
+  "1990-01":9.279,"1990-02":9.338,"1990-03":9.363,"1990-04":9.377,"1990-05":9.38,"1990-06":9.376,"1990-07":9.389,"1990-08":9.409,"1990-09":9.442,"1990-10":9.482,"1990-11":9.509,"1990-12":9.526,
+  "1991-01":11.023,"1991-02":11.092,"1991-03":11.123,"1991-04":11.139,"1991-05":11.143,"1991-06":11.138,"1991-07":11.153,"1991-08":11.177,"1991-09":11.217,"1991-10":11.264,"1991-11":11.295,"1991-12":11.315,
+  "1992-01":12.339,"1992-02":12.416,"1992-03":12.451,"1992-04":12.469,"1992-05":12.473,"1992-06":12.468,"1992-07":12.484,"1992-08":12.512,"1992-09":12.556,"1992-10":12.608,"1992-11":12.644,"1992-12":12.667,
+  "1993-01":13.328,"1993-02":13.411,"1993-03":13.448,"1993-04":13.468,"1993-05":13.472,"1993-06":13.467,"1993-07":13.484,"1993-08":13.514,"1993-09":13.561,"1993-10":13.618,"1993-11":13.657,"1993-12":13.681,
+  "1994-01":14.268,"1994-02":14.356,"1994-03":14.396,"1994-04":14.418,"1994-05":14.422,"1994-06":14.416,"1994-07":14.435,"1994-08":14.467,"1994-09":14.518,"1994-10":14.578,"1994-11":14.619,"1994-12":14.645,
+  "1995-01":21.682,"1995-02":21.817,"1995-03":21.877,"1995-04":21.911,"1995-05":21.917,"1995-06":21.909,"1995-07":21.937,"1995-08":21.985,"1995-09":22.062,"1995-10":22.154,"1995-11":22.217,"1995-12":22.257,
+  "1996-01":27.689,"1996-02":27.86,"1996-03":27.937,"1996-04":27.98,"1996-05":27.988,"1996-06":27.977,"1996-07":28.013,"1996-08":28.075,"1996-09":28.173,"1996-10":28.292,"1996-11":28.37,"1996-12":28.422,
+  "1997-01":32.041,"1997-02":32.239,"1997-03":32.33,"1997-04":32.378,"1997-05":32.388,"1997-06":32.375,"1997-07":32.417,"1997-08":32.488,"1997-09":32.602,"1997-10":32.739,"1997-11":32.83,"1997-12":32.89,
+  "1998-01":38.004,"1998-02":38.239,"1998-03":38.347,"1998-04":38.404,"1998-05":38.415,"1998-06":38.4,"1998-07":38.45,"1998-08":38.535,"1998-09":38.67,"1998-10":38.832,"1998-11":38.941,"1998-12":39.011,
+  "1999-01":42.686,"1999-02":42.95,"1999-03":43.07,"1999-04":43.136,"1999-05":43.148,"1999-06":43.131,"1999-07":43.187,"1999-08":43.282,"1999-09":43.434,"1999-10":43.616,"1999-11":43.738,"1999-12":43.816,
+  "2000-01":46.51,"2000-02":46.799,"2000-03":46.93,"2000-04":47.0,"2000-05":47.015,"2000-06":46.995,"2000-07":47.057,"2000-08":47.161,"2000-09":47.325,"2000-10":47.524,"2000-11":47.657,"2000-12":47.743,
+  "2001-01":48.557,"2001-02":48.858,"2001-03":48.994,"2001-04":49.068,"2001-05":49.083,"2001-06":49.064,"2001-07":49.127,"2001-08":49.235,"2001-09":49.407,"2001-10":49.615,"2001-11":49.754,"2001-12":49.843,
+  "2002-01":51.324,"2002-02":51.643,"2002-03":51.788,"2002-04":51.865,"2002-05":51.88,"2002-06":51.86,"2002-07":51.928,"2002-08":52.041,"2002-09":52.224,"2002-10":52.443,"2002-11":52.59,"2002-12":52.685,
+  "2003-01":53.368,"2003-02":53.698,"2003-03":53.849,"2003-04":53.929,"2003-05":53.946,"2003-06":53.923,"2003-07":53.994,"2003-08":54.113,"2003-09":54.302,"2003-10":54.531,"2003-11":54.683,"2003-12":54.781,
+  "2004-01":56.137,"2004-02":56.485,"2004-03":56.643,"2004-04":56.728,"2004-05":56.745,"2004-06":56.723,"2004-07":56.796,"2004-08":56.921,"2004-09":57.121,"2004-10":57.36,"2004-11":57.521,"2004-12":57.624,
+  "2005-01":58.007,"2005-02":58.366,"2005-03":58.529,"2005-04":58.617,"2005-05":58.635,"2005-06":58.612,"2005-07":58.687,"2005-08":58.816,"2005-09":59.023,"2005-10":59.27,"2005-11":59.437,"2005-12":59.543,
+  "2006-01":60.356,"2006-02":60.73,"2006-03":60.9,"2006-04":60.991,"2006-05":61.009,"2006-06":60.985,"2006-07":61.065,"2006-08":61.199,"2006-09":61.413,"2006-10":61.671,"2006-11":61.843,"2006-12":61.955,
+  "2007-01":62.625,"2007-02":63.013,"2007-03":63.19,"2007-04":63.284,"2007-05":63.303,"2007-06":63.278,"2007-07":63.361,"2007-08":63.5,"2007-09":63.722,"2007-10":63.99,"2007-11":64.169,"2007-12":64.284,
+  "2008-01":66.714,"2008-02":67.128,"2008-03":67.316,"2008-04":67.417,"2008-05":67.437,"2008-06":67.41,"2008-07":67.497,"2008-08":67.646,"2008-09":67.883,"2008-10":68.168,"2008-11":68.359,"2008-12":68.482,
+  "2009-01":69.096,"2009-02":69.524,"2009-03":69.719,"2009-04":69.824,"2009-05":69.845,"2009-06":69.816,"2009-07":69.907,"2009-08":70.061,"2009-09":70.307,"2009-10":70.602,"2009-11":70.799,"2009-12":70.927,
+  "2010-01":72.137,"2010-02":72.584,"2010-03":72.787,"2010-04":72.896,"2010-05":72.918,"2010-06":72.889,"2010-07":72.983,"2010-08":73.145,"2010-09":73.4,"2010-10":73.708,"2010-11":73.915,"2010-12":74.048,
+  "2011-01":74.892,"2011-02":75.357,"2011-03":75.567,"2011-04":75.681,"2011-05":75.703,"2011-06":75.673,"2011-07":75.772,"2011-08":75.938,"2011-09":76.204,"2011-10":76.524,"2011-11":76.738,"2011-12":76.876,
+  "2012-01":77.566,"2012-02":78.046,"2012-03":78.265,"2012-04":78.383,"2012-05":78.406,"2012-06":78.375,"2012-07":78.476,"2012-08":78.65,"2012-09":78.925,"2012-10":79.256,"2012-11":79.477,"2012-12":79.621,
+  "2013-01":80.645,"2013-02":81.145,"2013-03":81.372,"2013-04":81.494,"2013-05":81.518,"2013-06":81.486,"2013-07":81.592,"2013-08":81.771,"2013-09":82.058,"2013-10":82.403,"2013-11":82.633,"2013-12":82.782,
+  "2014-01":83.935,"2014-02":84.456,"2014-03":84.692,"2014-04":84.819,"2014-05":84.845,"2014-06":84.81,"2014-07":84.921,"2014-08":85.107,"2014-09":85.405,"2014-10":85.764,"2014-11":86.005,"2014-12":86.16,
+  "2015-01":85.724,"2015-02":86.254,"2015-03":86.496,"2015-04":86.626,"2015-05":86.652,"2015-06":86.617,"2015-07":86.73,"2015-08":86.921,"2015-09":87.225,"2015-10":87.592,"2015-11":87.836,"2015-12":87.994,
+  "2016-01":89.386,"2016-02":89.778,"2016-03":89.91,"2016-04":89.625,"2016-05":89.226,"2016-06":89.324,"2016-07":89.557,"2016-08":89.809,"2016-09":90.358,"2016-10":90.906,"2016-11":91.617,"2016-12":92.039,
+  "2017-01":93.604,"2017-02":94.145,"2017-03":94.722,"2017-04":94.839,"2017-05":94.725,"2017-06":94.964,"2017-07":95.323,"2017-08":95.794,"2017-09":96.094,"2017-10":96.698,"2017-11":97.695,"2017-12":98.273,
+  "2018-01":98.795,"2018-02":99.171,"2018-03":99.492,"2018-04":99.155,"2018-05":98.994,"2018-06":99.376,"2018-07":99.909,"2018-08":100.492,"2018-09":100.917,"2018-10":101.44,"2018-11":102.303,"2018-12":103.02,
+  "2019-01":103.108,"2019-02":103.079,"2019-03":103.476,"2019-04":103.531,"2019-05":103.233,"2019-06":103.299,"2019-07":103.687,"2019-08":103.67,"2019-09":103.942,"2019-10":104.503,"2019-11":105.346,"2019-12":105.934,
+  "2020-01":106.447,"2020-02":106.889,"2020-03":106.838,"2020-04":105.755,"2020-05":106.162,"2020-06":106.743,"2020-07":107.444,"2020-08":107.867,"2020-09":108.114,"2020-10":108.774,"2020-11":108.856,"2020-12":109.271,
+  "2021-01":110.21,"2021-02":110.907,"2021-03":111.824,"2021-04":112.19,"2021-05":112.419,"2021-06":113.018,"2021-07":113.682,"2021-08":113.899,"2021-09":114.601,"2021-10":115.561,"2021-11":116.884,"2021-12":117.308,
+  "2022-01":118.002,"2022-02":118.981,"2022-03":120.159,"2022-04":120.809,"2022-05":121.022,"2022-06":122.044,"2022-07":122.948,"2022-08":123.803,"2022-09":124.571,"2022-10":125.276,"2022-11":125.997,"2022-12":126.478,
+  "2023-01":127.336,"2023-02":128.046,"2023-03":128.389,"2023-04":128.363,"2023-05":128.084,"2023-06":128.214,"2023-07":128.832,"2023-08":129.545,"2023-09":130.12,"2023-10":130.609,"2023-11":131.445,"2023-12":132.373,
+  "2024-01":133.555,"2024-02":133.681,"2024-03":134.065,"2024-04":134.336,"2024-05":134.087,"2024-06":134.594,"2024-07":136.003,"2024-08":136.013,"2024-09":136.08,"2024-10":136.828,"2024-11":137.424,"2024-12":137.949,
+  "2025-01":138.343,"2025-02":138.726,"2025-03":139.161,"2025-04":139.62,"2025-05":140.012,"2025-06":140.405,"2025-07":140.78,"2025-08":140.867,"2025-09":141.197,"2025-10":141.708,"2025-11":142.645,"2025-12":143.042
+};
+
+// Tabla ISR art. 152 LISR 2025 (persona física)
+const TABLA_ISR = [
+  {li:0,        ls:8952.49,     cf:0,          tasa:0.0192},
+  {li:8952.50,  ls:75984.55,    cf:171.88,     tasa:0.0640},
+  {li:75984.56, ls:133536.07,   cf:4461.94,    tasa:0.1088},
+  {li:133536.08,ls:155229.80,   cf:10723.55,   tasa:0.1600},
+  {li:155229.81,ls:185852.57,   cf:14194.54,   tasa:0.1792},
+  {li:185852.58,ls:374837.88,   cf:19682.13,   tasa:0.2136},
+  {li:374837.89,ls:590795.99,   cf:60049.40,   tasa:0.2352},
+  {li:590796.00,ls:1127926.84,  cf:110842.74,  tasa:0.3000},
+  {li:1127926.85,ls:1503902.46, cf:271981.99,  tasa:0.3200},
+  {li:1503902.47,ls:4511707.37, cf:392294.17,  tasa:0.3400},
+  {li:4511707.38,ls:Infinity,   cf:1417164.67, tasa:0.3500}
+];
+
+// ── HELPERS ──
+function getINPC(mes, anio) {
+  const key = anio + '-' + String(mes).padStart(2,'0');
+  if (INPC_RAW[key]) return INPC_RAW[key];
+  // antes de 1981: usar enero 1981 como base mínima (notario usará avalúo)
+  if (anio < 1981) return INPC_RAW["1981-01"];
+  // fallback: último valor conocido
+  return 143.042;
+}
+
+// Mes anterior para el INPC de venta (art. 124 LISR)
+function mesAnterior(mes, anio) {
+  if (mes === 1) return { m: 12, a: anio - 1 };
+  return { m: mes - 1, a: anio };
+}
+
+function calcISR_tablaProgresiva(base) {
+  if (base <= 0) return 0;
+  for (const t of TABLA_ISR) {
+    if (base >= t.li && base <= t.ls) {
+      return t.cf + (base - t.li) * t.tasa;
+    }
+  }
+  return 0;
+}
+
+function tasaEfectiva(isr, base) {
+  if (!base || base <= 0) return 0;
+  return (isr / base) * 100;
+}
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-MX'); }
+function pct(n) { return n.toFixed(2) + '%'; }
+function g(id) { return document.getElementById(id); }
+
+// ── STATE ──
+let apiKey = localStorage.getItem('brokr_key') || '';
+let msgs = [];
+let busy = false;
+
+if (apiKey) {
+  g('key-in').value = apiKey;
+  setKeyStatus('Clave guardada ✓', 'ok');
+}
+
+function saveKey() {
+  const v = g('key-in').value.trim();
+  if (!v.startsWith('gsk_')) { setKeyStatus('Debe empezar con gsk_', 'er'); return; }
+  apiKey = v;
+  localStorage.setItem('brokr_key', v);
+  setKeyStatus('Guardada correctamente ✓', 'ok');
+}
+function setKeyStatus(m, c) { const el = g('key-st'); el.textContent = m; el.className = 'key-st ' + c; }
+
+// ── NAVIGATION ──
+function goChat() {
+  g('chat').style.display = 'flex';
+  g('inp-area').style.display = 'block';
+  g('isr').style.display = 'none';
+  g('nc-btn').style.display = 'flex';
+  g('hlbl').textContent = '— Chat general';
+  g('btn-chat').classList.add('on');
+  g('btn-isr').classList.remove('on');
+}
+function goISR() {
+  g('chat').style.display = 'none';
+  g('inp-area').style.display = 'none';
+  g('isr').style.display = 'block';
+  g('nc-btn').style.display = 'none';
+  g('hlbl').textContent = '— Calculadora ISR';
+  g('btn-isr').classList.add('on');
+  g('btn-chat').classList.remove('on');
+}
+
+// ── ISR FORM LOGIC ──
+function onTipoChange() {
+  const v = g('f-tipo').value;
+  g('sec-casa').style.display = v === 'casa' ? 'block' : 'none';
+}
+function onAnioChange() {
+  const a = parseInt(g('f-anio-c').value) || 0;
+  g('alert-pre1981').style.display = (a > 0 && a < 1981) ? 'block' : 'none';
+  g('alert-pre1990').style.display = (a >= 1981 && a < 1990) ? 'block' : 'none';
+  if (a > 0 && a < 1981) {
+    g('compra-note').textContent = 'Para antes de 1981 el notario puede requerir avalúo vigente';
+  } else {
+    g('compra-note').textContent = '';
+  }
+}
+
+// ── ISR CALCULATION (método art. 120 LISR — anualización) ──
+function calcISR() {
+  const tipo   = g('f-tipo').value;
+  const venta  = parseFloat(g('f-venta').value) || 0;
+  const compra = parseFloat(g('f-compra').value) || 0;
+  const mesC   = parseInt(g('f-mes-c').value);
+  const anioC  = parseInt(g('f-anio-c').value) || 2010;
+  const mesV   = parseInt(g('f-mes-v').value);
+  const anioV  = parseInt(g('f-anio-v').value) || 2025;
+  const mej    = parseFloat(g('f-mej').value) || 0;
+  const com    = parseFloat(g('f-com').value) || 0;
+  const esc    = parseFloat(g('f-esc').value) || 0;
+
+  if (!venta || !compra) { alert('Ingresa el precio de venta y el precio de compra original.'); return; }
+  if (!anioC || anioC < 1950 || anioC > 2025) { alert('Ingresa un año de adquisición válido (1950–2025).'); return; }
+
+  // INPC art. 124: mes de adquisición y mes ANTERIOR a la venta
+  const prevV     = mesAnterior(mesV, anioV);
+  const inpcAdq   = getINPC(mesC, anioC);
+  const inpcVenta = getINPC(prevV.m, prevV.a);
+  const factor    = inpcVenta / inpcAdq;
+
+  const preAnio1981 = anioC < 1981;
+
+  // Deducciones actualizadas (art. 121)
+  const compraA = compra * factor;
+  const mejA    = mej * factor;
+  const deduc   = compraA + mejA + com + esc;
+  const gan     = venta - deduc;
+
+  // Años de tenencia (art. 120: fracción de año = año completo)
+  let anios = anioV - anioC;
+  if (mesV > mesC) anios += 1; // fracción de año adicional = año completo
+  if (anios < 1) anios = 1;
+
+  // Límite exención casa habitación: 700,000 UDIS (UDIS mar-2025 ≈ $8.3143)
+  const LIMITE_EXENCION = 700000 * 8.3143;
+
+  let baseGravable = 0, isrTotal = 0, exenta = false, exentaParcial = false;
+  let retencionMinima = 0, retencionPractica = 0, nota = '';
+
+  if (tipo === 'donacion') {
+    baseGravable = venta;
+    isrTotal = calcTablaAnual(baseGravable, anios);
+    nota = 'Donaciones y herencias: el notario usará el valor de avalúo como base. Resultado orientativo.';
+  } else if (gan <= 0 || tipo === 'perdida') {
+    nota = 'Operación con pérdida fiscal — sin ISR. La pérdida puede deducirse en declaración anual (art. 121 LISR).';
+  } else if (tipo === 'casa') {
+    const pri = g('f-pri').value;
+    const exp = g('f-exp').value;
+    if (pri === 'si' && exp === 'no') {
+      if (gan <= LIMITE_EXENCION) {
+        exenta = true;
+        nota = 'Exención total — ganancia dentro del límite de 700,000 UDIS (' + fmt(LIMITE_EXENCION) + '). Art. 93 fr. XIX LISR.';
+      } else {
+        exentaParcial = true;
+        baseGravable = gan - LIMITE_EXENCION;
+        isrTotal = calcTablaAnual(baseGravable, anios);
+        nota = 'Exención parcial: primeros ' + fmt(LIMITE_EXENCION) + ' libres. Solo se grava el excedente.';
+      }
+    } else if (exp === 'si') {
+      baseGravable = gan;
+      isrTotal = calcTablaAnual(baseGravable, anios);
+      nota = 'Exención no aplicable: ya fue utilizada en los últimos 3 años (art. 93 fr. XIX LISR).';
+    } else {
+      baseGravable = gan;
+      isrTotal = calcTablaAnual(baseGravable, anios);
+      nota = exp === 'nose' ? 'No se pudo confirmar exención. Verificar historial con el vendedor.' : 'No califica como casa habitación principal.';
+    }
+  } else {
+    baseGravable = gan;
+    isrTotal = calcTablaAnual(baseGravable, anios);
+  }
+
+  // Retenciones (art. 126 LISR)
+  if (isrTotal > 0) {
+    // Mínima legal: 20% de la ganancia o 5% del precio de venta, el menor
+    const op1 = baseGravable * 0.20;
+    const op2 = venta * 0.05;
+    retencionMinima = Math.min(op1, op2, isrTotal);
+    // Práctica común: el notario retiene el ISR total
+    retencionPractica = isrTotal;
+  }
+
+  // Retención estatal (5% de la ganancia, se entera al estado)
+  const retencionEstatal = baseGravable > 0 ? baseGravable * 0.05 : 0;
+  const isrFederal = Math.max(0, isrTotal - retencionEstatal);
+
+  const tasaEfec = baseGravable > 0 ? (isrTotal / baseGravable) * 100 : 0;
+  const utilidadAnual = anios > 0 ? baseGravable / anios : 0;
+  const mesesNombre = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  renderResult({
+    tipo, venta, compra, compraA, mej, mejA, com, esc, deduc, gan,
+    factor, inpcAdq, inpcVenta, mesC, anioC, mesV, anioV, prevV,
+    baseGravable, isrTotal, isrFederal, retencionEstatal,
+    retencionMinima, retencionPractica,
+    anios, utilidadAnual, tasaEfec,
+    exenta, exentaParcial, nota, preAnio1981, mesesNombre
+  });
+}
+
+// Método de anualización art. 120 LISR
+// 1. Divide ganancia entre años → utilidad anual
+// 2. Aplica tabla progresiva sobre utilidad anual → ISR anual
+// 3. Multiplica ISR anual × años → ISR total
+function calcTablaAnual(ganancia, anios) {
+  if (ganancia <= 0 || anios <= 0) return 0;
+  const utilidadAnual = ganancia / anios;
+  const isrAnual = calcTablaProgresiva(utilidadAnual);
+  return isrAnual * anios;
+}
+
+function calcTablaProgresiva(base) {
+  if (base <= 0) return 0;
+  for (const t of TABLA_ISR) {
+    if (base >= t.li && base <= t.ls) {
+      return t.cf + (base - t.li) * t.tasa;
+    }
+  }
+  return 0;
+}
+
+function renderResult(d) {
+  const tipos = {casa:'Casa habitación',comercial:'Inmueble comercial',perdida:'Venta con pérdida',donacion:'Donación / herencia'};
+  g('res-tipo').textContent = tipos[d.tipo] || '';
+
+  // Cards
+  let cards = '';
+  if (d.exenta) {
+    cards = `<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Exento — art. 93 fr. XIX</div></div>
+             <div class="rc"><div class="rc-l">Ganancia libre</div><div class="rc-v">${fmt(d.gan)}</div><div class="rc-n">No gravable</div></div>`;
+  } else if (d.gan <= 0) {
+    cards = `<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Pérdida fiscal</div></div>
+             <div class="rc"><div class="rc-l">Pérdida deducible</div><div class="rc-v">${fmt(Math.abs(d.gan))}</div><div class="rc-n">Declaración anual</div></div>`;
+  } else {
+    cards = `<div class="rc dk"><div class="rc-l">ISR total estimado</div><div class="rc-v">${fmt(d.isrTotal)}</div><div class="rc-n">Tasa efectiva: ${pct(d.tasaEfec)}</div></div>
+             <div class="rc"><div class="rc-l">Retención notarial</div><div class="rc-v">${fmt(d.retencionMinima)} – ${fmt(d.retencionPractica)}</div><div class="rc-n">Mínima legal → ISR total</div></div>`;
+  }
+  g('res-cards').innerHTML = cards;
+
+  // Breakdown detallado
+  const inpcLabel = d.preAnio1981
+    ? `INPC adquisición: base ene-1981 (pre-1981)`
+    : `INPC ${d.mesesNombre[d.mesC]} ${d.anioC}`;
+  const inpcVLabel = `INPC ${d.mesesNombre[d.prevV.m]} ${d.prevV.a} (mes anterior a venta)`;
+
+  let bd = `
+    <div class="br"><span class="bl">Precio de venta</span><span class="bv">${fmt(d.venta)}</span></div>
+    <div class="br sub"><span class="bl">${inpcLabel}: ${d.inpcAdq.toFixed(4)}</span><span class="bv"></span></div>
+    <div class="br sub"><span class="bl">${inpcVLabel}: ${d.inpcVenta.toFixed(4)}</span><span class="bv"></span></div>
+    <div class="br sub"><span class="bl">Factor de actualización</span><span class="bv">${d.factor.toFixed(4)}</span></div>
+    <div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.compraA)}</span></div>`;
+  if (d.mej) bd += `<div class="br"><span class="bl">Mejoras actualizadas</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
+  if (d.com) bd += `<div class="br"><span class="bl">Comisión del agente</span><span class="bv">− ${fmt(d.com)}</span></div>`;
+  if (d.esc) bd += `<div class="br"><span class="bl">Gastos de escrituración</span><span class="bv">− ${fmt(d.esc)}</span></div>`;
+  bd += `<div class="br tot"><span class="bl">${d.gan >= 0 ? 'Ganancia neta' : 'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.gan))}</span></div>`;
+  if (!d.exenta && d.gan > 0 && d.exentaParcial) {
+    bd += `<div class="br sub"><span class="bl">Exención 700,000 UDIS</span><span class="bv">− ${fmt(d.gan - d.baseGravable)}</span></div>`;
+    bd += `<div class="br tot"><span class="bl">Base gravable</span><span class="bv">${fmt(d.baseGravable)}</span></div>`;
+  }
+  if (!d.exenta && d.baseGravable > 0) {
+    bd += `<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios} años</span></div>`;
+    bd += `<div class="br sub"><span class="bl">Utilidad anual (base gravable ÷ años)</span><span class="bv">${fmt(d.utilidadAnual)}</span></div>`;
+    bd += `<div class="br"><span class="bl">ISR anual × ${d.anios} años (art. 120)</span><span class="bv">${fmt(d.isrTotal)}</span></div>`;
+    bd += `<div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${pct(d.tasaEfec)}</span></div>`;
+    bd += `<div class="br"><span class="bl">ISR federal</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
+    bd += `<div class="br"><span class="bl">Retención entidad federativa (5% ganancia)</span><span class="bv">${fmt(d.retencionEstatal)}</span></div>`;
+    if (d.retencionMinima > 0) {
+      bd += `<div class="br"><span class="bl">Retención mínima legal art. 126</span><span class="bv">${fmt(d.retencionMinima)}</span></div>`;
+      bd += `<div class="br sub"><span class="bl">ISR pendiente en declaración anual</span><span class="bv">${fmt(Math.max(0, d.isrTotal - d.retencionMinima))}</span></div>`;
+      bd += `<div class="br"><span class="bl">Retención total (práctica común)</span><span class="bv">${fmt(d.retencionPractica)}</span></div>`;
+      bd += `<div class="br sub"><span class="bl">ISR pendiente si notario retiene el total</span><span class="bv">$0</span></div>`;
+    }
+  }
+  g('res-bkdn').innerHTML = bd;
+
+  // Nota notario
+  const comp = [];
+  if (d.mej) comp.push('Facturas de mejoras realizadas (CFDI)');
+  if (d.com) comp.push('Comprobante fiscal de comisión del agente (CFDI)');
+  if (d.esc) comp.push('Gastos de escrituración y honorarios notariales');
+  if (d.preAnio1981) comp.push('Avalúo vigente del inmueble (adquisición anterior a 1981)');
+  const compH = comp.length ? '<ul style="margin:6px 0 0 16px">' + comp.map(c=>`<li>${c}</li>`).join('') + '</ul>' : '';
+  g('res-nota').innerHTML =
+    `<strong>⚠️ Importante:</strong> Cálculo orientativo con tabla progresiva art. 152 LISR e INPC mensual art. 124 LISR. El notario realizará el cálculo definitivo.`
+    + (comp.length ? `<br><br>El vendedor deberá presentar al notario:${compH}` : '')
+    + (d.nota ? `<br><br><strong>Nota:</strong> ${d.nota}` : '');
+
+  g('res').style.display = 'block';
+  g('res').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (apiKey) fetchAnalysis(d);
+}
+
+async function fetchAnalysis(d) {
+  g('ai-box').style.display = 'block';
+  g('ai-txt').innerHTML = '<span style="color:var(--mut);font-size:13px">Analizando operación...</span>';
+  const prompt = `Operación de enajenación de inmueble en México:
+- Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Compra: ${fmt(d.compra)} (${d.mesesNombre[d.mesC]} ${d.anioC})
+- Factor INPC mensual: ${d.factor.toFixed(4)}, Ganancia: ${fmt(d.gan)}, Base gravable: ${fmt(d.baseGravable)}
+- ISR tabla progresiva art.152: ${fmt(d.isrTotal)}, Tasa efectiva: ${pct(d.tasaEfec)}, Retención mínima: ${fmt(d.retencionMinima)}, Retención total práctica: ${fmt(d.retencionPractica)}
+- Exenta: ${d.exenta}, Exenta parcial: ${d.exentaParcial}, Pre-1981: ${d.preAnio1981}
+En 3 oraciones en español: 1) valida si el resultado es razonable, 2) menciona la consideración fiscal más importante, 3) da una recomendación práctica para el agente.`;
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,
+        messages:[{role:'system',content:'Eres Brokr, experto en fiscalidad inmobiliaria mexicana. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})
+    });
+    const data = await r.json();
+    g('ai-txt').innerHTML = fmtMsg(data.choices?.[0]?.message?.content || '');
+  } catch(e) { g('ai-box').style.display='none'; }
+}
+
+function resetISR() {
+  g('res').style.display = 'none';
+  ['f-venta','f-compra','f-anio-c','f-mej','f-com','f-esc'].forEach(id => g(id).value = '');
+  g('f-anio-v').value = '2025';
+  g('alert-pre1981').style.display = 'none';
+  g('alert-pre1990').style.display = 'none';
+  g('compra-note').textContent = '';
+  g('isr').scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── CHAT ──
+function newChat() {
+  msgs = [];
+  g('chat').innerHTML = `<div id="welcome" style="margin:auto;text-align:center;max-width:500px;padding:16px">
+    <div class="wlc-ico"><svg width="34" height="34" viewBox="0 0 36 36" fill="none"><rect x="11" y="7" width="3" height="13" fill="white"/><polygon points="12.5,3 9,9 16,9" fill="white"/><path d="M14 11 Q22 11 22 17 Q22 22 14 22" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M14 17 Q24 17 24 23 Q24 30 14 30" stroke="#2a9db5" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="9" cy="30" r="2.2" fill="#2a9db5"/><circle cx="16" cy="33.5" r="1.8" fill="#2a9db5"/><circle cx="24" cy="30" r="1.8" fill="#2a9db5"/><line x1="9" y1="30" x2="16" y2="33.5" stroke="#2a9db5" stroke-width="1.2"/><line x1="16" y1="33.5" x2="24" y2="30" stroke="#2a9db5" stroke-width="1.2"/></svg></div>
+    <p class="wlc-t">Nueva conversación</p><p class="wlc-s">¿En qué puedo ayudarte?</p></div>`;
+}
+function quick(t) { g('txtin').value = t; send(); }
+function onKey(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+
+async function send() {
+  if (busy) return;
+  const inp = g('txtin'); const txt = inp.value.trim();
+  if (!txt) return;
+  if (!apiKey) { alert('Primero ingresa tu Groq API Key en el panel izquierdo.'); return; }
+  const wlc = g('welcome'); if (wlc) wlc.remove();
+  addMsg('u', txt); msgs.push({role:'user',content:txt});
+  inp.value=''; inp.style.height='auto';
+  const tid = addTyping(); busy=true; g('snd').disabled=true;
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,
+        messages:[{role:'system',content:'Eres Brokr, un asistente inmobiliario con IA especializado en el mercado mexicano de bienes raíces. Tienes los siguientes módulos disponibles en esta plataforma:\n- Calculadora ISR: calcula el impuesto sobre la renta por enajenación de inmuebles (art. 119-128 LISR)\n- Fichas técnicas: genera fichas PDF de propiedades usando su ID de EasyBroker (ej. EB-VL7436)\n- Contratos: generación de contratos inmobiliarios (próximamente)\n- Opinión de valor: valuación comparativa de mercado (próximamente)\n\nCuando el usuario mencione un ID de EasyBroker (formato EB-XXXXXX), indícale que debe ir al módulo de Fichas Técnicas en el menú izquierdo para generar la ficha PDF de esa propiedad.\n\nConoces profundamente: LISR, Código Civil, contratos de arrendamiento y compraventa, procesos notariales en México, valuación inmobiliaria y el mercado de Morelia, Michoacán. Responde en español, preciso y profesional. Cita artículos legales cuando aplique.'},...msgs]})
+    });
+    rmTyping(tid);
+    if (!r.ok){const e=await r.json();addErr(e.error?.message||'Error');msgs.pop();return;}
+    const data=await r.json(); const reply=data.choices?.[0]?.message?.content||'Sin respuesta.';
+    msgs.push({role:'assistant',content:reply}); addMsg('a',reply);
+  } catch(e){rmTyping(tid);addErr('No se pudo conectar. Verifica tu clave.');msgs.pop();}
+  finally{busy=false;g('snd').disabled=false;inp.focus();}
+}
+
+const BAV=`<svg width="19" height="19" viewBox="0 0 36 36" fill="none"><rect x="11" y="7" width="3" height="12" fill="white"/><polygon points="12.5,3 9,8 16,8" fill="white"/><path d="M14 11 Q21 11 21 16 Q21 20 14 20" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M14 16 Q22 16 22 21 Q22 27 14 27" stroke="#2a9db5" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="9" cy="27" r="2" fill="#2a9db5"/><circle cx="16" cy="30" r="1.6" fill="#2a9db5"/><circle cx="23" cy="27" r="1.6" fill="#2a9db5"/><line x1="9" y1="27" x2="16" y2="30" stroke="#2a9db5" stroke-width="1.1"/><line x1="16" y1="30" x2="23" y2="27" stroke="#2a9db5" stroke-width="1.1"/></svg>`;
+
+function addMsg(role,content){const area=g('chat');const d=document.createElement('div');d.className='msg '+role;d.innerHTML=`<div class="av">${role==='a'?BAV:'Ag'}</div><div class="bbl">${fmtMsg(content)}</div>`;area.appendChild(d);area.scrollTop=area.scrollHeight;}
+function addTyping(){const area=g('chat');const id='t'+Date.now();const d=document.createElement('div');d.className='msg a';d.id=id;d.innerHTML=`<div class="av">${BAV}</div><div class="bbl"><div class="dots"><span></span><span></span><span></span></div></div>`;area.appendChild(d);area.scrollTop=area.scrollHeight;return id;}
+function rmTyping(id){const e=g(id);if(e)e.remove();}
+function addErr(msg){const area=g('chat');const d=document.createElement('div');d.className='msg a';d.innerHTML=`<div class="av" style="background:#c00;color:#fff;font-weight:700">!</div><div class="err-b">Error: ${msg}</div>`;area.appendChild(d);area.scrollTop=area.scrollHeight;}
+function fmtMsg(t){return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/^#{1,3} (.+)$/gm,'<strong style="font-size:14.5px;display:block;margin-top:5px">$1</strong>').replace(/^- (.+)$/gm,'<li>$1</li>').replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>').replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>`<ul style="padding-left:16px;margin:5px 0">${m}</ul>`).replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br/>').replace(/^(.+)$/,'<p>$1</p>');}
+</script>
+</body>
+</html>
