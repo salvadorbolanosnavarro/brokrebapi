@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Brokr — Ficha Manual</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
+  --teal:#2a9db5;--teal2:#3dbdd6;--tealp:#e8f7fa;
+  --gold:#c9a96e;--silver:#f4f6f9;--silver2:#e8ecf2;
+  --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh}
+#app{max-width:720px;margin:0 auto;padding:32px 20px 60px}
+
+/* Logo */
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.logo svg{height:26px}
+.logo a{font-size:13px;color:var(--mut);margin-left:auto;text-decoration:none}
+.logo a:hover{color:var(--navy)}
+
+/* Page header */
+.pg-ttl{font-family:'Playfair Display',serif;font-size:24px;color:var(--navy);margin-bottom:4px}
+.pg-sub{font-size:13.5px;color:var(--mut);margin-bottom:22px;line-height:1.5}
+
+/* Cards */
+.card{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);padding:22px;margin-bottom:14px}
+.sec{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);padding-bottom:9px;border-bottom:1px solid var(--silver2);margin-bottom:15px}
+.opt{font-weight:400;font-style:italic;font-size:11px;text-transform:none;color:var(--mut)}
+
+/* Form */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.frow.one{grid-template-columns:1fr}
+.frow.three{grid-template-columns:1fr 1fr 1fr}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.f input,.f select,.f textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--teal);background:var(--wh)}
+.f input::placeholder,.f textarea::placeholder{color:var(--mut)}
+.f textarea{resize:vertical;min-height:90px;line-height:1.6}
+
+/* Description area */
+.desc-wrap{position:relative}
+.desc-wrap textarea{padding-right:130px}
+.ai-gen-btn{position:absolute;right:8px;top:8px;background:var(--teal);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s;white-space:nowrap}
+.ai-gen-btn:hover{background:var(--teal2)}
+.ai-gen-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
+.ai-hint{font-size:11px;color:var(--mut);margin-top:4px;font-style:italic}
+
+/* Photo upload */
+.photos-zone{border:2px dashed var(--silver2);border-radius:var(--r2);padding:20px;text-align:center;cursor:pointer;transition:all .18s;position:relative;background:var(--silver)}
+.photos-zone:hover{border-color:var(--teal);background:var(--tealp)}
+.photos-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photos-zone-ico{font-size:28px;margin-bottom:6px}
+.photos-zone-txt{font-size:13px;color:var(--mut)}
+.photos-zone-sub{font-size:11px;color:var(--mut);margin-top:3px}
+.photos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
+.photo-thumb{position:relative;border-radius:6px;overflow:hidden;aspect-ratio:1}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.photo-main-badge{position:absolute;bottom:4px;left:4px;background:var(--gold);color:var(--navy2);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;text-transform:uppercase;letter-spacing:.06em}
+
+/* Buttons */
+.main-btn{display:block;width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+.main-btn:hover{background:var(--navy3)}
+.loading{display:none;align-items:center;gap:10px;padding:12px;background:var(--tealp);border-radius:var(--r2);font-size:13px;color:var(--teal);margin-top:10px}
+.loading.show{display:flex}
+.spinner{width:15px;height:15px;border:2px solid var(--teal2);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── FICHA TÉCNICA ── */
+#ficha{display:none}
+#ficha.show{display:block;margin-top:20px}
+.print-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.print-btn{display:flex;align-items:center;gap:7px;padding:10px 18px;background:var(--teal);color:#fff;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
+.print-btn:hover{background:var(--teal2)}
+.back-btn{display:flex;align-items:center;gap:6px;padding:10px 15px;background:none;border:1.5px solid var(--silver2);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--mut);cursor:pointer}
+.back-btn:hover{border-color:var(--navy);color:var(--navy)}
+
+/* Ficha pages */
+.ficha-page{width:210mm;min-height:297mm;margin:0 auto 20px;background:var(--wh);position:relative;overflow:hidden;box-shadow:0 4px 40px rgba(26,39,68,.15)}
+.cover-hero{width:100%;height:60%;object-fit:cover;display:block;flex-shrink:0}
+.cover-hero-bg{width:100%;height:60%;background:linear-gradient(135deg,var(--navy2),var(--navy3));display:flex;align-items:center;justify-content:center}
+.cover-overlay{position:absolute;top:0;left:0;right:0;height:60%;background:linear-gradient(to bottom,rgba(15,24,41,.2),rgba(15,24,41,.7))}
+.cover-brand-ph{position:absolute;top:20px;left:22px;background:rgba(255,255,255,.12);border:1px dashed rgba(255,255,255,.3);border-radius:6px;padding:5px 12px;color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.cover-tipo-badge{position:absolute;top:20px;right:22px;background:var(--gold);color:var(--navy2);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:20px}
+.cover-price-block{position:absolute;bottom:41%;left:0;right:0;padding:0 22px 16px}
+.cover-precio{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;margin-bottom:3px;text-shadow:0 2px 10px rgba(0,0,0,.3)}
+.cover-titulo{font-size:14px;color:rgba(255,255,255,.85);margin-bottom:4px}
+.cover-ubicacion{font-size:12px;color:rgba(255,255,255,.6)}
+.cover-body{padding:20px 22px 58px;background:var(--wh)}
+.cover-specs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+.spec-item{text-align:center;padding:11px 6px;background:var(--silver);border-radius:7px}
+.spec-ico{font-size:16px;margin-bottom:3px}
+.spec-val{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--navy)}
+.spec-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+.cover-desc-ttl{font-family:'Playfair Display',serif;font-size:14px;color:var(--navy);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--silver2)}
+.cover-desc{font-size:12px;color:#4a5568;line-height:1.75}
+.ficha-content{width:100%;min-height:297mm;padding:24px 22px 58px;background:var(--wh);position:relative}
+.sec-ttl{font-family:'Playfair Display',serif;font-size:15px;color:var(--navy);margin-bottom:13px;padding-bottom:7px;border-bottom:2px solid var(--navy)}
+.photo-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.photo-pair img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;display:block}
+.char-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-bottom:18px}
+.char-item{display:flex;justify-content:space-between;align-items:baseline;padding:6px 9px;border-bottom:1px solid var(--silver2);font-size:12px;gap:8px}
+.char-item:nth-child(odd){background:var(--silver)}
+.char-lbl{color:var(--mut);font-weight:500;flex-shrink:0}
+.char-val{color:var(--navy);font-weight:600;text-align:right}
+.ficha-footer{position:absolute;bottom:0;left:0;right:0;height:48px;background:var(--navy2);display:flex;align-items:center;justify-content:center;gap:8px}
+.ft-txt{font-size:9px;color:rgba(255,255,255,.38);text-transform:uppercase;letter-spacing:.1em}
+.ft-logo{height:14px;opacity:.65}
+.ft-div{width:1px;height:12px;background:rgba(255,255,255,.18)}
+
+/* Print */
+@media print{
+  body{background:#fff}
+  #app > *:not(#ficha){display:none!important}
+  #ficha{display:block!important;margin:0}
+  .print-bar{display:none!important}
+  .ficha-page{box-shadow:none;margin:0;page-break-after:always}
+  .ficha-page:last-child{page-break-after:avoid}
+  @page{size:A4;margin:0}
+}
+@media(max-width:600px){
+  .frow,.frow.three{grid-template-columns:1fr}
+  .cover-specs{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="logo">
+    <svg viewBox="0 0 130 36" fill="none">
+      <rect x="10.5" y="6" width="2.5" height="18" fill="#1a2744"/>
+      <polygon points="11.75,2 8,8 15.5,8" fill="#1a2744"/>
+      <path d="M13 10 Q22 10 22 16 Q22 22 13 22" stroke="#1a2744" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M13 16 Q23 16 23 22.5 Q23 29 13 29" stroke="#2a9db5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="8" cy="29" r="2.5" fill="#2a9db5"/><circle cx="16" cy="33" r="2" fill="#2a9db5"/><circle cx="23" cy="29" r="2" fill="#2a9db5"/>
+      <line x1="8" y1="29" x2="16" y2="33" stroke="#2a9db5" stroke-width="1.2"/>
+      <line x1="16" y1="33" x2="23" y2="29" stroke="#2a9db5" stroke-width="1.2"/>
+      <text x="30" y="28" font-family="DM Sans,sans-serif" font-weight="600" font-size="22" fill="#1a2744" letter-spacing="1">ROKR</text>
+    </svg>
+    <a href="index.html">← Volver a Brokr</a>
+  </div>
+
+  <h1 class="pg-ttl">Ficha técnica manual</h1>
+  <p class="pg-sub">Llena los datos disponibles, sube las fotos y Brokr genera la ficha PDF. Todos los campos son opcionales.</p>
+
+  <!-- FOTOS -->
+  <div class="card">
+    <div class="sec">Fotografías <span class="opt">(sin límite — arrastra o selecciona)</span></div>
+    <div class="photos-zone" id="photos-zone">
+      <input type="file" accept="image/*" multiple id="photos-input" onchange="addPhotos(this)"/>
+      <div class="photos-zone-ico">📷</div>
+      <div class="photos-zone-txt">Clic para seleccionar o arrastra las fotos aquí</div>
+      <div class="photos-zone-sub">La primera foto será la portada · JPG, PNG, HEIC</div>
+    </div>
+    <div class="photos-grid" id="photos-grid"></div>
+  </div>
+
+  <!-- DATOS BÁSICOS -->
+  <div class="card">
+    <div class="sec">Datos de la propiedad <span class="opt">(todos opcionales)</span></div>
+    <div class="frow">
+      <div class="f">
+        <label>Tipo de inmueble</label>
+        <select id="d-tipo">
+          <option value="">Seleccionar...</option>
+          <option>Casa</option><option>Departamento</option><option>Terreno</option>
+          <option>Local comercial</option><option>Oficina</option><option>Bodega</option>
+          <option>Rancho</option><option>Desarrollo</option>
+        </select>
+      </div>
+      <div class="f">
+        <label>Tipo de operación</label>
+        <select id="d-op">
+          <option value="">Seleccionar...</option>
+          <option>Venta</option><option>Renta</option><option>Venta y renta</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow one">
+      <div class="f">
+        <label>Precio</label>
+        <input type="text" id="d-precio" placeholder="Ej. $3,500,000 MXN"/>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="f">
+        <label>Colonia / Fraccionamiento</label>
+        <input type="text" id="d-colonia" placeholder="Ej. Chapultepec Sur"/>
+      </div>
+      <div class="f">
+        <label>Ciudad</label>
+        <input type="text" id="d-ciudad" placeholder="Ej. Morelia" value="Morelia"/>
+      </div>
+    </div>
+    <div class="frow one">
+      <div class="f">
+        <label>Dirección <span class="opt">(opcional)</span></label>
+        <input type="text" id="d-dir" placeholder="Ej. Av. Lázaro Cárdenas 230"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARACTERÍSTICAS -->
+  <div class="card">
+    <div class="sec">Características <span class="opt">(opcionales)</span></div>
+    <div class="frow three">
+      <div class="f"><label>Recámaras</label><input type="number" id="d-rec" placeholder="Ej. 3" min="0"/></div>
+      <div class="f"><label>Baños completos</label><input type="number" id="d-ban" placeholder="Ej. 2" min="0" step="0.5"/></div>
+      <div class="f"><label>Medios baños</label><input type="number" id="d-mban" placeholder="Ej. 1" min="0"/></div>
+    </div>
+    <div class="frow three">
+      <div class="f"><label>m² construcción</label><input type="number" id="d-m2c" placeholder="Ej. 180" min="0"/></div>
+      <div class="f"><label>m² terreno</label><input type="number" id="d-m2t" placeholder="Ej. 250" min="0"/></div>
+      <div class="f"><label>Estacionamientos</label><input type="number" id="d-est" placeholder="Ej. 2" min="0"/></div>
+    </div>
+    <div class="frow">
+      <div class="f"><label>Niveles</label><input type="number" id="d-niv" placeholder="Ej. 2" min="0"/></div>
+      <div class="f"><label>Año de construcción</label><input type="number" id="d-anio" placeholder="Ej. 2015" min="1900" max="2026"/></div>
+    </div>
+  </div>
+
+  <!-- DESCRIPCIÓN -->
+  <div class="card">
+    <div class="sec">Descripción comercial</div>
+    <div class="f desc-wrap">
+      <label>Descripción <span class="opt">(escribe o genera con IA)</span></label>
+      <textarea id="d-desc" placeholder="Escribe aquí la descripción, o haz clic en 'Generar con IA' para que Brokr redacte una descripción atractiva con los datos que llenaste..." rows="5"></textarea>
+      <button class="ai-gen-btn" id="ai-btn" onclick="generarDescripcion()">✨ Generar con IA</button>
+    </div>
+    <div class="ai-hint" id="ai-hint">La IA usará los datos del formulario para redactar una descripción comercial atractiva. Podrás editarla después.</div>
+  </div>
+
+  <!-- AMENIDADES -->
+  <div class="card">
+    <div class="sec">Amenidades <span class="opt">(escribe separadas por coma)</span></div>
+    <div class="f one">
+      <label>Amenidades</label>
+      <input type="text" id="d-amen" placeholder="Ej. Alberca, Jardín, Cuarto de servicio, Seguridad 24h, Roof garden"/>
+    </div>
+  </div>
+
+  <button class="main-btn" onclick="generarFicha()">Generar ficha técnica</button>
+  <div class="loading" id="loading"><div class="spinner"></div><span>Generando ficha técnica...</span></div>
+
+  <!-- FICHA -->
+  <div id="ficha">
+    <div class="print-bar">
+      <button class="print-btn" onclick="window.print()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Guardar como PDF
+      </button>
+      <button class="back-btn" onclick="resetFicha()">← Editar datos</button>
+    </div>
+    <div id="ficha-pages"></div>
+  </div>
+
+</div>
+
+<script>
+const API = 'https://brokrebapi-production.up.railway.app';
+let fotos = []; // {url, name}
+
+// ── PHOTOS ──
+function addPhotos(input){
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      fotos.push({ url: e.target.result, name: file.name });
+      renderThumbs();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // reset so same file can be added again
+}
+
+function renderThumbs(){
+  const grid = document.getElementById('photos-grid');
+  grid.innerHTML = fotos.map((f,i) => `
+    <div class="photo-thumb">
+      <img src="${f.url}" alt="foto ${i+1}"/>
+      ${i===0 ? '<div class="photo-main-badge">Portada</div>' : ''}
+      <button class="photo-del" onclick="deletePhoto(${i})">×</button>
+    </div>`).join('');
+}
+
+function deletePhoto(i){
+  fotos.splice(i,1);
+  renderThumbs();
+}
+
+// Drag & drop
+const zone = document.getElementById('photos-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--teal)'; });
+zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.style.borderColor = '';
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => { fotos.push({url:ev.target.result,name:file.name}); renderThumbs(); };
+    reader.readAsDataURL(file);
+  });
+});
+
+// ── AI DESCRIPTION ──
+async function generarDescripcion(){
+  const btn = document.getElementById('ai-btn');
+  const hint = document.getElementById('ai-hint');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando...';
+
+  const datos = getDatos();
+  const prompt = `Eres un agente inmobiliario experto en Morelia, Michoacán, México. 
+Redacta una descripción comercial atractiva y profesional para la siguiente propiedad.
+La descripción debe ser persuasiva, destacar los atributos más atractivos, y estar en español.
+Máximo 200 palabras. Sin emojis. Sin mencionar el precio.
+
+Datos de la propiedad:
+${datos.tipo ? `- Tipo: ${datos.tipo}` : ''}
+${datos.op ? `- Operación: ${datos.op}` : ''}
+${datos.colonia ? `- Colonia: ${datos.colonia}, ${datos.ciudad}` : `- Ciudad: ${datos.ciudad}`}
+${datos.rec ? `- Recámaras: ${datos.rec}` : ''}
+${datos.ban ? `- Baños: ${datos.ban}` : ''}
+${datos.m2c ? `- Construcción: ${datos.m2c} m²` : ''}
+${datos.m2t ? `- Terreno: ${datos.m2t} m²` : ''}
+${datos.est ? `- Estacionamientos: ${datos.est}` : ''}
+${datos.niv ? `- Niveles: ${datos.niv}` : ''}
+${datos.anio ? `- Año construcción: ${datos.anio}` : ''}
+${datos.amen ? `- Amenidades: ${datos.amen}` : ''}
+
+Redacta solo la descripción, sin título ni encabezado.`;
+
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('brokr_key') || ''}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 400,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await r.json();
+    const desc = data.choices?.[0]?.message?.content || '';
+    document.getElementById('d-desc').value = desc;
+    hint.textContent = '✓ Descripción generada — puedes editarla libremente.';
+    hint.style.color = 'var(--teal)';
+  } catch(e) {
+    hint.textContent = 'No se pudo generar. Verifica que tu API key de Groq esté guardada en Brokr.';
+    hint.style.color = '#c00';
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Regenerar';
+}
+
+// ── GET DATA ──
+function g(id){ return document.getElementById(id); }
+function gv(id){ return g(id)?.value?.trim() || ''; }
+
+function getDatos(){
+  return {
+    tipo:    gv('d-tipo'),
+    op:      gv('d-op'),
+    precio:  gv('d-precio'),
+    colonia: gv('d-colonia'),
+    ciudad:  gv('d-ciudad') || 'Morelia',
+    dir:     gv('d-dir'),
+    rec:     gv('d-rec'),
+    ban:     gv('d-ban'),
+    mban:    gv('d-mban'),
+    m2c:     gv('d-m2c'),
+    m2t:     gv('d-m2t'),
+    est:     gv('d-est'),
+    niv:     gv('d-niv'),
+    anio:    gv('d-anio'),
+    desc:    gv('d-desc'),
+    amen:    gv('d-amen'),
+  };
+}
+
+// ── FOOTER ──
+function footer(){
+  return `<div class="ficha-footer">
+    <span class="ft-txt">Powered by</span>
+    <svg class="ft-logo" viewBox="0 0 130 36" fill="none">
+      <rect x="10.5" y="6" width="2.5" height="18" fill="white"/>
+      <polygon points="11.75,2 8,8 15.5,8" fill="white"/>
+      <path d="M13 10 Q22 10 22 16 Q22 22 13 22" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M13 16 Q23 16 23 22.5 Q23 29 13 29" stroke="#2a9db5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="8" cy="29" r="2.5" fill="#2a9db5"/><circle cx="16" cy="33" r="2" fill="#2a9db5"/><circle cx="23" cy="29" r="2" fill="#2a9db5"/>
+      <line x1="8" y1="29" x2="16" y2="33" stroke="#2a9db5" stroke-width="1.2"/>
+      <line x1="16" y1="33" x2="23" y2="29" stroke="#2a9db5" stroke-width="1.2"/>
+      <text x="30" y="28" font-family="DM Sans,sans-serif" font-weight="600" font-size="22" fill="white" letter-spacing="1">ROKR</text>
+    </svg>
+  </div>`;
+}
+
+// ── GENERATE FICHA ──
+function generarFicha(){
+  const d = getDatos();
+  const load = g('loading');
+  load.classList.add('show');
+
+  setTimeout(() => {
+    load.classList.remove('show');
+    renderFicha(d);
+  }, 300);
+}
+
+function renderFicha(d){
+  // Build specs
+  const specs = [];
+  if(d.rec)  specs.push({ico:'🛏',val:d.rec,lbl:'Recámaras'});
+  if(d.ban)  specs.push({ico:'🚿',val:d.ban,lbl:'Baños'});
+  if(d.m2c)  specs.push({ico:'📐',val:d.m2c+' m²',lbl:'Construcción'});
+  if(d.m2t)  specs.push({ico:'🌿',val:d.m2t+' m²',lbl:'Terreno'});
+  if(d.est && specs.length<4) specs.push({ico:'🚗',val:d.est,lbl:'Estacion.'});
+
+  const specsHTML = specs.slice(0,4).map(s =>
+    `<div class="spec-item">
+      <div class="spec-ico">${s.ico}</div>
+      <div class="spec-val">${s.val}</div>
+      <div class="spec-lbl">${s.lbl}</div>
+    </div>`).join('');
+
+  // Cover hero
+  const heroSrc = fotos[0]?.url || null;
+  const heroHTML = heroSrc
+    ? `<img class="cover-hero" src="${heroSrc}" alt="portada"/>`
+    : `<div class="cover-hero-bg"><svg width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.2)" stroke-width="1"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>`;
+
+  const ubicacion = [d.colonia, d.ciudad].filter(Boolean).join(', ') || 'Morelia, Michoacán';
+  const titulo = [d.tipo, d.op ? `en ${d.op}` : ''].filter(Boolean).join(' ') || 'Propiedad';
+
+  // ── PAGE 1: COVER ──
+  let html = `
+  <div class="ficha-page" style="display:flex;flex-direction:column">
+    <div style="position:relative;flex-shrink:0">
+      ${heroHTML}
+      <div class="cover-overlay"></div>
+      <div class="cover-brand-ph">Tu logo aquí</div>
+      ${d.op ? `<div class="cover-tipo-badge">${d.op.toUpperCase()}</div>` : ''}
+      <div class="cover-price-block">
+        ${d.precio ? `<div class="cover-precio">${d.precio}</div>` : ''}
+        <div class="cover-titulo">${titulo}</div>
+        <div class="cover-ubicacion">📍 ${ubicacion}</div>
+      </div>
+    </div>
+    <div class="cover-body" style="flex:1">
+      ${specs.length ? `<div class="cover-specs">${specsHTML}</div>` : ''}
+      ${d.desc ? `<div class="cover-desc-ttl">Descripción</div><div class="cover-desc">${d.desc}</div>` : ''}
+    </div>
+    ${footer()}
+  </div>`;
+
+  // ── PHOTO PAGES ──
+  const restFotos = fotos.slice(1);
+  if(restFotos.length > 0){
+    let i = 0;
+    while(i < restFotos.length){
+      const page = restFotos.slice(i, i+6);
+      i += 6;
+      const imgs = page.map(f => f.url);
+      let gridHTML = '';
+      for(let r=0; r<imgs.length; r+=2){
+        const pair = imgs.slice(r,r+2);
+        gridHTML += `<div class="photo-pair">${pair.map(s=>`<img src="${s}" alt="foto"/>`).join('')}</div>`;
+      }
+      html += `
+      <div class="ficha-page">
+        <div class="ficha-content">
+          <div class="sec-ttl">Galería fotográfica</div>
+          ${gridHTML}
+        </div>
+        ${footer()}
+      </div>`;
+    }
+  }
+
+  // ── CARACTERÍSTICAS PAGE ──
+  const rows = [];
+  if(d.tipo)    rows.push(['Tipo de inmueble', d.tipo]);
+  if(d.op)      rows.push(['Operación', d.op]);
+  if(d.precio)  rows.push(['Precio', d.precio]);
+  if(d.rec)     rows.push(['Recámaras', d.rec]);
+  if(d.ban)     rows.push(['Baños completos', d.ban]);
+  if(d.mban)    rows.push(['Medios baños', d.mban]);
+  if(d.m2c)     rows.push(['Superficie construida', d.m2c+' m²']);
+  if(d.m2t)     rows.push(['Superficie de terreno', d.m2t+' m²']);
+  if(d.est)     rows.push(['Estacionamientos', d.est]);
+  if(d.niv)     rows.push(['Niveles', d.niv]);
+  if(d.anio)    rows.push(['Año de construcción', d.anio]);
+  if(d.colonia) rows.push(['Colonia', d.colonia]);
+  if(d.ciudad)  rows.push(['Ciudad', d.ciudad]);
+  if(d.dir)     rows.push(['Dirección', d.dir]);
+
+  const amenList = d.amen ? d.amen.split(',').map(a=>a.trim()).filter(Boolean) : [];
+  const amenHTML = amenList.length
+    ? `<div class="sec-ttl" style="margin-top:16px">Amenidades</div>
+       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+         ${amenList.map(a=>`<div style="display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--silver);border-radius:6px;font-size:11.5px"><span style="color:var(--teal);font-weight:700;font-size:10px">✓</span>${a}</div>`).join('')}
+       </div>`
+    : '';
+
+  if(rows.length || amenList.length){
+    const mid = Math.ceil(rows.length/2);
+    const colA = rows.slice(0,mid);
+    const colB = rows.slice(mid);
+    const makeCol = arr => arr.map(([k,v])=>
+      `<div class="char-item"><span class="char-lbl">${k}</span><span class="char-val">${v}</span></div>`
+    ).join('');
+
+    html += `
+    <div class="ficha-page">
+      <div class="ficha-content">
+        <div class="sec-ttl">Características del inmueble</div>
+        <div class="char-cols">
+          <div>${makeCol(colA)}</div>
+          <div>${makeCol(colB)}</div>
+        </div>
+        ${amenHTML}
+      </div>
+      ${footer()}
+    </div>`;
+  }
+
+  g('ficha-pages').innerHTML = html;
+  g('ficha').classList.add('show');
+  g('ficha').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function resetFicha(){
+  g('ficha').classList.remove('show');
+  g('ficha-pages').innerHTML = '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
