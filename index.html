@@ -225,6 +225,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
 
 <main id="main">
   <header id="hdr">
+    <button id="ham-btn" onclick="toggleSidebar()" aria-label="Menú"><span></span><span></span><span></span></button>
     <div class="hdr-l"><div class="dot"></div>Brokr <span id="hlbl">— Chat general</span></div>
     <button class="nc-btn" id="nc-btn" onclick="newChat()">
       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -819,5 +820,6 @@ document.querySelectorAll('.sb-btn').forEach(btn => {
   });
 });
 </script>
+
 </body>
 </html>
