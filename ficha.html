@@ -40,6 +40,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 
 /* ── PRINT TOOLBAR ── */
 #ficha{display:none}
+#ficha.show{display:block}
+#app-ui.hidden{display:none}
 .print-bar{position:sticky;top:0;z-index:100;background:var(--navy);display:flex;align-items:center;gap:10px;padding:10px 20px}
 .print-bar img{height:22px;width:auto}
 .back-btn{font-size:13px;color:rgba(255,255,255,.6);cursor:pointer;border:none;background:none;padding:4px 8px;border-radius:6px}
@@ -433,12 +435,14 @@ async function renderFicha(p){
 
   el.classList.add('show');
   g('print-bar').classList.add('show');
+  g('app-ui').classList.add('hidden');
   el.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function resetFicha(){
   g('ficha').innerHTML='';
   g('ficha').classList.remove('show');
+  g('app-ui').classList.remove('hidden');
   g('print-bar').classList.remove('show');
   g('gen-btn').disabled=false;
   g('prop-id').value='';
