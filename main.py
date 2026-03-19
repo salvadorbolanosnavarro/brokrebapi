@@ -614,6 +614,28 @@ class ContratoRequest(BaseModel):
     tipo: str   # arrendamiento | promesa
     datos: dict
 
+
+@app.get("/img")
+async def proxy_image(url: str):
+    """Proxy image from EasyBroker to avoid CORS issues in PDF printing."""
+    import base64
+    from fastapi.responses import Response
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://www.easybroker.com/",
+        }
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            r = await client.get(url, headers=headers)
+            if r.status_code == 200:
+                content_type = r.headers.get("content-type", "image/jpeg")
+                return Response(content=r.content, media_type=content_type,
+                    headers={"Access-Control-Allow-Origin": "*",
+                             "Cache-Control": "public, max-age=3600"})
+    except Exception as e:
+        pass
+    raise HTTPException(status_code=404, detail="Image not available")
+
 @app.post("/contrato")
 async def generar_contrato(req: ContratoRequest):
     """Generate a DOCX contract from form data."""

@@ -55,11 +55,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 }
 
 /* Cover */
-.ficha-cover{width:100%;height:297mm;position:relative;overflow:hidden;background:var(--wh)}
-/* Hero takes top 55% */
-.cover-hero{position:absolute;top:0;left:0;right:0;height:55%;object-fit:cover;display:block;width:100%}
-.cover-hero-bg{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(135deg,var(--navy2),var(--navy3));display:flex;align-items:center;justify-content:center}
-.cover-overlay{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(to bottom,rgba(15,24,41,.1) 0%,rgba(15,24,41,.65) 100%)}
+.ficha-cover{width:100%;height:297mm;display:block;overflow:hidden;background:var(--wh);position:relative}
+.cover-hero-wrap{position:relative;width:100%;height:160mm;overflow:hidden;display:block}
+.cover-hero{width:100%;height:160mm;object-fit:cover;display:block}
+.cover-hero-bg{width:100%;height:160mm;background:linear-gradient(135deg,var(--navy2),var(--navy3));display:flex;align-items:center;justify-content:center}
+.cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(15,24,41,.1) 0%,rgba(15,24,41,.65) 100%)}
 
 /* Brand area top-left (agente) */
 .cover-brand-agente{
@@ -101,10 +101,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .cover-ubicacion{font-size:12.5px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:4px}
 
 .cover-body{
-  position:absolute;
-  top:55%;left:0;right:0;bottom:0;
   padding:16px 22px 55px;
   background:var(--wh);
+  height:calc(297mm - 160mm);
   overflow:hidden;
 }
 .cover-specs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
@@ -237,11 +236,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 <script>
 const API = 'https://brokrebapi-production.up.railway.app';
 
-// Convert image URL to base64 for reliable PDF printing
+// Proxy images through Railway to avoid CORS issues in PDF
 async function imgToBase64(url){
   if(!url) return url;
   try {
-    const r = await fetch(url);
+    // Use Railway proxy which sets CORS headers
+    const proxyUrl = `${API}/img?url=${encodeURIComponent(url)}`;
+    const r = await fetch(proxyUrl);
+    if(!r.ok) return url;
     const blob = await r.blob();
     return new Promise(res => {
       const fr = new FileReader();
@@ -392,18 +394,21 @@ async function renderFicha(p){
   let html = `
   <div class="ficha-page">
     <div class="ficha-cover">
-      ${heroHTML}
-      <div class="cover-overlay"></div>
-      <!-- ESPACIO LOGO AGENTE (se habilitará en próxima versión) -->
-      <div class="cover-brand-agente">
-        <div class="cover-brand-placeholder"><span>Tu logo aquí</span></div>
+      <!-- HERO WRAP: image + overlay + badges + price, all positioned inside -->
+      <div class="cover-hero-wrap">
+        ${heroHTML}
+        <div class="cover-overlay"></div>
+        <div class="cover-brand-agente">
+          <div class="cover-brand-placeholder"><span>Tu logo aquí</span></div>
+        </div>
+        <div class="cover-tipo">${tipo_op}</div>
+        <div class="cover-price-block">
+          <div class="cover-precio">${precio}</div>
+          <div class="cover-titulo">${titulo}</div>
+          <div class="cover-ubicacion">📍 ${ubicacion}</div>
+        </div>
       </div>
-      <div class="cover-tipo">${tipo_op}</div>
-      <div class="cover-price-block">
-        <div class="cover-precio">${precio}</div>
-        <div class="cover-titulo">${titulo}</div>
-        <div class="cover-ubicacion">📍 ${ubicacion}</div>
-      </div>
+      <!-- BODY: normal flow below hero -->
       <div class="cover-body">
         ${specs.length ? `<div class="cover-specs">${specsHTML}</div>` : ''}
         ${descPortada ? `<div class="cover-desc-ttl">Descripción</div><div class="cover-desc">${descPortada}</div>` : ''}
