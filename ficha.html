@@ -55,10 +55,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 }
 
 /* Cover */
-.ficha-cover{width:100%;min-height:297mm;position:relative;display:flex;flex-direction:column}
-.cover-hero{width:100%;height:185mm;object-fit:cover;display:block;flex-shrink:0}
-.cover-hero-bg{width:100%;height:185mm;background:linear-gradient(135deg,var(--navy2),var(--navy3));display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.cover-overlay{position:absolute;top:0;left:0;right:0;height:62%;background:linear-gradient(to bottom,rgba(15,24,41,.25) 0%,rgba(15,24,41,.72) 100%)}
+.ficha-cover{width:100%;height:297mm;position:relative;overflow:hidden;background:var(--wh)}
+/* Hero takes top 55% */
+.cover-hero{position:absolute;top:0;left:0;right:0;height:55%;object-fit:cover;display:block;width:100%}
+.cover-hero-bg{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(135deg,var(--navy2),var(--navy3));display:flex;align-items:center;justify-content:center}
+.cover-overlay{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(to bottom,rgba(15,24,41,.1) 0%,rgba(15,24,41,.65) 100%)}
 
 /* Brand area top-left (agente) */
 .cover-brand-agente{
@@ -89,7 +90,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   padding:5px 14px;border-radius:20px;
 }
 .cover-price-block{
-  position:absolute;bottom:0;left:0;right:0;transform:translateY(-115%);
+  position:absolute;bottom:46%;left:0;right:0;
   padding:0 24px 18px;
 }
 .cover-precio{
@@ -99,7 +100,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .cover-titulo{font-size:15px;font-weight:400;color:rgba(255,255,255,.85);margin-bottom:5px}
 .cover-ubicacion{font-size:12.5px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:4px}
 
-.cover-body{flex:1;padding:22px 24px 22px;background:var(--wh)}
+.cover-body{
+  position:absolute;
+  top:55%;left:0;right:0;bottom:0;
+  padding:16px 22px 55px;
+  background:var(--wh);
+  overflow:hidden;
+}
 .cover-specs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
 .spec-item{text-align:center;padding:12px 6px;background:var(--silver);border-radius:8px}
 .spec-ico{font-size:17px;margin-bottom:3px}
@@ -182,15 +189,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   body{background:#fff}
   #app-ui{display:none!important}
   #ficha{display:block!important}
-  .ficha-page{
-    box-shadow:none;margin:0;
-    page-break-after:always;
-    page-break-inside:avoid;
-  }
-  .ficha-cover{
-    min-height:auto;
-    page-break-inside:avoid;
-  }
+  .ficha-page{box-shadow:none;margin:0;page-break-after:always}
   .ficha-page:last-child{page-break-after:avoid}
   @page{size:A4;margin:0}
 }
@@ -238,6 +237,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 <script>
 const API = 'https://brokrebapi-production.up.railway.app';
 
+// Convert image URL to base64 for reliable PDF printing
+async function imgToBase64(url){
+  if(!url) return url;
+  try {
+    const r = await fetch(url);
+    const blob = await r.blob();
+    return new Promise(res => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.readAsDataURL(blob);
+    });
+  } catch(e){ return url; }
+}
+
 function g(id){ return document.getElementById(id); }
 function fmt(n){ return n ? '$'+Number(n).toLocaleString('es-MX',{maximumFractionDigits:0}) : '—'; }
 function fmtM2(n){ return n ? n+' m²' : '—'; }
@@ -283,8 +296,16 @@ async function generarFicha(){
     }
 
     const p = await res.json();
+    setLoading(false, 'Preparando imágenes para PDF...');
+    // Pre-convert all images to base64 so they print correctly
+    const fotos = p.property_images || [];
+    for(let i=0; i<fotos.length; i++){
+      const src = fotos[i].url || fotos[i].original;
+      if(src) fotos[i]._b64 = await imgToBase64(src);
+    }
+    p.property_images = fotos;
     setLoading(false);
-    renderFicha(p);
+    await renderFicha(p);
 
   } catch(e) {
     setLoading(false);
@@ -302,7 +323,7 @@ async function generarFicha(){
 }
 
 // ── RENDER ──
-function renderFicha(p){
+async function renderFicha(p){
   const id       = p.public_id || p.id || '—';
   const titulo   = p.title || p.property_type || 'Propiedad';
   const op       = p.operations?.[0];
@@ -327,9 +348,28 @@ function renderFicha(p){
   const estatus  = p.status || '';
 
   // ── PAGE 1: PORTADA ──
-  const heroSrc = fotos[0]?.url || fotos[0]?.original || null;
-  const heroHTML = heroSrc
-    ? `<img class="cover-hero" src="${heroSrc}" alt="foto principal"/>`
+  // Convert hero image to base64 for PDF rendering
+  async function toBase64(url){
+    try {
+      const r = await fetch(url);
+      const blob = await r.blob();
+      return new Promise(res => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.readAsDataURL(blob);
+      });
+    } catch(e){ return url; }
+  }
+
+  const heroSrc = fotos[0]?._b64 || fotos[0]?.url || fotos[0]?.original || null;
+  // Try to convert to base64 for reliable PDF rendering
+  let heroB64 = heroSrc;
+  if(heroSrc){
+    try { heroB64 = await toBase64(heroSrc); } catch(e){ heroB64 = heroSrc; }
+  }
+
+  const heroHTML = heroB64
+    ? `<img class="cover-hero" src="${heroB64}" alt="foto principal"/>`
     : `<div class="cover-hero-bg"><svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.2)" stroke-width="1"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>`;
 
   const specs = [];
@@ -379,7 +419,7 @@ function renderFicha(p){
     while(i < restFotos.length){
       const page = restFotos.slice(i, i+6);
       i += 6;
-      const imgs = page.map(f => f.url || f.original).filter(Boolean);
+      const imgs = page.map(f => f._b64 || f.url || f.original).filter(Boolean);
       if(!imgs.length) continue;
 
       // Always 2 photos per row, square aspect ratio
