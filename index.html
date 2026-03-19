@@ -118,6 +118,126 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
 #reset-btn{background:none;border:1.5px solid var(--gray2);border-radius:var(--r2);padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--mut);cursor:pointer;margin-top:14px;display:block}
 #reset-btn:hover{border-color:var(--navy);color:var(--navy)}
 
+
+/* ══════════════════════════════
+   MIS PROPIEDADES
+══════════════════════════════ */
+.props-toolbar{
+  display:flex;align-items:center;gap:10px;padding:14px 20px;
+  border-bottom:1px solid var(--gray2);flex-wrap:wrap;background:var(--wh);flex-shrink:0;
+}
+.props-search-wrap{position:relative;flex:1;min-width:200px}
+.props-search-wrap input{
+  width:100%;padding:8px 12px 8px 34px;border:1px solid var(--gray2);
+  border-radius:var(--r2);font-size:13px;outline:none;background:var(--gray);
+  font-family:'DM Sans',sans-serif;color:var(--txt);
+}
+.props-search-wrap input:focus{border-color:var(--teal);background:#fff}
+.props-toolbar select{
+  padding:8px 10px;border:1px solid var(--gray2);border-radius:var(--r2);
+  font-size:12px;background:var(--gray);color:var(--txt);
+  font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;
+}
+.props-new-btn{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  background:var(--teal);color:#fff;border:none;border-radius:var(--r2);
+  font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;
+  white-space:nowrap;flex-shrink:0;
+}
+.props-new-btn:hover{background:var(--teal2)}
+.props-grid{
+  flex:1;overflow-y:auto;padding:20px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;
+  align-content:start;
+}
+.props-loading{grid-column:1/-1;text-align:center;color:var(--mut);padding:40px;font-size:14px}
+.props-empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:60px 20px}
+.props-empty svg{margin-bottom:12px;opacity:.3}
+.props-empty p{font-size:14px}
+
+/* PROP CARD */
+.prop-card{
+  background:var(--wh);border-radius:var(--r);
+  box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;
+  transition:box-shadow .2s,transform .2s;cursor:pointer;
+}
+.prop-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);transform:translateY(-2px)}
+.prop-card-img{
+  width:100%;height:180px;object-fit:cover;background:var(--gray);
+  display:flex;align-items:center;justify-content:center;color:var(--mut);
+}
+.prop-card-img img{width:100%;height:100%;object-fit:cover}
+.prop-card-img-placeholder{width:100%;height:180px;background:var(--gray);display:flex;align-items:center;justify-content:center}
+.prop-card-body{padding:14px}
+.prop-card-badges{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.badge-venta{background:#e8f5e9;color:#2e7d32}
+.badge-renta{background:#e3f2fd;color:#1565c0}
+.badge-activa{background:#e8f5e9;color:#2e7d32}
+.badge-vendida{background:#fce4ec;color:#c62828}
+.badge-rentada{background:#e3f2fd;color:#1565c0}
+.badge-suspendida{background:#fff3e0;color:#e65100}
+.prop-card-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px;line-height:1.3}
+.prop-card-loc{font-size:12px;color:var(--mut);margin-bottom:10px}
+.prop-card-price{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.prop-card-specs{display:flex;gap:12px;font-size:11px;color:var(--mut)}
+.prop-card-specs span{display:flex;align-items:center;gap:3px}
+.prop-card-actions{
+  display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--gray2);background:var(--gray);
+}
+.prop-act-btn{
+  flex:1;padding:7px;border:none;border-radius:var(--r2);font-size:12px;
+  font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;
+}
+.prop-act-edit{background:var(--navy2);color:#fff}
+.prop-act-edit:hover{background:var(--navy3)}
+.prop-act-del{background:#fff;color:#e53e3e;border:1px solid #fca5a5}
+.prop-act-del:hover{background:#fef2f2}
+.prop-act-ficha{background:var(--teal);color:#fff}
+.prop-act-ficha:hover{background:var(--teal2)}
+
+/* MODAL */
+.prop-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.prop-modal-box{
+  background:#fff;border-radius:var(--r);width:100%;max-width:720px;
+  max-height:90vh;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.prop-modal-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;border-bottom:1px solid var(--gray2);flex-shrink:0;
+}
+.prop-modal-hdr h3{font-size:16px;font-weight:700;color:var(--navy)}
+.prop-modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mut);padding:4px 8px}
+.prop-modal-body{overflow-y:auto;padding:20px 24px;flex:1}
+.pf-section{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--gray2)}
+.pf-section:first-child{margin-top:0}
+.pf-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:4px}
+.pf-field{display:flex;flex-direction:column;gap:4px}
+.pf-field.full{grid-column:1/-1}
+.pf-field label{font-size:11px;font-weight:600;color:var(--mut)}
+.pf-field input,.pf-field select,.pf-field textarea{
+  padding:9px 11px;border:1px solid var(--gray2);border-radius:var(--r2);
+  font-size:13px;font-family:'DM Sans',sans-serif;color:var(--txt);
+  outline:none;background:#fff;resize:vertical;
+}
+.pf-field input:focus,.pf-field select:focus,.pf-field textarea:focus{border-color:var(--teal)}
+.pf-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray2)}
+.pf-cancel-btn{padding:9px 18px;background:var(--gray);border:1px solid var(--gray2);border-radius:var(--r2);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.pf-save-btn{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--teal);color:#fff;border:none;border-radius:var(--r2);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.pf-save-btn:hover{background:var(--teal2)}
+
+/* MOBILE props */
+@media(max-width:768px){
+  .props-toolbar{gap:8px}
+  .props-search-wrap{min-width:100%;order:-1}
+  .props-grid{grid-template-columns:1fr;padding:12px}
+  .pf-row{grid-template-columns:1fr 1fr}
+  .prop-modal-box{max-height:95vh}
+}
 /* ── MIC BUTTON ── */
 #mic-btn{
   width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
@@ -215,6 +335,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
     <button class="sb-btn" onclick="window.location.href='ficha-manual.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Ficha manual</button>
     <button class="sb-btn" onclick="window.location.href='contratos.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Contratos</button>
     <button class="sb-btn" onclick="window.location.href='ficha.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Fichas técnicas</button>
+    <button class="sb-btn" id="btn-props" onclick="goProps()">
+      <svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg>
+      Mis Propiedades
+      <span class="pill" id="props-count">0</span>
+    </button>
     <button class="sb-btn" onclick="window.location.href='avm.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Opinión de valor</button>
   </div>
   <div class="sb-foot">
@@ -382,6 +507,203 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
       </div>
     </div>
   </div>
+<!-- ═══════════════════════════════════════════
+     PANEL: MIS PROPIEDADES
+═══════════════════════════════════════════ -->
+<div id="props-panel" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+
+  <!-- TOOLBAR -->
+  <div class="props-toolbar">
+    <div class="props-search-wrap">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      <input id="props-search" type="text" placeholder="Buscar por colonia, tipo, precio..." oninput="filterProps()" />
+    </div>
+    <select id="props-filter-op" onchange="filterProps()">
+      <option value="">Todas las operaciones</option>
+      <option value="venta">Venta</option>
+      <option value="renta">Renta</option>
+    </select>
+    <select id="props-filter-tipo" onchange="filterProps()">
+      <option value="">Todos los tipos</option>
+      <option value="casa">Casa</option>
+      <option value="departamento">Departamento</option>
+      <option value="terreno">Terreno</option>
+      <option value="local">Local comercial</option>
+      <option value="oficina">Oficina</option>
+      <option value="bodega">Bodega</option>
+    </select>
+    <select id="props-filter-est" onchange="filterProps()">
+      <option value="">Todos los estatus</option>
+      <option value="activa">Activas</option>
+      <option value="vendida">Vendidas</option>
+      <option value="rentada">Rentadas</option>
+      <option value="suspendida">Suspendidas</option>
+    </select>
+    <button class="props-new-btn" onclick="openPropForm(null)">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+      Nueva propiedad
+    </button>
+  </div>
+
+  <!-- GRID -->
+  <div id="props-grid" class="props-grid">
+    <div class="props-loading">Cargando propiedades...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: FORM NUEVA/EDITAR PROPIEDAD
+═══════════════════════════════════════════ -->
+<div id="prop-modal" class="prop-modal-overlay" style="display:none" onclick="closePropModal(event)">
+  <div class="prop-modal-box" onclick="event.stopPropagation()">
+    <div class="prop-modal-hdr">
+      <h3 id="prop-modal-title">Nueva propiedad</h3>
+      <button onclick="closePropModal()" class="prop-modal-close">✕</button>
+    </div>
+    <div class="prop-modal-body">
+      <form id="prop-form" onsubmit="saveProp(event)">
+
+        <div class="pf-section">Información básica</div>
+        <div class="pf-row">
+          <div class="pf-field full">
+            <label>Título *</label>
+            <input type="text" name="titulo" placeholder="Casa en venta en Las Palmas" required/>
+          </div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field">
+            <label>Tipo *</label>
+            <select name="tipo" required>
+              <option value="">Seleccionar</option>
+              <option value="casa">Casa</option>
+              <option value="departamento">Departamento</option>
+              <option value="terreno">Terreno</option>
+              <option value="local">Local comercial</option>
+              <option value="oficina">Oficina</option>
+              <option value="bodega">Bodega</option>
+            </select>
+          </div>
+          <div class="pf-field">
+            <label>Operación *</label>
+            <select name="operacion" required>
+              <option value="">Seleccionar</option>
+              <option value="venta">Venta</option>
+              <option value="renta">Renta</option>
+            </select>
+          </div>
+          <div class="pf-field">
+            <label>Estatus</label>
+            <select name="estatus">
+              <option value="activa">Activa</option>
+              <option value="vendida">Vendida</option>
+              <option value="rentada">Rentada</option>
+              <option value="suspendida">Suspendida</option>
+            </select>
+          </div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field">
+            <label>Precio *</label>
+            <input type="number" name="precio" placeholder="2500000" required min="0"/>
+          </div>
+          <div class="pf-field">
+            <label>Moneda</label>
+            <select name="moneda">
+              <option value="MXN">MXN</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pf-section">Ubicación</div>
+        <div class="pf-row">
+          <div class="pf-field full">
+            <label>Calle y número</label>
+            <input type="text" name="calle" placeholder="Av. Madero 123"/>
+          </div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field">
+            <label>Colonia *</label>
+            <input type="text" name="colonia" placeholder="Las Palmas" required/>
+          </div>
+          <div class="pf-field">
+            <label>Ciudad</label>
+            <input type="text" name="ciudad" value="Morelia"/>
+          </div>
+          <div class="pf-field">
+            <label>C.P.</label>
+            <input type="text" name="cp" placeholder="58070"/>
+          </div>
+        </div>
+
+        <div class="pf-section">Características</div>
+        <div class="pf-row">
+          <div class="pf-field">
+            <label>M² construcción</label>
+            <input type="number" name="m2_construccion" placeholder="180" min="0"/>
+          </div>
+          <div class="pf-field">
+            <label>M² terreno</label>
+            <input type="number" name="m2_terreno" placeholder="220" min="0"/>
+          </div>
+          <div class="pf-field">
+            <label>Recámaras</label>
+            <input type="number" name="recamaras" placeholder="3" min="0"/>
+          </div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field">
+            <label>Baños</label>
+            <input type="number" name="banos" placeholder="2.5" min="0" step="0.5"/>
+          </div>
+          <div class="pf-field">
+            <label>Estacionamientos</label>
+            <input type="number" name="estacionamientos" placeholder="2" min="0"/>
+          </div>
+          <div class="pf-field">
+            <label>Año construcción</label>
+            <input type="number" name="anio_construccion" placeholder="2010" min="1900" max="2030"/>
+          </div>
+        </div>
+
+        <div class="pf-section">Descripción</div>
+        <div class="pf-row">
+          <div class="pf-field full">
+            <label>Descripción comercial</label>
+            <textarea name="descripcion" rows="4" placeholder="Describe la propiedad..."></textarea>
+          </div>
+        </div>
+
+        <div class="pf-section">Fotos (URLs separadas por coma)</div>
+        <div class="pf-row">
+          <div class="pf-field full">
+            <label>URLs de fotos</label>
+            <textarea name="fotos_raw" rows="2" placeholder="https://url1.jpg, https://url2.jpg"></textarea>
+          </div>
+        </div>
+
+        <div class="pf-row">
+          <div class="pf-field full">
+            <label>Notas internas</label>
+            <textarea name="notas" rows="2" placeholder="Notas privadas sobre esta propiedad..."></textarea>
+          </div>
+        </div>
+
+        <input type="hidden" name="prop_id" value=""/>
+
+        <div class="pf-actions">
+          <button type="button" onclick="closePropModal()" class="pf-cancel-btn">Cancelar</button>
+          <button type="submit" class="pf-save-btn">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+            Guardar propiedad
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <script>
@@ -797,6 +1119,215 @@ function fmtMsg(t){return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').repl
 // ── VOICE INPUT ──
 let recognition = null;
 let isListening  = false;
+
+
+// ══════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+async function sbFetch(path, method='GET', body=null){
+  const opts = {
+    method,
+    headers:{
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'return=representation' : 'return=representation',
+    }
+  };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(SB_URL + '/rest/v1/' + path, opts);
+  if(!r.ok){ const e = await r.text(); throw new Error(e); }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+// ══════════════════════════════
+// MIS PROPIEDADES
+// ══════════════════════════════
+let allProps = [];
+let editingPropId = null;
+
+function goProps(){
+  setPanel('props');
+  loadProps();
+}
+
+function setPanel(name){
+  // Hide all panels
+  ['chat','isr','props'].forEach(p => {
+    const el = document.getElementById(p === 'chat' ? 'chat' : p === 'isr' ? 'isr' : 'props-panel');
+    if(el) el.style.display = 'none';
+  });
+  // Show target
+  const target = name === 'props' ? 'props-panel' : name;
+  const el = document.getElementById(target);
+  if(el) el.style.display = 'flex';
+  // Update header label
+  const labels = {chat:'Chat general', isr:'Calculadora ISR', props:'Mis Propiedades'};
+  const lbl = document.getElementById('hlbl');
+  if(lbl) lbl.textContent = '— ' + (labels[name] || name);
+  // Update sidebar active
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('on'));
+  const btnMap = {chat:'btn-chat', isr:'btn-isr', props:'btn-props'};
+  const btn = document.getElementById(btnMap[name]);
+  if(btn) btn.classList.add('on');
+  if(window.innerWidth <= 768) toggleSidebar();
+}
+
+async function loadProps(){
+  const grid = document.getElementById('props-grid');
+  grid.innerHTML = '<div class="props-loading">Cargando propiedades...</div>';
+  try{
+    allProps = await sbFetch('propiedades?order=created_at.desc&limit=200');
+    // Update count badge
+    const badge = document.getElementById('props-count');
+    if(badge) badge.textContent = allProps.length;
+    renderProps(allProps);
+  } catch(e){
+    grid.innerHTML = '<div class="props-loading">Error cargando propiedades: ' + e.message + '</div>';
+  }
+}
+
+function fmt_precio(p, moneda='MXN'){
+  if(!p) return '—';
+  return (moneda === 'USD' ? 'USD ' : '$') + Number(p).toLocaleString('es-MX', {minimumFractionDigits:0});
+}
+
+function renderProps(props){
+  const grid = document.getElementById('props-grid');
+  if(!props.length){
+    grid.innerHTML = `<div class="props-empty">
+      <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <p>No hay propiedades aún.<br>Agrega la primera con el botón <strong>Nueva propiedad</strong>.</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = props.map(p => {
+    const foto = p.fotos && p.fotos.length ? `<img src="${p.fotos[0]}" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:180px;background:var(--gray);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px\'>Sin foto</div>'" />` : '<div style="width:100%;height:180px;background:var(--gray);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px">Sin foto</div>';
+    const specs = [];
+    if(p.recamaras) specs.push(`<span>🛏 ${p.recamaras}</span>`);
+    if(p.banos)     specs.push(`<span>🚿 ${p.banos}</span>`);
+    if(p.m2_construccion) specs.push(`<span>📐 ${p.m2_construccion}m²</span>`);
+    return `<div class="prop-card">
+      <div class="prop-card-img">${foto}</div>
+      <div class="prop-card-body">
+        <div class="prop-card-badges">
+          <span class="badge badge-${p.operacion}">${p.operacion}</span>
+          <span class="badge badge-${p.estatus}">${p.estatus}</span>
+          <span class="badge" style="background:var(--gray2);color:var(--mut)">${p.tipo}</span>
+        </div>
+        <div class="prop-card-title">${p.titulo}</div>
+        <div class="prop-card-loc">📍 ${p.colonia}${p.ciudad ? ', '+p.ciudad : ''}</div>
+        <div class="prop-card-price">${fmt_precio(p.precio, p.moneda)}</div>
+        <div class="prop-card-specs">${specs.join('')}</div>
+      </div>
+      <div class="prop-card-actions">
+        <button class="prop-act-btn prop-act-edit" onclick="openPropForm('${p.id}')">✏️ Editar</button>
+        <button class="prop-act-btn prop-act-del" onclick="deleteProp('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterProps(){
+  const q    = document.getElementById('props-search').value.toLowerCase();
+  const op   = document.getElementById('props-filter-op').value;
+  const tipo = document.getElementById('props-filter-tipo').value;
+  const est  = document.getElementById('props-filter-est').value;
+  const filtered = allProps.filter(p => {
+    const matchQ  = !q || (p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q);
+    const matchOp = !op   || p.operacion === op;
+    const matchT  = !tipo || p.tipo === tipo;
+    const matchE  = !est  || p.estatus === est;
+    return matchQ && matchOp && matchT && matchE;
+  });
+  renderProps(filtered);
+}
+
+function openPropForm(id){
+  editingPropId = id;
+  const modal = document.getElementById('prop-modal');
+  const form  = document.getElementById('prop-form');
+  const title = document.getElementById('prop-modal-title');
+  form.reset();
+  if(id){
+    const p = allProps.find(x => x.id === id);
+    if(!p) return;
+    title.textContent = 'Editar propiedad';
+    // Fill form fields
+    Object.keys(p).forEach(k => {
+      const el = form.elements[k];
+      if(el && p[k] !== null && p[k] !== undefined) el.value = p[k];
+    });
+    form.elements['fotos_raw'].value = (p.fotos || []).join(', ');
+    form.elements['prop_id'].value = id;
+  } else {
+    title.textContent = 'Nueva propiedad';
+    form.elements['prop_id'].value = '';
+  }
+  modal.style.display = 'flex';
+}
+
+function closePropModal(e){
+  if(e && e.target !== document.getElementById('prop-modal')) return;
+  document.getElementById('prop-modal').style.display = 'none';
+}
+
+async function saveProp(e){
+  e.preventDefault();
+  const form = e.target;
+  const fd   = new FormData(form);
+  const data = {};
+  fd.forEach((v,k) => { if(v !== '') data[k] = v; });
+  // Parse fotos
+  const fotosRaw = (data.fotos_raw || '').split(',').map(s=>s.trim()).filter(Boolean);
+  delete data.fotos_raw;
+  data.fotos = fotosRaw;
+  // Parse numbers
+  ['precio','m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => {
+    if(data[k]) data[k] = Number(data[k]);
+  });
+  data.updated_at = new Date().toISOString();
+  const id = data.prop_id;
+  delete data.prop_id;
+  try{
+    const btn = form.querySelector('.pf-save-btn');
+    btn.textContent = 'Guardando...'; btn.disabled = true;
+    if(id){
+      await sbFetch(`propiedades?id=eq.${id}`, 'PATCH', data);
+    } else {
+      await sbFetch('propiedades', 'POST', data);
+    }
+    document.getElementById('prop-modal').style.display = 'none';
+    await loadProps();
+  } catch(err){
+    alert('Error guardando: ' + err.message);
+    const btn = form.querySelector('.pf-save-btn');
+    btn.textContent = 'Guardar propiedad'; btn.disabled = false;
+  }
+}
+
+async function deleteProp(id){
+  if(!confirm('¿Eliminar esta propiedad? Esta acción no se puede deshacer.')) return;
+  try{
+    await sbFetch(`propiedades?id=eq.${id}`, 'DELETE');
+    await loadProps();
+  } catch(e){
+    alert('Error eliminando: ' + e.message);
+  }
+}
+
+// Load props count on init
+(async () => {
+  try{
+    const data = await sbFetch('propiedades?select=id');
+    const badge = document.getElementById('props-count');
+    if(badge) badge.textContent = data.length;
+  } catch(e){}
+})();
 
 function toggleVoice(){
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
