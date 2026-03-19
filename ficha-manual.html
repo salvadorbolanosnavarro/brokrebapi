@@ -435,12 +435,9 @@ ${datos.amen ? `- Amenidades: ${datos.amen}` : ''}
 Redacta solo la descripción, sin título ni encabezado.`;
 
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('brokr_key') || ''}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         max_tokens: 400,

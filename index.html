@@ -118,6 +118,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
 #reset-btn{background:none;border:1.5px solid var(--gray2);border-radius:var(--r2);padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--mut);cursor:pointer;margin-top:14px;display:block}
 #reset-btn:hover{border-color:var(--navy);color:var(--navy)}
 
+/* ── MIC BUTTON ── */
+#mic-btn{
+  width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--navy2);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .2s;
+}
+#mic-btn:hover{background:var(--navy)}
+#mic-btn.listening{background:#e53e3e;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(229,62,62,.4)}50%{box-shadow:0 0 0 8px rgba(229,62,62,0)}}
+
 /* ── HAMBURGER BUTTON (hidden on desktop) ── */
 #ham-btn{
   display:none;flex-direction:column;justify-content:center;gap:5px;
@@ -239,6 +249,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
   <div id="inp-area">
     <div class="inp-wrap">
       <textarea id="txtin" rows="1" placeholder="Pregunta sobre ISR, contratos, valuación..." onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button id="mic-btn" onclick="toggleVoice()" title="Hablar">
+        <svg id="mic-icon" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+      </button>
       <button id="snd" onclick="send()">
         <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7"/></svg>
       </button>
@@ -779,6 +792,79 @@ function addTyping(){const area=g('chat');const id='t'+Date.now();const d=docume
 function rmTyping(id){const e=g(id);if(e)e.remove();}
 function addErr(msg){const area=g('chat');const d=document.createElement('div');d.className='msg a';d.innerHTML=`<div class="av" style="background:#c00;color:#fff;font-weight:700">!</div><div class="err-b">Error: ${msg}</div>`;area.appendChild(d);area.scrollTop=area.scrollHeight;}
 function fmtMsg(t){return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/^#{1,3} (.+)$/gm,'<strong style="font-size:14.5px;display:block;margin-top:5px">$1</strong>').replace(/^- (.+)$/gm,'<li>$1</li>').replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>').replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>`<ul style="padding-left:16px;margin:5px 0">${m}</ul>`).replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br/>').replace(/^(.+)$/,'<p>$1</p>');}
+
+
+// ── VOICE INPUT ──
+let recognition = null;
+let isListening  = false;
+
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
+    return;
+  }
+  if(isListening){ stopVoice(); return; }
+  startVoice();
+}
+
+function startVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'es-MX';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  const btn  = document.getElementById('mic-btn');
+  const inp  = document.getElementById('txtin');
+
+  recognition.onstart = () => {
+    isListening = true;
+    btn.classList.add('listening');
+    btn.title = 'Escuchando... (toca para detener)';
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .map(r => r[0].transcript).join('');
+    inp.value = transcript;
+    resize(inp);
+    // If final result, send automatically
+    if(e.results[e.results.length-1].isFinal){
+      stopVoice();
+      setTimeout(() => send(), 300);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    stopVoice();
+    if(e.error !== 'no-speech') console.warn('Voice error:', e.error);
+  };
+
+  recognition.onend = () => stopVoice();
+  recognition.start();
+}
+
+function stopVoice(){
+  isListening = false;
+  const btn = document.getElementById('mic-btn');
+  if(btn){ btn.classList.remove('listening'); btn.title = 'Hablar'; }
+  if(recognition){ try{ recognition.stop(); }catch(e){} recognition = null; }
+}
+
+// Speak response aloud (optional — called after AI replies)
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'es-MX';
+  utt.rate = 1.05;
+  utt.pitch = 1;
+  // Pick a Spanish voice if available
+  const voices = window.speechSynthesis.getVoices();
+  const esVoice = voices.find(v => v.lang.startsWith('es'));
+  if(esVoice) utt.voice = esVoice;
+  window.speechSynthesis.speak(utt);
+}
 
 function toggleSidebar(){
   const sb  = document.getElementById('sb');
