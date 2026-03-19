@@ -94,8 +94,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 
 .cover-tipo-badge{position:absolute;top:20px;right:22px;background:var(--gold);color:var(--navy2);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:20px}
 .cover-price-block{position:absolute;bottom:41%;left:0;right:0;padding:0 22px 16px}
-.cover-precio{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;margin-bottom:3px;text-shadow:0 2px 10px rgba(0,0,0,.3)}
-.cover-titulo{font-size:14px;color:rgba(255,255,255,.85);margin-bottom:4px}
+.cover-precio{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;margin-bottom:3px;color:rgba(255,255,255,.85);margin-bottom:4px}
 .cover-ubicacion{font-size:12px;color:rgba(255,255,255,.6)}
 .cover-body{padding:20px 22px 16px;background:var(--wh);flex:1}
 .cover-specs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
@@ -121,19 +120,64 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 
 /* Print */
 @media print{
-  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff;margin:0;padding:0}
   #app > *:not(#ficha){display:none!important}
-  #ficha{display:block!important;margin:0}
+  #ficha{display:block!important;margin:0;padding:0}
   .print-bar{display:none!important}
+
   .ficha-page{
-    box-shadow:none;margin:0;
-    page-break-after:always;
-    page-break-inside:avoid;
-    width:210mm;min-height:297mm;
+    box-shadow:none!important;
+    margin:0!important;
+    width:210mm!important;
+    height:297mm!important;
+    min-height:unset!important;
+    max-height:297mm!important;
+    overflow:hidden!important;
+    page-break-after:always!important;
+    page-break-inside:avoid!important;
+    display:flex!important;
+    flex-direction:column!important;
+    position:relative!important;
   }
-  .ficha-page:last-child{page-break-after:avoid}
-  .ficha-footer{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  @page{size:A4;margin:0}
+  .ficha-page:last-child{page-break-after:avoid!important}
+
+  /* No text-shadow on print */
+  .cover-precio,.cover-titulo,.cover-ubicacion{
+    text-shadow:none!important;
+  }
+
+  /* Footer at bottom */
+  .ficha-footer{
+    margin-top:auto!important;
+    flex-shrink:0!important;
+    position:relative!important;
+  }
+
+  /* Content fills space */
+  .cover-body,.ficha-content{
+    flex:1!important;
+    overflow:hidden!important;
+  }
+
+  /* Fix table width */
+  .char-cols{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    width:100%!important;
+  }
+  .char-val{
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    max-width:160px!important;
+    word-break:break-word!important;
+  }
+
+  /* Fixed cover height for print */
+  .cover-hero,.cover-hero-bg-img{height:150mm!important}
+  .cover-overlay{height:150mm!important}
+  .cover-price-block{bottom:0!important}
+  @page{size:A4 portrait;margin:0}
 }
 @media(max-width:600px){
   .frow,.frow.three{grid-template-columns:1fr}
