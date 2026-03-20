@@ -798,7 +798,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     def footer():
         return '<div class="ficha-footer"><img src="{}" class="ft-logo" alt="Brokr"/><div class="ft-id">{}</div></div>'.format(LOGO, id_prop)
 
-    gallery_fotos = foto_urls[1:]
+    gallery_fotos = foto_urls[:]  # include hero photo as first in gallery
     gallery_pages = ""
     total = len(gallery_fotos)
     full_pages = total // 6
