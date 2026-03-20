@@ -348,6 +348,66 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
 #panel-ficha-manual,#panel-ficha,#panel-contratos,#panel-avm{
   display:none;flex-direction:column;height:100%;overflow:hidden;
 }
+
+/* ══════════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 768px){
+
+  /* Layout */
+  #app{flex-direction:column}
+
+  /* Sidebar: hidden off-screen by default on mobile */
+  #sb{
+    position:fixed;top:0;left:0;height:100vh;z-index:1000;
+    transform:translateX(-100%);transition:transform .25s ease;
+    width:280px;min-width:0;
+  }
+  #sb.open{transform:translateX(0)}
+
+  /* Overlay behind open sidebar */
+  #sb-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+    z-index:999;transition:opacity .2s;
+  }
+  #sb-overlay.show{display:block}
+
+  /* Ham button visible on mobile */
+  #ham-btn{display:flex !important}
+
+  /* Main fills full width */
+  #main{width:100%;min-width:0;height:100vh;overflow:hidden}
+
+  /* Header */
+  #hdr{padding:0 12px;height:52px}
+
+  /* Chat area */
+  #chat{padding:12px 10px;padding-bottom:80px}
+  .msg{max-width:92%}
+
+  /* Input area */
+  #inp-area{padding:8px 10px;gap:6px}
+  #txtin{font-size:15px}
+
+  /* ISR panel */
+  .isr-wrap{padding:12px}
+
+  /* Welcome screen */
+  #welcome{padding:20px 16px}
+  .wlc-t{font-size:20px}
+  .wlc-s{font-size:13px}
+
+  /* Mic button */
+  #mic-btn{width:40px;height:40px}
+
+  /* Iframe panels */
+  #panel-ficha-manual iframe,
+  #panel-ficha iframe,
+  #panel-contratos iframe,
+  #panel-avm iframe{
+    width:100%;height:100%;border:none;
+  }
+}
 </style>
 </head>
 <body>
