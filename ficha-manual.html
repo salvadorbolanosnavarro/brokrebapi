@@ -535,7 +535,7 @@ ${datos.amen ? `- Amenidades: ${datos.amen}` : ''}
 Redacta solo la descripción, sin título ni encabezado.`;
 
   try {
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat', {
+    const r = await fetch(API + '/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -545,9 +545,19 @@ Redacta solo la descripción, sin título ni encabezado.`;
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    if(!r.ok){
+      const errTxt = await r.text();
+      throw new Error('Servidor ' + r.status + ': ' + errTxt);
+    }
     const data = await r.json();
-    const desc = data.choices?.[0]?.message?.content || '';
-    document.getElementById('d-desc').value = desc;
+    // Groq returns choices[0].message.content
+    // Our proxy may return it directly or wrapped
+    const desc = data.choices?.[0]?.message?.content
+               || data.content
+               || data.message
+               || '';
+    if(!desc) throw new Error('Respuesta vacía del servidor: ' + JSON.stringify(data));
+    document.getElementById('d-desc').value = desc.trim();
     hint.textContent = '✓ Descripción generada — puedes editarla libremente.';
     hint.style.color = 'var(--teal)';
   } catch(e) {
@@ -556,7 +566,7 @@ Redacta solo la descripción, sin título ni encabezado.`;
     console.error('generarDescripcion error:', e);
   }
   btn.disabled = false;
-  btn.textContent = '✨ Regenerar con IA';
+  btn.textContent = '✨ Generar con IA';
 }
 
 // ── FOOTER ──────────────────────────────────
