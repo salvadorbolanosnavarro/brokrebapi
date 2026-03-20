@@ -857,8 +857,8 @@ body{font-family:'DM Sans',sans-serif;background:white;color:#0f1829}
 .ficha-page{width:210mm;height:297mm;background:white;display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
 .ficha-page:last-child{page-break-after:avoid}
 .cover-accent{height:4px;background:linear-gradient(90deg,#2a9db5 0%,#4caf7d 100%);flex-shrink:0}
-.cover-hero{width:100%;height:85mm;object-fit:cover;display:block;flex-shrink:0}
-.cover-hero-placeholder{width:100%;height:85mm;background:linear-gradient(135deg,#0f1829,#1a2744);flex-shrink:0}
+.cover-hero{width:100%;height:120mm;object-fit:cover;display:block;flex-shrink:0}
+.cover-hero-placeholder{width:100%;height:120mm;background:linear-gradient(135deg,#0f1829,#1a2744);flex-shrink:0}
 .cover-info{padding:14px 24px 10px;border-bottom:1px solid #e8ecf2}
 .cover-badge{display:inline-block;background:linear-gradient(135deg,#2a9db5,#1f8ba0);color:white;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:7px}
 .cover-precio{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#0f1829;line-height:1;margin-bottom:4px}

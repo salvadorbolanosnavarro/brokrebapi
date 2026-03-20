@@ -528,35 +528,50 @@ async function descargarPDF(){
   if(!_propData){ alert('Genera primero la ficha.'); return; }
   const btn = document.getElementById('pdf-btn');
   const txt = document.getElementById('print-bar-txt');
+  const id  = _propData.public_id || _propData.id || 'ficha';
+  const filename = 'BROKR_' + id + '.pdf';
   btn.disabled = true;
-  btn.innerHTML = '⏳ Generando PDF...';
-  txt.textContent = 'Esto tarda ~15 segundos la primera vez...';
+  btn.innerHTML = '&#9203; Generando PDF...';
+  txt.textContent = 'Preparando tu ficha...';
   try{
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
-    const res = await fetch(`${API}/ficha-pdf`, {
+    const timeout = setTimeout(() => controller.abort(), 120000);
+    const res = await fetch(API + '/ficha-pdf', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(_propData),
       signal: controller.signal
     });
     clearTimeout(timeout);
-    if(!res.ok) throw new Error('Error en el servidor: ' + res.status);
+    if(!res.ok) throw new Error('Error ' + res.status);
     const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const id   = _propData.public_id || _propData.id || 'ficha';
-    a.href     = url;
-    a.download = `BROKR_${id}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-    txt.textContent = '✓ PDF descargado correctamente';
+    const file = new File([blob], filename, {type:'application/pdf'});
+    // Web Share API — iOS shows WhatsApp, Files, Mail, etc.
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({title:'Ficha BROKR ' + id, files:[file]});
+        txt.textContent = '&#10003; Listo';
+      } catch(shareErr){
+        // User cancelled — not an error
+        txt.textContent = 'Ficha lista';
+      }
+    } else {
+      // Desktop fallback
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      txt.textContent = '&#10003; PDF descargado';
+    }
   } catch(e){
-    alert('Error generando PDF: ' + e.message);
+    if(e.name === 'AbortError') alert('Tiempo agotado. Intenta de nuevo.');
+    else alert('Error: ' + e.message);
     txt.textContent = 'Ficha lista';
   } finally{
     btn.disabled = false;
-    btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Descargar PDF';
+    btn.innerHTML = '&#11015; Descargar / Compartir PDF';
   }
 }
 
