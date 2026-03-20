@@ -925,26 +925,29 @@ async def generar_ficha_pdf(p: dict):
     async with httpx.AsyncClient(timeout=30) as client:
         async def fetch_img(url):
             try:
-                r = await client.get(url, follow_redirects=True)
+                r = await client.get(url, follow_redirects=True, timeout=10.0)
                 if r.status_code == 200:
                     ext = url.split(".")[-1].split("?")[0].lower()
-                    mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", 
+                    mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
                             "webp": "image/webp", "gif": "image/gif"}.get(ext, "image/jpeg")
                     b64 = base64.b64encode(r.content).decode()
                     images_b64[url] = f"data:{mime};base64,{b64}"
-            except:
-                pass
-        
-        await asyncio.gather(*[fetch_img(u) for u in urls[:30]])
+            except Exception:
+                pass  # skip failed images, show blank
+
+        # Limit to 19 gallery images (1 hero + 18 gallery = 3 full pages max)
+        await asyncio.gather(*[fetch_img(u) for u in urls[:19]])
     
     # Build HTML
     html = build_ficha_html(p, images_b64)
     
     # Render to PDF with Playwright
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch()
+        browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
         page = await browser.new_page()
-        await page.set_content(html, wait_until="networkidle")
+        # Use domcontentloaded instead of networkidle — images are already base64
+        await page.set_content(html, wait_until="domcontentloaded")
+        await page.wait_for_timeout(500)  # small wait for fonts
         pdf_bytes = await page.pdf(
             format="A4",
             print_background=True,

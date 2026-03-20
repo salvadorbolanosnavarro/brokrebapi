@@ -532,11 +532,15 @@ async function descargarPDF(){
   btn.innerHTML = '⏳ Generando PDF...';
   txt.textContent = 'Esto tarda ~15 segundos la primera vez...';
   try{
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
     const res = await fetch(`${API}/ficha-pdf`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(_propData)
+      body: JSON.stringify(_propData),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
     if(!res.ok) throw new Error('Error en el servidor: ' + res.status);
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
