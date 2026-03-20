@@ -301,8 +301,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:var(--txt)}
   </div>
 
   <div id="print-bar">
-    <span>Ficha lista — usa Imprimir para guardar como PDF</span>
-    <button class="ui-btn teal" id="pdf-btn" onclick="window.print()">
+    <span id="print-bar-txt">Ficha lista</span>
+    <button class="ui-btn teal" id="pdf-btn" onclick="descargarPDF()">
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
       </svg>
@@ -381,7 +381,10 @@ async function convertAllImages(fotos) {
 }
 
 // ── RENDER ──────────────────────────────────────
+let _propData = null; // store for PDF generation
+
 function renderFicha(p){
+  _propData = p;
   const id      = p.public_id || p.id || '';
   const titulo  = p.title || p.property_type || 'Propiedad';
   const op      = p.operations?.[0];
@@ -517,6 +520,40 @@ function renderFicha(p){
   el.classList.add('show');
   g('print-bar').classList.add('show');
   el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+
+// ── DESCARGA PDF VÍA RAILWAY ─────────────────────────────────
+async function descargarPDF(){
+  if(!_propData){ alert('Genera primero la ficha.'); return; }
+  const btn = document.getElementById('pdf-btn');
+  const txt = document.getElementById('print-bar-txt');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Generando PDF...';
+  txt.textContent = 'Esto tarda ~15 segundos la primera vez...';
+  try{
+    const res = await fetch(`${API}/ficha-pdf`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(_propData)
+    });
+    if(!res.ok) throw new Error('Error en el servidor: ' + res.status);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const id   = _propData.public_id || _propData.id || 'ficha';
+    a.href     = url;
+    a.download = `BROKR_${id}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    txt.textContent = '✓ PDF descargado correctamente';
+  } catch(e){
+    alert('Error generando PDF: ' + e.message);
+    txt.textContent = 'Ficha lista';
+  } finally{
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Descargar PDF';
+  }
 }
 
 // ── FETCH ────────────────────────────────────────
