@@ -448,6 +448,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
     <div id="sb-history"></div>
   </div>
   <div class="sb-foot">
+  <div style="padding:10px 12px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:6px" id="user-display">
+    <div style="width:24px;height:24px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0" id="user-avatar">?</div>
+    <div style="overflow:hidden">
+      <div style="font-size:11px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="user-name-display">—</div>
+      <div style="font-size:10px;color:var(--mut)" id="user-plan-display">—</div>
+    </div>
+  </div>
     <div class="sb-brand">Brokr® — Grupo Navarro</div>
   </div>
 </aside>
@@ -456,6 +463,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
   <header id="hdr">
     <button id="ham-btn" onclick="toggleSidebar()" aria-label="Menú"><span></span><span></span><span></span></button>
     <div class="hdr-l"><div class="dot"></div>BROKR® <span id="hlbl">— Chat general</span></div>
+    <button class="nc-btn" title="Cerrar sesión" onclick="logout()" style="background:none;border:none;color:var(--mut);cursor:pointer;padding:6px;border-radius:6px;margin-right:4px">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    </button>
     <button class="nc-btn" id="nc-btn" onclick="newChat()">
       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
       Nueva conversación
@@ -847,6 +857,118 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
 </main>
 
 <script>
+
+// ══════════════════════════════════════════════════
+// AUTH GUARD — runs immediately on page load
+// ══════════════════════════════════════════════════
+const SB_URL_AUTH = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY_AUTH = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+let currentUser = null;
+let userProfile = null;
+
+async function authInit(){
+  const token = sessionStorage.getItem('sb_token');
+  if(!token){ window.location.href = 'login.html'; return; }
+
+  const user = JSON.parse(sessionStorage.getItem('sb_user') || '{}');
+  if(!user.id){ window.location.href = 'login.html'; return; }
+
+  // Load profile
+  try{
+    const r = await fetch(`${SB_URL_AUTH}/rest/v1/usuarios?id=eq.${user.id}&select=*`, {
+      headers:{ 'apikey': SB_KEY_AUTH, 'Authorization': `Bearer ${token}` }
+    });
+    const data = await r.json();
+    if(!data.length || data[0].activo === false){
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+      return;
+    }
+    userProfile = data[0];
+    currentUser = user;
+    applyUserPermissions();
+  } catch(e){
+    console.warn('Auth error:', e);
+    // Allow access on network error to avoid locking out
+    userProfile = { plan:'pro', modulos:['chat','isr','ficha-manual','ficha','contratos','avm'], activo:true };
+    applyUserPermissions();
+  }
+}
+
+function hasModule(mod){
+  if(!userProfile) return false;
+  if(userProfile.plan === 'admin' || userProfile.plan === 'pro') return true;
+  return (userProfile.modulos || []).includes(mod);
+}
+
+function applyUserPermissions(){
+  const ALL = ['chat','isr','ficha-manual','ficha','contratos','avm'];
+
+  // Update sidebar — show/hide buttons based on modules
+  const btnMap = {
+    'ficha-manual': '[onclick*="ficha-manual"]',
+    'ficha':        '[onclick*="setPanel('ficha')"]',
+    'contratos':    '[onclick*="contratos"]',
+    'avm':          '[onclick*="avm"]',
+    'isr':          '#btn-isr',
+    'chat':         null, // chat is always available if user is active
+  };
+
+  // Hide sidebar buttons for modules user doesn't have
+  document.querySelectorAll('.sb-btn').forEach(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    let mod = null;
+    if(onclick.includes('ficha-manual')) mod = 'ficha-manual';
+    else if(onclick.includes("setPanel('ficha')")) mod = 'ficha';
+    else if(onclick.includes('contratos')) mod = 'contratos';
+    else if(onclick.includes('avm')) mod = 'avm';
+    else if(btn.id === 'btn-isr') mod = 'isr';
+    else if(btn.id === 'btn-props') mod = null; // always show
+
+    if(mod && !hasModule(mod)){
+      btn.style.display = 'none';
+    }
+  });
+
+  // Update user display in header
+  if(userProfile.nombre){
+    const lbl = document.getElementById('hlbl');
+    if(lbl && lbl.textContent.includes('Chat')){
+      // Show name in header somehow — add to dot area
+    }
+  }
+
+  // If user has no chat module, redirect to first available module
+  if(!hasModule('chat')){
+    const firstMod = (userProfile.modulos || [])[0];
+    if(firstMod) setTimeout(() => setPanel(firstMod), 100);
+    // Hide chat input area
+    const inp = document.getElementById('inp-area');
+    if(inp) inp.style.display = 'none';
+  }
+
+  // Show admin link if admin
+  if(userProfile.plan === 'admin'){
+    // Add admin button to sidebar footer
+    const foot = document.querySelector('.sb-foot');
+    if(foot && !document.getElementById('admin-link-btn')){
+      const adminBtn = document.createElement('button');
+      adminBtn.className = 'sb-btn';
+      adminBtn.id = 'admin-link-btn';
+      adminBtn.onclick = () => window.open('admin.html','_blank');
+      adminBtn.innerHTML = `<svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>Panel Admin`;
+      foot.prepend(adminBtn);
+    }
+  }
+}
+
+// Logout function
+function logout(){
+  sessionStorage.clear();
+  window.location.href = 'login.html';
+}
+
 // ── INPC MENSUAL BANXICO (base 2da quincena dic-2010=100, serie SAT/notarios) ──
 // 1981-1989: pesos viejos, dividir entre 1000 para convertir
 // Fuente: BANXICO / SAT
@@ -1880,6 +2002,7 @@ function startNewChat(){
 }
 
 // Init
+document.addEventListener('DOMContentLoaded', () => { authInit().then(() => { updateUserDisplay(); }); }); function updateUserDisplay(){ if(!userProfile) return; const n = document.getElementById('user-name-display'); const p = document.getElementById('user-plan-display'); const a = document.getElementById('user-avatar'); if(n) n.textContent = userProfile.nombre || currentUser?.email || '—'; if(p) p.textContent = {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan; if(a) a.textContent = (userProfile.nombre||'?')[0].toUpperCase(); }
 document.addEventListener('DOMContentLoaded', function(){
   _currentChatId = genId();
   renderChatList();

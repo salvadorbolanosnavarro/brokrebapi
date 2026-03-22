@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BROKR® — Acceso</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<meta name="theme-color" content="#0a1628"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a1628;
+  --navy2:#0f1f3d;
+  --teal:#0d9488;
+  --teal2:#14b8a6;
+  --white:#ffffff;
+  --muted:#94a3b8;
+  --border:#1e3058;
+  --input-bg:#0d1f3a;
+  --err:#ef4444;
+  --radius:12px;
+}
+
+html,body{height:100%;background:var(--navy);font-family:'DM Sans',sans-serif;color:var(--white);overflow:hidden}
+
+/* Background mesh */
+.bg{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(13,148,136,.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(59,111,212,.12) 0%, transparent 60%),
+    var(--navy);
+}
+.bg-grid{
+  position:fixed;inset:0;z-index:0;opacity:.04;
+  background-image:linear-gradient(var(--teal) 1px, transparent 1px),
+                   linear-gradient(90deg, var(--teal) 1px, transparent 1px);
+  background-size:48px 48px;
+}
+
+/* Layout */
+.wrap{
+  position:relative;z-index:1;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px 16px;
+}
+
+/* Card */
+.card{
+  width:100%;max-width:440px;
+  background:rgba(10,22,40,.85);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:40px 36px 36px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 32px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.03);
+  animation:cardIn .5s cubic-bezier(.16,1,.3,1);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* Logo */
+.logo-area{text-align:center;margin-bottom:32px}
+.logo-area img{height:44px;width:auto}
+.logo-area p{font-size:13px;color:var(--muted);margin-top:8px;letter-spacing:.3px}
+
+/* Tabs */
+.tabs{display:flex;background:var(--input-bg);border-radius:10px;padding:3px;margin-bottom:28px;gap:2px}
+.tab{flex:1;padding:9px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:all .2s;font-family:inherit}
+.tab.active{background:var(--navy2);color:var(--white);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+/* Form */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.field input{
+  width:100%;padding:12px 14px;
+  background:var(--input-bg);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--white);font-size:14px;font-family:inherit;
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+.field input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.15)}
+.field input::placeholder{color:#3d5a80}
+
+/* Buttons */
+.btn-primary{
+  width:100%;padding:14px;border:none;border-radius:var(--radius);
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  color:var(--white);font-size:15px;font-weight:600;font-family:inherit;
+  cursor:pointer;transition:opacity .2s,transform .1s;letter-spacing:.3px;
+  margin-top:8px;
+}
+.btn-primary:hover{opacity:.9}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:22px 0;color:var(--muted);font-size:12px;
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.btn-oauth{
+  width:100%;padding:12px 14px;
+  background:var(--input-bg);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--white);font-size:13px;font-weight:500;
+  font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:border-color .2s,background .2s;margin-bottom:10px;
+}
+.btn-oauth:hover{border-color:var(--teal);background:rgba(13,148,136,.05)}
+.btn-oauth svg{flex-shrink:0}
+
+/* Messages */
+.msg{
+  padding:10px 14px;border-radius:8px;font-size:13px;
+  margin-bottom:14px;display:none;line-height:1.5;
+}
+.msg.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
+.msg.ok{background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);color:#5eead4;display:block}
+
+/* Forgot */
+.forgot{font-size:12px;color:var(--muted);text-align:right;margin-top:-8px;margin-bottom:16px}
+.forgot a{color:var(--teal2);text-decoration:none}
+.forgot a:hover{text-decoration:underline}
+
+/* Face ID hint */
+.faceid-hint{
+  text-align:center;font-size:11px;color:var(--muted);
+  margin-top:18px;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+
+/* Spinner */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:480px){
+  .card{padding:28px 20px 24px;border-radius:16px}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="bg-grid"></div>
+
+<div class="wrap">
+  <div class="card">
+
+    <div class="logo-area">
+      <img src="icon-192.png" alt="BROKR®"/>
+      <p>El asistente inmobiliario con IA</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('login')">Iniciar sesión</button>
+      <button class="tab" onclick="setTab('signup')">Crear cuenta</button>
+    </div>
+
+    <!-- Messages -->
+    <div class="msg" id="msg"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(e.key==='Enter')doLogin()"/>
+      </div>
+      <div class="forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
+      <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+
+      <div class="divider">o continúa con</div>
+
+      <button class="btn-oauth" onclick="doGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Continuar con Google
+      </button>
+      <button class="btn-oauth" onclick="doFacebook()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="#1877F2"><path d="M18 9a9 9 0 10-10.406 8.892V11.61H5.309V9h2.285V7.017c0-2.256 1.343-3.502 3.4-3.502.984 0 2.014.175 2.014.175V5.9h-1.135c-1.118 0-1.466.694-1.466 1.406V9h2.496l-.399 2.61h-2.097v6.282A9.003 9.003 0 0018 9z"/></svg>
+        Continuar con Facebook
+      </button>
+
+      <div class="faceid-hint">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>
+        Face ID disponible después del primer inicio de sesión
+      </div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="form-signup" style="display:none">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
+      </div>
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <input type="password" id="s-pass2" placeholder="Repite la contraseña"/>
+      </div>
+      <button class="btn-primary" id="btn-signup" onclick="doSignup()">Crear cuenta</button>
+
+      <div class="divider">o regístrate con</div>
+
+      <button class="btn-oauth" onclick="doGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Registrarse con Google
+      </button>
+      <button class="btn-oauth" onclick="doFacebook()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="#1877F2"><path d="M18 9a9 9 0 10-10.406 8.892V11.61H5.309V9h2.285V7.017c0-2.256 1.343-3.502 3.4-3.502.984 0 2.014.175 2.014.175V5.9h-1.135c-1.118 0-1.466.694-1.466 1.406V9h2.496l-.399 2.61h-2.097v6.282A9.003 9.003 0 0018 9z"/></svg>
+        Registrarse con Facebook
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+// ── SUPABASE AUTH HELPERS ──
+async function sbAuth(path, body){
+  const r = await fetch(`${SB_URL}/auth/v1/${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+    },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+function showMsg(text, type='err'){
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = `msg ${type}`;
+}
+function clearMsg(){ document.getElementById('msg').className = 'msg'; }
+
+function setTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('form-login').style.display  = tab==='login'  ? '' : 'none';
+  document.getElementById('form-signup').style.display = tab==='signup' ? '' : 'none';
+  clearMsg();
+}
+
+function setLoading(btnId, loading){
+  const btn = document.getElementById(btnId);
+  if(loading){ btn.disabled=true; btn.innerHTML='<span class="spin"></span>'; }
+  else { btn.disabled=false; btn.textContent = btnId==='btn-login' ? 'Entrar' : 'Crear cuenta'; }
+}
+
+async function doLogin(){
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  if(!email||!pass){ showMsg('Completa todos los campos'); return; }
+  setLoading('btn-login', true);
+  const data = await sbAuth('token?grant_type=password', { email, password: pass });
+  setLoading('btn-login', false);
+  if(data.error){ showMsg(data.error_description || data.error); return; }
+  sessionStorage.setItem('sb_token', data.access_token);
+  sessionStorage.setItem('sb_user', JSON.stringify(data.user));
+  await checkProfileAndRedirect(data.access_token, data.user);
+}
+
+async function doSignup(){
+  const email = document.getElementById('s-email').value.trim();
+  const pass  = document.getElementById('s-pass').value;
+  const pass2 = document.getElementById('s-pass2').value;
+  if(!email||!pass||!pass2){ showMsg('Completa todos los campos'); return; }
+  if(pass !== pass2){ showMsg('Las contraseñas no coinciden'); return; }
+  if(pass.length < 8){ showMsg('La contraseña debe tener al menos 8 caracteres'); return; }
+  setLoading('btn-signup', true);
+  const data = await sbAuth('signup', { email, password: pass });
+  setLoading('btn-signup', false);
+  if(data.error){ showMsg(data.error_description || data.error); return; }
+  if(data.id){
+    // Auto-login after signup
+    sessionStorage.setItem('sb_token', data.access_token || '');
+    sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
+    showMsg('Cuenta creada. Completando tu perfil…', 'ok');
+    setTimeout(() => { window.location.href = 'registro.html'; }, 1000);
+  } else {
+    showMsg('Revisa tu correo para confirmar tu cuenta.', 'ok');
+  }
+}
+
+async function doGoogle(){
+  const r = await fetch(`${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`, {
+    headers:{'apikey':SB_KEY}
+  });
+  // Redirect to Google OAuth
+  window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`;
+}
+
+async function doFacebook(){
+  window.location.href = `${SB_URL}/auth/v1/authorize?provider=facebook&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`;
+}
+
+async function doForgot(){
+  const email = document.getElementById('l-email').value.trim();
+  if(!email){ showMsg('Ingresa tu correo primero'); return; }
+  const data = await sbAuth('recover', { email });
+  if(data.error){ showMsg(data.error_description || data.error); return; }
+  showMsg('Te enviamos un enlace para restablecer tu contraseña.', 'ok');
+}
+
+async function checkProfileAndRedirect(token, user){
+  // Check if user has completed profile
+  const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
+    headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
+  });
+  const data = await r.json();
+  if(!data.length || !data[0].nombre){
+    window.location.href = 'registro.html';
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+
+// Check if already logged in
+(async () => {
+  const token = sessionStorage.getItem('sb_token');
+  if(token){
+    const user = JSON.parse(sessionStorage.getItem('sb_user') || '{}');
+    if(user.id) await checkProfileAndRedirect(token, user);
+  }
+  // Handle OAuth callback (hash fragment)
+  const hash = location.hash;
+  if(hash.includes('access_token=')){
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get('access_token');
+    if(token){
+      const r = await fetch(`${SB_URL}/auth/v1/user`, {
+        headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
+      });
+      const user = await r.json();
+      sessionStorage.setItem('sb_token', token);
+      sessionStorage.setItem('sb_user', JSON.stringify(user));
+      await checkProfileAndRedirect(token, user);
+    }
+  }
+})();
+</script>
+</body>
+</html>

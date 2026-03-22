@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BROKR® Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a1628;--navy2:#0f1f3d;--navy3:#162338;
+  --teal:#0d9488;--teal2:#14b8a6;
+  --white:#fff;--muted:#94a3b8;--border:#1e3058;
+  --input-bg:#0d1f3a;--radius:10px;
+  --free:#64748b;--modulos:#3b6fd4;--pro:#0d9488;--admin:#7c3aed;
+  --danger:#ef4444;--warn:#f59e0b;
+}
+html,body{min-height:100%;background:var(--navy);font-family:'DM Sans',sans-serif;color:var(--white);font-size:14px}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;min-width:220px;background:var(--navy2);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px}
+.sidebar .logo{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.sidebar .logo img{height:28px}
+.sidebar .logo span{font-weight:700;font-size:15px;letter-spacing:.5px}
+.sidebar .logo small{font-size:10px;color:var(--teal2);font-weight:600;letter-spacing:1px;display:block;text-transform:uppercase}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:9px 12px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;width:100%;text-align:left;transition:all .15s;font-family:inherit}
+.nav-btn:hover{background:rgba(255,255,255,.05);color:var(--white)}
+.nav-btn.active{background:rgba(13,148,136,.12);color:var(--teal2)}
+.sidebar-foot{margin-top:auto;border-top:1px solid var(--border);padding-top:14px}
+
+/* Main */
+.main{flex:1;overflow:auto;padding:28px 32px}
+.page{display:none}
+.page.active{display:block}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.page-hdr h1{font-size:20px;font-weight:700}
+.page-hdr p{font-size:13px;color:var(--muted)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+.stat{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.stat .n{font-size:28px;font-weight:700;line-height:1}
+.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-top:4px}
+.stat.free .n{color:var(--free)}
+.stat.mod .n{color:var(--modulos)}
+.stat.pro .n{color:var(--pro)}
+.stat.admin .n{color:var(--admin)}
+
+/* Table */
+.table-wrap{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-top{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.search-box{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:0 12px}
+.search-box input{flex:1;background:none;border:none;outline:none;color:var(--white);font-size:13px;padding:8px 0;font-family:inherit}
+.search-box input::placeholder{color:#3d5a80}
+.filter-sel{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--white);padding:8px 10px;font-size:12px;outline:none;font-family:inherit;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid rgba(30,48,88,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.u-name{font-weight:600;font-size:14px}
+.u-email{font-size:12px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.badge.free{background:rgba(100,116,139,.15);color:#94a3b8}
+.badge.modulos{background:rgba(59,111,212,.15);color:#7da3f0}
+.badge.pro{background:rgba(13,148,136,.15);color:#5eead4}
+.badge.admin{background:rgba(124,58,237,.15);color:#c4b5fd}
+.badge.activo{background:rgba(16,185,129,.1);color:#6ee7b7}
+.badge.inactivo{background:rgba(239,68,68,.1);color:#fca5a5}
+.action-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.action-btn:hover{border-color:var(--teal);color:var(--teal2);background:rgba(13,148,136,.05)}
+.mod-tags{display:flex;flex-wrap:wrap;gap:4px}
+.mod-tag{background:rgba(59,111,212,.1);color:#93c5fd;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--navy2);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.modal .sub{font-size:12px;color:var(--muted);margin-bottom:22px}
+.mfield{margin-bottom:14px}
+.mfield label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+.mfield select,.mfield input,.mfield textarea{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--white);padding:9px 12px;font-size:13px;font-family:inherit;outline:none}
+.mfield select:focus,.mfield input:focus,.mfield textarea:focus{border-color:var(--teal)}
+.mfield textarea{resize:vertical;min-height:70px}
+.modules-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mod-check{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--navy3);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s}
+.mod-check:hover{border-color:var(--teal)}
+.mod-check input{accent-color:var(--teal);width:15px;height:15px;cursor:pointer}
+.mod-check span{font-size:12px;font-weight:500}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--muted);padding:9px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-cancel:hover{border-color:var(--white);color:var(--white)}
+.btn-save{background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;color:var(--white);padding:9px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:9px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.toggle-label{font-size:13px;font-weight:500}
+.toggle-sub{font-size:11px;color:var(--muted)}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#1e3058;border-radius:24px;cursor:pointer;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+.toggle input:checked + .toggle-slider{background:var(--teal)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(20px)}
+
+/* Empty state */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty svg{opacity:.3;margin-bottom:12px}
+.empty p{font-size:13px}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.spin{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="icon-192.png" alt="BROKR®"/>
+      <div>
+        <span>BROKR®</span>
+        <small>Admin</small>
+      </div>
+    </div>
+    <button class="nav-btn active" onclick="showPage('usuarios')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+      Usuarios
+    </button>
+    <div class="sidebar-foot">
+      <button class="nav-btn" onclick="logout()" style="color:#ef4444">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- USUARIOS PAGE -->
+    <div class="page active" id="page-usuarios">
+      <div class="page-hdr">
+        <div>
+          <h1>Usuarios</h1>
+          <p>Gestiona planes, módulos y accesos</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats" id="stats-grid">
+        <div class="stat free"><div class="n" id="cnt-free">—</div><div class="l">Free</div></div>
+        <div class="stat mod"><div class="n" id="cnt-mod">—</div><div class="l">Módulos</div></div>
+        <div class="stat pro"><div class="n" id="cnt-pro">—</div><div class="l">Pro</div></div>
+        <div class="stat admin"><div class="n" id="cnt-admin">—</div><div class="l">Admin</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-top">
+          <div class="search-box">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="search-input" placeholder="Buscar por nombre o correo…" oninput="renderTable()"/>
+          </div>
+          <select class="filter-sel" id="filter-plan" onchange="renderTable()">
+            <option value="">Todos los planes</option>
+            <option value="free">Free</option>
+            <option value="modulos">Módulos</option>
+            <option value="pro">Pro</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div id="table-container"><div class="loading"><span class="spin"></span></div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-edit">
+    <h2 id="modal-title">Editar usuario</h2>
+    <div class="sub" id="modal-sub"></div>
+
+    <div class="mfield">
+      <label>Plan</label>
+      <select id="m-plan" onchange="onPlanChange()">
+        <option value="free">Free</option>
+        <option value="modulos">Módulos (à la carte)</option>
+        <option value="pro">Pro (todos los módulos)</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <div class="mfield" id="mfield-modulos">
+      <label>Módulos activos</label>
+      <div class="modules-grid" id="modules-grid"></div>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Exento de pago</div>
+        <div class="toggle-sub">El usuario no paga suscripción</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="m-exento"/>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Cuenta activa</div>
+        <div class="toggle-sub">Desactivar bloquea el acceso</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="m-activo" checked/>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="mfield" style="margin-top:12px">
+      <label>Notas internas</label>
+      <textarea id="m-notas" placeholder="Ej. Vendedor Grupo Navarro, sin costo…"></textarea>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" id="btn-save-modal" onclick="saveUser()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+const ALL_MODULES = [
+  {id:'chat',        label:'Chat con IA'},
+  {id:'ficha-manual',label:'Fichas manuales'},
+  {id:'ficha',       label:'Fichas EasyBroker'},
+  {id:'contratos',   label:'Contratos'},
+  {id:'avm',         label:'Opinión de valor'},
+  {id:'isr',         label:'Calculadora ISR'},
+];
+
+let allUsers = [];
+let editingUser = null;
+let token = '';
+
+// ── AUTH CHECK ──
+async function init(){
+  token = sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token') || '';
+  if(!token){ window.location.href = 'login.html'; return; }
+
+  // Verify admin
+  const r = await sbFetch(`usuarios?id=eq.${getUser().id}&select=plan`);
+  if(!r.length || r[0].plan !== 'admin'){
+    alert('No tienes permisos de administrador.');
+    window.location.href = 'login.html';
+    return;
+  }
+  loadUsers();
+}
+
+function getUser(){ return JSON.parse(sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}'); }
+
+async function sbFetch(path, method='GET', body=null){
+  const opts = {
+    method,
+    headers:{
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    }
+  };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, opts);
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+async function loadUsers(){
+  try{
+    // Admin can see all users via the view or direct query
+    allUsers = await sbFetch('usuarios?order=created_at.desc&limit=500');
+    updateStats();
+    renderTable();
+  } catch(e){ console.error(e); }
+}
+
+function updateStats(){
+  const counts = {free:0, modulos:0, pro:0, admin:0};
+  allUsers.forEach(u => { if(counts[u.plan]!==undefined) counts[u.plan]++; });
+  document.getElementById('cnt-free').textContent  = counts.free;
+  document.getElementById('cnt-mod').textContent   = counts.modulos;
+  document.getElementById('cnt-pro').textContent   = counts.pro;
+  document.getElementById('cnt-admin').textContent = counts.admin;
+}
+
+function renderTable(){
+  const q    = document.getElementById('search-input').value.toLowerCase();
+  const plan = document.getElementById('filter-plan').value;
+  const filtered = allUsers.filter(u => {
+    const matchQ    = !q || (u.nombre+u.email+'').toLowerCase().includes(q);
+    const matchPlan = !plan || u.plan === plan;
+    return matchQ && matchPlan;
+  });
+
+  const container = document.getElementById('table-container');
+  if(!filtered.length){
+    container.innerHTML = `<div class="empty"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg><p>No hay usuarios que coincidan.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Plan</th>
+          <th>Módulos</th>
+          <th>Estado</th>
+          <th>Exento</th>
+          <th>Registro</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(u => `
+          <tr>
+            <td>
+              <div class="u-name">${u.nombre || '—'}</div>
+              <div class="u-email">${u.email}</div>
+              ${u.telefono ? `<div class="u-email">${u.telefono}</div>` : ''}
+            </td>
+            <td><span class="badge ${u.plan}">${planLabel(u.plan)}</span></td>
+            <td>
+              <div class="mod-tags">
+                ${(u.modulos||[]).map(m => `<span class="mod-tag">${modLabel(m)}</span>`).join('')}
+              </div>
+            </td>
+            <td><span class="badge ${u.activo?'activo':'inactivo'}">${u.activo?'Activo':'Inactivo'}</span></td>
+            <td style="text-align:center">${u.exento ? '✓' : '—'}</td>
+            <td style="font-size:11px;color:var(--muted)">${fmtDate(u.created_at)}</td>
+            <td><button class="action-btn" onclick='openEdit(${JSON.stringify(u)})'>Editar</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function planLabel(p){ return {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[p]||p; }
+function modLabel(m){  return {chat:'Chat','ficha-manual':'F.Manual',ficha:'F.EB',contratos:'Contratos',avm:'AVM',isr:'ISR'}[m]||m; }
+function fmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'2-digit'}); }
+
+function openEdit(user){
+  editingUser = user;
+  document.getElementById('modal-title').textContent = user.nombre || user.email;
+  document.getElementById('modal-sub').textContent = user.email;
+  document.getElementById('m-plan').value = user.plan || 'free';
+  document.getElementById('m-exento').checked = !!user.exento;
+  document.getElementById('m-activo').checked = user.activo !== false;
+  document.getElementById('m-notas').value = user.notas || '';
+  buildModulesGrid(user.modulos || []);
+  onPlanChange();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function buildModulesGrid(active){
+  const grid = document.getElementById('modules-grid');
+  grid.innerHTML = ALL_MODULES.map(m => `
+    <label class="mod-check">
+      <input type="checkbox" value="${m.id}" ${active.includes(m.id) ? 'checked' : ''}/>
+      <span>${m.label}</span>
+    </label>
+  `).join('');
+}
+
+function onPlanChange(){
+  const plan = document.getElementById('m-plan').value;
+  const modField = document.getElementById('mfield-modulos');
+
+  if(plan === 'pro' || plan === 'admin'){
+    // All modules — hide individual selection
+    modField.style.display = 'none';
+    // Check all
+    document.querySelectorAll('#modules-grid input').forEach(cb => cb.checked = true);
+  } else if(plan === 'free'){
+    modField.style.display = 'block';
+    // Uncheck all except ficha-manual
+    document.querySelectorAll('#modules-grid input').forEach(cb => {
+      cb.checked = cb.value === 'ficha-manual';
+    });
+  } else {
+    modField.style.display = 'block';
+  }
+}
+
+function getSelectedModules(){
+  return Array.from(document.querySelectorAll('#modules-grid input:checked')).map(cb => cb.value);
+}
+
+async function saveUser(){
+  if(!editingUser) return;
+  const btn = document.getElementById('btn-save-modal');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  const plan    = document.getElementById('m-plan').value;
+  const exento  = document.getElementById('m-exento').checked;
+  const activo  = document.getElementById('m-activo').checked;
+  const notas   = document.getElementById('m-notas').value.trim();
+  let modulos   = getSelectedModules();
+
+  // Pro/Admin get all modules
+  if(plan === 'pro' || plan === 'admin'){
+    modulos = ALL_MODULES.map(m => m.id);
+  }
+
+  try{
+    await sbFetch(`usuarios?id=eq.${editingUser.id}`, 'PATCH', {
+      plan, modulos, exento, activo, notas,
+      updated_at: new Date().toISOString()
+    });
+    closeModal();
+    await loadUsers();
+  } catch(e){
+    alert('Error guardando: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
+  }
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingUser = null;
+}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function logout(){
+  sessionStorage.clear(); localStorage.clear();
+  window.location.href = 'login.html';
+}
+
+init();
+</script>
+</body>
+</html>
