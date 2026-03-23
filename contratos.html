@@ -126,6 +126,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .clausula-redactada .cl-num{
   font-weight:700;color:#3b6fd4;display:block;margin-bottom:4px;font-size:10px;
 }
+
+/* ── SMART FORM ELEMENTS ── */
+.auto-badge{
+  background:rgba(13,148,136,.15);color:var(--teal2);
+  font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;
+  text-transform:uppercase;letter-spacing:.5px;vertical-align:middle;margin-left:4px;
+}
+.opt-badge{
+  background:rgba(148,163,184,.1);color:var(--mut);
+  font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;
+  vertical-align:middle;margin-left:4px;
+}
+.sexo-toggle{
+  display:flex;gap:6px;margin-top:4px;
+}
+.sexo-btn{
+  flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;
+  background:none;color:var(--mut);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.sexo-btn.active{
+  border-color:var(--teal);background:rgba(13,148,136,.12);color:var(--teal2);
+}
+.err-note{ display:none; }
 </style>
 </head>
 <body>
@@ -156,171 +180,320 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   <!-- ══ FORMULARIO ARRENDAMIENTO ══ -->
   <div id="form-arrendamiento">
 
+    <!-- ══ SECCIÓN 1: FECHA Y PLAZO ══ -->
     <div class="card">
-      <div class="card-title">Fecha y datos generales</div>
-      <div class="frow one">
-        <div class="f">
-          <label>Fecha del contrato (escrita)</label>
-          <input type="text" id="a-fecha" placeholder="Ej. 16 DE ENERO DE 2026"/>
-        </div>
-      </div>
+      <div class="card-title">📅 Fecha y plazo</div>
+
       <div class="frow">
         <div class="f">
-          <label>Fecha de inicio del arrendamiento</label>
-          <input type="text" id="a-inicio" placeholder="Ej. 17 de enero de 2026"/>
+          <label>Día de firma</label>
+          <input type="number" id="a-dia-firma" placeholder="Ej. 16" min="1" max="31" oninput="actualizarFechaFirma()"/>
         </div>
         <div class="f">
-          <label>Fecha de fin del arrendamiento</label>
-          <input type="text" id="a-fin" placeholder="Ej. 16 de enero de 2027"/>
-        </div>
-      </div>
-      <div class="frow">
-        <div class="f">
-          <label>Duración del contrato</label>
-          <input type="text" id="a-duracion" placeholder="Ej. UN AÑO" value="UN AÑO"/>
-        </div>
-        <div class="f">
-          <label>Destino / uso del inmueble</label>
-          <select id="a-destino">
-            <option value="Casa Habitación">Casa Habitación</option>
-            <option value="Uso Comercial">Uso Comercial</option>
-            <option value="Uso de Oficina">Uso de Oficina</option>
-            <option value="Uso Mixto">Uso Mixto</option>
+          <label>Mes de firma</label>
+          <select id="a-mes-firma" onchange="actualizarFechaFirma()">
+            <option value="">— Mes —</option>
+            <option>ENERO</option><option>FEBRERO</option><option>MARZO</option>
+            <option>ABRIL</option><option>MAYO</option><option>JUNIO</option>
+            <option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option>
+            <option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
           </select>
+        </div>
+        <div class="f">
+          <label>Año de firma</label>
+          <input type="number" id="a-anio-firma" placeholder="Ej. 2026" min="2024" max="2030" oninput="actualizarFechaFirma()"/>
+        </div>
+      </div>
+      <div class="f-note" id="a-fecha-preview" style="color:var(--teal2);font-weight:600"></div>
+
+      <div class="frow" style="margin-top:14px">
+        <div class="f">
+          <label>Fecha de inicio del contrato</label>
+          <input type="date" id="a-inicio" onchange="onFechaInicioChange()"/>
+        </div>
+        <div class="f">
+          <label>Fecha de término del contrato</label>
+          <input type="date" id="a-fin" onchange="validarFechas()"/>
+        </div>
+      </div>
+      <div class="f-note err-note" id="err-fechas" style="display:none;color:#ef4444;font-weight:600">
+        ⚠️ La fecha de término debe ser posterior a la de inicio.
+      </div>
+
+      <div class="frow" style="margin-top:8px">
+        <div class="f">
+          <label>Plazo del contrato <span class="auto-badge">se genera automático</span></label>
+          <input type="text" id="a-duracion" placeholder="Ej. UN AÑO" readonly style="background:var(--navy3);color:var(--teal2)"/>
+        </div>
+        <div class="f">
+          <label>Inicio escrito <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-inicio-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del picker"/>
+        </div>
+        <div class="f">
+          <label>Término escrito <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-fin-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del picker"/>
         </div>
       </div>
     </div>
 
+    <!-- ══ SECCIÓN 2: INMUEBLE ══ -->
     <div class="card">
-      <div class="card-title">Datos del inmueble</div>
-      <div class="frow one">
+      <div class="card-title">🏠 Inmueble arrendado</div>
+      <div class="f-note" style="margin-bottom:10px">Esta dirección se usará en múltiples secciones del contrato automáticamente.</div>
+
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Calle</label>
+          <input type="text" id="a-calle-inm" placeholder="Ej. AV. CAMELINAS" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
         <div class="f">
-          <label>Calle y número</label>
-          <input type="text" id="a-dir" placeholder="Ej. Paseo de las Aves 97"/>
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-inm" placeholder="Ej. 123" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. interior <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-inm" placeholder="Ej. 4-A" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
-      <div class="frow three">
+      <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia" placeholder="Ej. Vistas Altozano"/>
+          <input type="text" id="a-colonia" placeholder="Ej. CHAPULTEPEC" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Código Postal</label>
-          <input type="text" id="a-cp" placeholder="Ej. 58350"/>
+          <label>Código postal</label>
+          <input type="text" id="a-cp" placeholder="Ej. 58260" maxlength="5" oninput="validarCP('a-cp')"/>
         </div>
         <div class="f">
-          <label>Cajones de estacionamiento</label>
-          <input type="number" id="a-cajones" placeholder="0" min="0" value="0"/>
+          <label>Municipio y Estado</label>
+          <input type="text" id="a-mpio-inm" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
-          <label>¿Incluye bodega?</label>
-          <select id="a-bodega">
-            <option value="false">No</option>
-            <option value="true">Sí</option>
+          <label>Destino y uso del inmueble</label>
+          <select id="a-destino" onchange="onDestinoChange()">
+            <option value="">— Seleccionar —</option>
+            <option value="CASA HABITACIÓN">Casa habitación</option>
+            <option value="DEPARTAMENTO HABITACIONAL">Departamento habitacional</option>
+            <option value="LOCAL COMERCIAL">Local comercial</option>
+            <option value="OFICINA">Oficina</option>
+            <option value="BODEGA">Bodega</option>
+            <option value="otro">Otro (especificar)…</option>
           </select>
         </div>
+        <div class="f" id="a-destino-otro-wrap" style="display:none">
+          <label>Especificar destino</label>
+          <input type="text" id="a-destino-otro" placeholder="Ej. CONSULTORIO MÉDICO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
       </div>
     </div>
 
+    <!-- ══ SECCIÓN 3: ARRENDADOR ══ -->
     <div class="card">
-      <div class="card-title">Parte arrendadora</div>
-      <div class="frow one">
-        <div class="f">
+      <div class="card-title">👤 Arrendador (propietario)</div>
+      <div class="frow">
+        <div class="f" style="flex:2">
           <label>Nombre completo del arrendador</label>
-          <input type="text" id="a-arrendador" placeholder="Nombre como aparece en escrituras"/>
+          <input type="text" id="a-arrendador" placeholder="Ej. SALVADOR BOLAÑOS NAVARRO" oninput="this.value=this.value.toUpperCase()"/>
         </div>
-      </div>
-      <div class="frow one">
         <div class="f">
-          <label>Domicilio del arrendador para notificaciones</label>
-          <input type="text" id="a-dom-arr" placeholder="Calle, número, colonia, C.P."/>
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-arr">
+            <button class="sexo-btn active" onclick="setSexo('arr','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" onclick="setSexo('arr','F',this)">♀ Femenino</button>
+          </div>
         </div>
       </div>
-    </div>
+      <div class="f-note" id="preview-sexo-arr" style="color:var(--teal2);font-size:11px"></div>
 
-    <div class="card">
-      <div class="card-title">Parte arrendataria</div>
-      <div class="frow one">
+      <div class="frow" style="margin-top:10px">
+        <div class="f" style="flex:2">
+          <label>Calle del domicilio del arrendador</label>
+          <input type="text" id="a-calle-arr" placeholder="Ej. CALLE REAL DE GUADALUPE" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
         <div class="f">
-          <label>Nombre completo del arrendatario</label>
-          <input type="text" id="a-arrendatario" placeholder="Nombre como aparece en su INE"/>
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-arr" placeholder="Ej. 45" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-arr" placeholder="Ej. B" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Obligado solidario</div>
-      <div class="frow one">
-        <div class="f">
-          <label>Nombre completo del obligado solidario</label>
-          <input type="text" id="a-os" placeholder="Nombre como aparece en su INE"/>
-        </div>
-      </div>
-      <div class="frow one">
-        <div class="f">
-          <label>Domicilio del obligado solidario</label>
-          <input type="text" id="a-dom-os" placeholder="Calle, número, colonia, C.P."/>
-        </div>
-      </div>
-      <div class="frow one">
-        <div class="f">
-          <label>Inmueble que garantiza su solvencia</label>
-          <input type="text" id="a-inm-os" placeholder="Calle, colonia, C.P., Morelia, Michoacán"/>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Condiciones económicas</div>
       <div class="frow">
         <div class="f">
-          <label>Renta mensual (MXN)</label>
-          <div class="money-wrap">
-            <span class="money-prefix">$</span>
-            <input type="text" id="a-renta" placeholder="11,000" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>
-          </div>
+          <label>Colonia del arrendador</label>
+          <input type="text" id="a-colonia-arr" placeholder="Ej. CENTRO" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Depósito en garantía (MXN)</label>
-          <div class="money-wrap">
-            <span class="money-prefix">$</span>
-            <input type="text" id="a-deposito" placeholder="11,000" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>
+          <label>C.P. del arrendador</label>
+          <input type="text" id="a-cp-arr" placeholder="58000" maxlength="5" oninput="validarCP('a-cp-arr')"/>
+        </div>
+        <div class="f">
+          <label>Municipio/Estado del arrendador</label>
+          <input type="text" id="a-mpio-arr" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 4: ARRENDATARIO ══ -->
+    <div class="card">
+      <div class="card-title">👤 Arrendatario (inquilino)</div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Nombre completo del arrendatario</label>
+          <input type="text" id="a-arrendatario" placeholder="Ej. GABRIELA NAVARRO PÉREZ" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-arrt">
+            <button class="sexo-btn active" onclick="setSexo('arrt','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" onclick="setSexo('arrt','F',this)">♀ Femenino</button>
           </div>
+        </div>
+      </div>
+      <div class="f-note">El domicilio del arrendatario será el inmueble arrendado (se toma automáticamente).</div>
+    </div>
+
+    <!-- ══ SECCIÓN 5: OBLIGADO SOLIDARIO ══ -->
+    <div class="card">
+      <div class="card-title">🤝 Obligado solidario</div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Nombre completo del obligado solidario</label>
+          <input type="text" id="a-os" placeholder="Ej. PEDRO RAMÍREZ GARCÍA" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-os">
+            <button class="sexo-btn active" onclick="setSexo('os','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" onclick="setSexo('os','F',this)">♀ Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="f-note" id="preview-sexo-os" style="color:var(--teal2);font-size:11px"></div>
+
+      <div class="card-title" style="margin-top:12px;font-size:12px">Domicilio del obligado solidario</div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Calle del domicilio del OS</label>
+          <input type="text" id="a-calle-os" placeholder="Ej. BLVD. GARCÍA DE LEÓN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-os" placeholder="Ej. 200" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-os" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="a-colonia-os" placeholder="Ej. CHAPULTEPEC" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>C.P.</label>
+          <input type="text" id="a-cp-os" placeholder="58260" maxlength="5" oninput="validarCP('a-cp-os')"/>
+        </div>
+        <div class="f">
+          <label>Municipio / Estado</label>
+          <input type="text" id="a-mpio-os" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top:12px;font-size:12px;display:flex;align-items:center;gap:12px">
+        Inmueble en garantía del obligado solidario
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--mut);cursor:pointer">
+          <input type="checkbox" id="os-misma-prop" onchange="toggleMismaPropOS(this)" style="accent-color:var(--teal);width:14px;height:14px;cursor:pointer"/>
+          Es la misma donde vive
+        </label>
+      </div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Calle del inmueble en garantía</label>
+          <input type="text" id="a-calle-inm-os" placeholder="Ej. AV. ACUEDUCTO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-inm-os" placeholder="Ej. 10" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-inm-os" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="a-colonia-inm-os" placeholder="Ej. JARDINES DE GUADALUPE" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>C.P.</label>
+          <input type="text" id="a-cp-inm-os" placeholder="58270" maxlength="5" oninput="validarCP('a-cp-inm-os')"/>
+        </div>
+        <div class="f">
+          <label>Municipio / Estado</label>
+          <input type="text" id="a-mpio-inm-os" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 6: RENTA Y PAGOS ══ -->
+    <div class="card">
+      <div class="card-title">💰 Renta y condiciones de pago</div>
+      <div class="frow">
+        <div class="f">
+          <label>Renta mensual ($)</label>
+          <input type="text" id="a-renta" placeholder="Ej. 8,500.00" oninput="onRentaChange(this)" onblur="fmtMoneyBlur(this)"/>
+        </div>
+        <div class="f">
+          <label>Renta en letra <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-renta-letra" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del número"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Depósito en garantía ($) <span class="auto-badge">= 1 mes por defecto</span></label>
+          <input type="text" id="a-deposito" placeholder="Ej. 8,500.00" oninput="fmtMoney(this)" onblur="onDepositoBlur(this)"/>
+        </div>
+        <div class="f">
+          <label>Depósito en letra <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-deposito-letra" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del número"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
           <label>Día límite de pago mensual</label>
-          <input type="text" id="a-dia-pago" placeholder="Ej. 1" value="1"/>
+          <input type="number" id="a-dia-pago" placeholder="Ej. 5" min="1" max="28"
+            oninput="if(this.value>28){this.value=28;showFieldAlert(this,'El día no puede ser mayor a 28.')}
+                     if(this.value<1){this.value=1}"/>
         </div>
         <div class="f">
           <label>Forma de pago</label>
           <select id="a-forma-pago" onchange="onFormaPagoChange()">
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia bancaria">Transferencia bancaria</option>
-            <option value="depósito bancario">Depósito bancario</option>
-            <option value="cheque">Cheque</option>
+            <option value="">— Seleccionar —</option>
+            <option value="TRANSFERENCIA BANCARIA">Transferencia bancaria</option>
+            <option value="DEPÓSITO EN EFECTIVO">Depósito en efectivo</option>
+            <option value="CHEQUE">Cheque</option>
+            <option value="EFECTIVO">Efectivo</option>
           </select>
         </div>
-      </div>
-      <!-- Cuenta bancaria — solo visible cuando es transferencia o depósito -->
-      <div class="frow one" id="banco-wrap" style="display:none">
         <div class="f">
-          <label>Datos bancarios para el pago</label>
-          <input type="text" id="a-banco" placeholder="Ej. BBVA / CLABE: 012345678901234567 / Nombre del titular"/>
-          <div class="f-note">Se incluirá en el contrato para que el arrendatario sepa a dónde transferir</div>
+          <label>Cuenta / CLABE bancaria <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-banco" placeholder="Ej. BBVA 0123456789"/>
         </div>
       </div>
-      <div class="frow one">
+      <div class="frow">
         <div class="f">
-          <label>Pena por retención del inmueble al vencimiento ($/día)</label>
-          <div class="money-wrap">
-            <span class="money-prefix">$</span>
-            <input type="text" id="a-pena" placeholder="500" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>
-          </div>
-          <div class="f-note">Cantidad diaria que paga el arrendatario si no desocupa al vencer el contrato</div>
+          <label>Pena diaria por no desocupar ($)</label>
+          <input type="text" id="a-pena" placeholder="Ej. 500.00" oninput="onPenaChange(this)" onblur="fmtMoneyBlur(this)"/>
+        </div>
+        <div class="f">
+          <label>Pena diaria en letra <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-pena-letra" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del número"/>
         </div>
       </div>
     </div>
@@ -559,14 +732,33 @@ function gv(id){ return (document.getElementById(id)?.value || '').trim(); }
 
 // ── Validation ──
 function validateArrendamiento(){
-  const required = ['a-fecha','a-inicio','a-fin','a-dir','a-colonia','a-cp',
-                    'a-arrendador','a-dom-arr','a-arrendatario',
-                    'a-os','a-dom-os','a-inm-os','a-renta','a-deposito'];
-  for(const id of required){
-    if(!gv(id)){ return `El campo "${document.querySelector(`label[for="${id}"]`)?.textContent || id}" es requerido.`; }
+  const required = [
+    ['a-arrendador','Nombre del arrendador'],
+    ['a-calle-inm','Calle del inmueble'],
+    ['a-numext-inm','Número exterior del inmueble'],
+    ['a-colonia','Colonia del inmueble'],
+    ['a-cp','Código postal del inmueble'],
+    ['a-mpio-inm','Municipio/Estado del inmueble'],
+    ['a-destino','Destino del inmueble'],
+    ['a-arrendatario','Nombre del arrendatario'],
+    ['a-os','Nombre del obligado solidario'],
+    ['a-calle-os','Domicilio del obligado solidario'],
+    ['a-calle-arr','Domicilio del arrendador'],
+    ['a-renta','Renta mensual'],
+    ['a-deposito','Depósito en garantía'],
+    ['a-dia-pago','Día límite de pago'],
+    ['a-forma-pago','Forma de pago'],
+  ];
+  for(const [id, label] of required){
+    if(!gv(id)){ return `El campo "${label}" es requerido.`; }
   }
+  if(!gv('a-dia-firma') || !gv('a-mes-firma') || !gv('a-anio-firma'))
+    return 'Completa la fecha de firma del contrato.';
+  if(!gv('a-inicio') || !gv('a-fin'))
+    return 'Ingresa las fechas de inicio y término del contrato.';
+  if(new Date(gv('a-fin')) <= new Date(gv('a-inicio')))
+    return '⚠️ La fecha de término debe ser posterior a la de inicio.';
   if(!getMonto('a-renta')) return 'Ingresa el monto de la renta mensual.';
-  if(!getMonto('a-deposito')) return 'Ingresa el monto del depósito en garantía.';
   return null;
 }
 
@@ -596,7 +788,58 @@ async function generarContrato(){
   }
 
   // Build data
-  let datos = {};
+  let datos = {
+      // Fechas
+      fecha_contrato:     `${gv('a-dia-firma')} DE ${gv('a-mes-firma')} DE ${gv('a-anio-firma')}`,
+      fecha_inicio:       fechaEscrita(gv('a-inicio')),
+      fecha_fin:          fechaEscrita(gv('a-fin')),
+      plazo_contrato:     gv('a-duracion') || calcularPlazo(gv('a-inicio'), gv('a-fin')),
+      // Inmueble
+      calle_inmueble:     gv('a-calle-inm'),
+      num_ext_inmueble:   gv('a-numext-inm'),
+      num_int_inmueble:   gv('a-numint-inm'),
+      colonia_inmueble:   gv('a-colonia'),
+      cp_inmueble:        gv('a-cp'),
+      municipio_estado_inmueble: gv('a-mpio-inm'),
+      destino_uso:        gv('a-destino') === 'otro' ? gv('a-destino-otro') : gv('a-destino'),
+      // Arrendador
+      nombre_arrendador:  gv('a-arrendador'),
+      sexo_arrendador:    document.querySelector('#sexo-arr .sexo-btn.active')?.textContent.includes('Fem') ? 'F' : 'M',
+      calle_arrendador:   gv('a-calle-arr'),
+      num_ext_arrendador: gv('a-numext-arr') || gv('a-calle-arr'),
+      num_int_arrendador: gv('a-numint-arr'),
+      colonia_arrendador: gv('a-colonia-arr'),
+      cp_arrendador:      gv('a-cp-arr'),
+      municipio_estado_arrendador: gv('a-mpio-arr'),
+      // Arrendatario
+      nombre_arrendatario: gv('a-arrendatario'),
+      sexo_arrendatario:  document.querySelector('#sexo-arrt .sexo-btn.active')?.textContent.includes('Fem') ? 'F' : 'M',
+      // Obligado Solidario
+      nombre_obligado_solidario: gv('a-os'),
+      sexo_os:            document.querySelector('#sexo-os .sexo-btn.active')?.textContent.includes('Fem') ? 'F' : 'M',
+      calle_os:           gv('a-calle-os'),
+      num_ext_os:         gv('a-numext-os') || gv('a-calle-os'),
+      num_int_os:         gv('a-numint-os'),
+      colonia_os:         gv('a-colonia-os'),
+      cp_os:              gv('a-cp-os'),
+      municipio_estado_os: gv('a-mpio-os'),
+      calle_inm_os:       gv('a-calle-inm-os'),
+      num_ext_inm_os:     gv('a-numext-inm-os') || gv('a-calle-inm-os'),
+      num_int_inm_os:     gv('a-numint-inm-os'),
+      colonia_inm_os:     gv('a-colonia-inm-os'),
+      cp_inm_os:          gv('a-cp-inm-os'),
+      municipio_estado_inm_os: gv('a-mpio-inm-os'),
+      // Renta y pagos
+      renta_mensual:      getMonto('a-renta'),
+      renta_letra:        gv('a-renta-letra'),
+      deposito_garantia:  getMonto('a-deposito'),
+      deposito_letra:     gv('a-deposito-letra'),
+      dia_pago:           gv('a-dia-pago'),
+      forma_pago:         gv('a-forma-pago'),
+      cuenta_bancaria:    gv('a-banco'),
+      pena_dia_num:       getMonto('a-pena'),
+      pena_dia_letra:     gv('a-pena-letra'),
+    };
   if(tipoActual === 'arrendamiento'){
     datos = {
       fecha_contrato:     gv('a-fecha'),
@@ -713,6 +956,44 @@ function removeClausula(n){
 function getClausulasTexto(){
   const items = document.querySelectorAll('#clausulas-list textarea');
   return Array.from(items).map(t => t.value.trim()).filter(Boolean);
+}
+
+
+function toggleMismaPropOS(cb){
+  const fields = ['calle-inm-os','numint-inm-os','colonia-inm-os','cp-inm-os','mpio-inm-os'];
+  const src    = ['calle-os',    'numint-os',    'colonia-os',    'cp-os',    'mpio-os'];
+  const wrap   = document.querySelectorAll('#form-arrendamiento .inm-os-field');
+
+  if(cb.checked){
+    // Copy from domicilio OS → inmueble garantía OS
+    fields.forEach((f, i) => {
+      const target = document.getElementById(`a-${f}`);
+      const source = document.getElementById(`a-${src[i]}`);
+      if(target && source){ target.value = source.value; target.disabled = true; }
+    });
+  } else {
+    fields.forEach(f => {
+      const target = document.getElementById(`a-${f}`);
+      if(target){ target.disabled = false; }
+    });
+  }
+}
+
+
+function onFormaPagoChange(){
+  const val   = document.getElementById('a-forma-pago')?.value;
+  const banco = document.getElementById('a-banco');
+  if(!banco) return;
+  if(val === 'EFECTIVO'){
+    banco.value = '';
+    banco.disabled = true;
+    banco.style.opacity = '.4';
+    banco.placeholder = 'No aplica para pago en efectivo';
+  } else {
+    banco.disabled = false;
+    banco.style.opacity = '';
+    banco.placeholder = 'Ej. BBVA 0123456789';
+  }
 }
 
 </script>
