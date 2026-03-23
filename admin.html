@@ -253,6 +253,7 @@ const ALL_MODULES = [
   {id:'contratos',   label:'Contratos'},
   {id:'avm',         label:'Opinión de valor'},
   {id:'isr',         label:'Calculadora ISR'},
+  {id:'props',        label:'Mis propiedades'},
 ];
 
 let allUsers = [];
@@ -363,7 +364,7 @@ function renderTable(){
 }
 
 function planLabel(p){ return {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[p]||p; }
-function modLabel(m){  return {chat:'Chat','ficha-manual':'F.Manual',ficha:'F.EB',contratos:'Contratos',avm:'AVM',isr:'ISR'}[m]||m; }
+function modLabel(m){  return {chat:'Chat','ficha-manual':'F.Manual',ficha:'F.EB',contratos:'Contratos',avm:'AVM',isr:'ISR',props:'Mis Prop.'}[m]||m; }
 function fmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'2-digit'}); }
 
 function openEdit(user){
