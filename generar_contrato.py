@@ -221,19 +221,53 @@ def generar_arrendamiento(datos, output_path):
     nombre_os   = u('nombre_obligado_solidario')
     destino     = u('destino_uso')
     plazo       = u('plazo_contrato')
-    fecha_firma = u('fecha_contrato')
-    fecha_ini   = u('fecha_inicio')
-    fecha_fin_s = u('fecha_fin')
+    MESES_PY = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
+
+    def _fecha_escrita(v):
+        """Convert ISO date or already-written date to 'DD DE MES DE YYYY'."""
+        if not v: return ''
+        v = v.strip()
+        # Already written format e.g. '16 DE ENERO DE 2026'
+        if 'DE' in v.upper(): return v.upper()
+        # ISO format YYYY-MM-DD
+        try:
+            parts = v.split('-')
+            if len(parts) == 3:
+                y,m,d_n = int(parts[0]),int(parts[1]),int(parts[2])
+                return f"{d_n} DE {MESES_PY[m-1]} DE {y}"
+        except: pass
+        return v.upper()
+
+    fecha_firma_raw = d('fecha_contrato')
+    # fecha_contrato is built as "DD DE MES DE YYYY" in JS - use as-is
+    fecha_firma = fecha_firma_raw.upper() if fecha_firma_raw else ''
+    fecha_ini   = _fecha_escrita(d('fecha_inicio'))
+    fecha_fin_s = _fecha_escrita(d('fecha_fin'))
     mpio_inm    = u('municipio_estado_inmueble')
     estado_inm  = mpio_inm.split(',')[-1].strip() if ',' in mpio_inm else mpio_inm
     renta_num   = d('renta_mensual')
-    renta_letra = u('renta_letra')
+    # Letras: use JS-provided value, fallback to Python calculation
+    def _letra(num_str):
+        """Convert amount string to Spanish words for MXN."""
+        try:
+            n = int(float(str(num_str).replace(',','').replace('$','').strip()))
+            return numero_a_letras(n) + ' PESOS 00/100 M.N.'
+        except:
+            return ''
+
+    renta_letra_raw = u('renta_letra')
+    renta_letra = renta_letra_raw if renta_letra_raw else _letra(d('renta_mensual'))
+
     dep_num     = d('deposito_garantia')
-    dep_letra   = u('deposito_letra')
+    dep_letra_raw = u('deposito_letra')
+    dep_letra   = dep_letra_raw if dep_letra_raw else _letra(dep_num)
+
     forma_pago  = u('forma_pago')
     dia_pago    = d('dia_pago')
     pena_num    = d('pena_dia_num')
-    pena_letra  = u('pena_dia_letra')
+    pena_letra_raw = u('pena_dia_letra')
+    pena_letra  = pena_letra_raw if pena_letra_raw else _letra(pena_num)
 
     try:
         renta_f = f"${float(str(renta_num).replace(',','').replace('$','')):,.2f}"
@@ -247,14 +281,19 @@ def generar_arrendamiento(datos, output_path):
 
     # Fecha de incremento INPC = día siguiente al término
     try:
-        from datetime import datetime, timedelta
-        fin_dt = datetime.strptime(datos.get('fecha_fin_iso',''), '%Y-%m-%d')
-        sig_dia = fin_dt + timedelta(days=1)
-        MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-                 'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
-        fecha_inpc = f"{sig_dia.day} DE {MESES[sig_dia.month-1]} DE {sig_dia.year}"
+        from datetime import datetime as _dt, timedelta as _td
+        fin_iso = datos.get('fecha_fin_iso','') or datos.get('fecha_fin','')
+        # Try ISO first, then parse written date
+        fin_dt = None
+        if fin_iso and '-' in fin_iso:
+            fin_dt = _dt.strptime(fin_iso.split('T')[0], '%Y-%m-%d')
+        if fin_dt:
+            sig_dia = fin_dt + _td(days=1)
+            fecha_inpc = f"{sig_dia.day} DE {MESES_PY[sig_dia.month-1]} DE {sig_dia.year}"
+        else:
+            fecha_inpc = fecha_fin_s
     except:
-        fecha_inpc = fecha_fin_s  # fallback
+        fecha_inpc = fecha_fin_s
 
     # Direcciones
     dir_inm, mpio_inm2 = dir_completa('calle_inmueble','num_ext_inmueble','num_int_inmueble',

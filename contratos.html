@@ -300,8 +300,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-arr">
-            <button class="sexo-btn active" onclick="setSexo('arr','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" onclick="setSexo('arr','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arr','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arr','F',this)">♀ Femenino</button>
           </div>
         </div>
       </div>
@@ -348,8 +348,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-arrt">
-            <button class="sexo-btn active" onclick="setSexo('arrt','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" onclick="setSexo('arrt','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arrt','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arrt','F',this)">♀ Femenino</button>
           </div>
         </div>
       </div>
@@ -367,8 +367,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-os">
-            <button class="sexo-btn active" onclick="setSexo('os','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" onclick="setSexo('os','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('os','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('os','F',this)">♀ Femenino</button>
           </div>
         </div>
       </div>
@@ -804,7 +804,7 @@ async function generarContrato(){
       destino_uso:        gv('a-destino') === 'otro' ? gv('a-destino-otro') : gv('a-destino'),
       // Arrendador
       nombre_arrendador:  gv('a-arrendador'),
-      sexo_arrendador:    document.querySelector('#sexo-arr .sexo-btn.active')?.textContent.includes('Fem') ? 'F' : 'M',
+      sexo_arrendador:    document.querySelector('#sexo-arr .sexo-btn.active')?.dataset?.sexo || 'M',
       calle_arrendador:   gv('a-calle-arr'),
       num_ext_arrendador: gv('a-numext-arr') || gv('a-calle-arr'),
       num_int_arrendador: gv('a-numint-arr'),
@@ -813,10 +813,10 @@ async function generarContrato(){
       municipio_estado_arrendador: gv('a-mpio-arr'),
       // Arrendatario
       nombre_arrendatario: gv('a-arrendatario'),
-      sexo_arrendatario:  document.querySelector('#sexo-arrt .sexo-btn.active')?.textContent.includes('Fem') ? 'F' : 'M',
+      sexo_arrendatario:  document.querySelector('#sexo-arrt .sexo-btn.active')?.dataset?.sexo || 'M',
       // Obligado Solidario
       nombre_obligado_solidario: gv('a-os'),
-      sexo_os:            document.querySelector('#sexo-os .sexo-btn.active')?.textContent.includes('Fem') ? 'F' : 'M',
+      sexo_os:            document.querySelector('#sexo-os .sexo-btn.active')?.dataset?.sexo || 'M',
       calle_os:           gv('a-calle-os'),
       num_ext_os:         gv('a-numext-os') || gv('a-calle-os'),
       num_int_os:         gv('a-numint-os'),
@@ -831,15 +831,14 @@ async function generarContrato(){
       municipio_estado_inm_os: gv('a-mpio-inm-os'),
       // Renta y pagos
       renta_mensual:      getMonto('a-renta'),
-      renta_letra:        gv('a-renta-letra'),
+      renta_letra:        gv('a-renta-letra') || montoALetras(getMonto('a-renta')),
       deposito_garantia:  getMonto('a-deposito'),
-      deposito_letra:     gv('a-deposito-letra'),
+      deposito_letra:     gv('a-deposito-letra') || montoALetras(getMonto('a-deposito')),
       dia_pago:           gv('a-dia-pago'),
       forma_pago:         gv('a-forma-pago'),
       cuenta_bancaria:    gv('a-banco'),
       pena_dia_num:       getMonto('a-pena'),
-      pena_dia_letra:     gv('a-pena-letra'),
-      fecha_fin_iso:      gv('a-fin'),
+      pena_dia_letra:     gv('a-pena-letra') || montoALetras(getMonto('a-pena')),
     };
   if(tipoActual === 'arrendamiento'){
     datos = {
@@ -995,166 +994,6 @@ function onFormaPagoChange(){
     banco.style.opacity = '';
     banco.placeholder = 'Ej. BBVA 0123456789';
   }
-}
-
-
-// ══════════════════════════════════════════════════
-// SMART FORM HELPERS — Contrato de Arrendamiento
-// ══════════════════════════════════════════════════
-
-const MESES_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-                  'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-
-function fechaEscrita(isoDate){
-  if(!isoDate) return '';
-  const [y,m,d] = isoDate.split('-').map(Number);
-  return `${d} DE ${MESES_ES[m-1]} DE ${y}`;
-}
-
-function calcularPlazo(inicio, fin){
-  if(!inicio || !fin) return '';
-  const d1 = new Date(inicio), d2 = new Date(fin);
-  const meses = (d2.getFullYear()-d1.getFullYear())*12+(d2.getMonth()-d1.getMonth());
-  const num = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
-               'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
-               'DIECISIETE','DIECIOCHO','DIECINUEVE','VEINTE','VEINTIUNO','VEINTIDÓS',
-               'VEINTITRÉS','VEINTICUATRO'];
-  if(meses===12) return 'UN AÑO';
-  if(meses===24) return 'DOS AÑOS';
-  if(meses===6)  return 'SEIS MESES';
-  if(meses===3)  return 'TRES MESES';
-  const años=Math.floor(meses/12), resto=meses%12;
-  if(años>0&&resto===0) return `${num[años]||años} AÑO${años>1?'S':''}`;
-  if(años===0) return `${num[meses]||meses} MES${meses>1?'ES':''}`;
-  return `${num[años]||años} AÑO${años>1?'S':''} Y ${num[resto]||resto} MES${resto>1?'ES':''}`;
-}
-
-function actualizarFechaFirma(){
-  const dia=document.getElementById('a-dia-firma')?.value;
-  const mes=document.getElementById('a-mes-firma')?.value;
-  const anio=document.getElementById('a-anio-firma')?.value;
-  const prev=document.getElementById('a-fecha-preview');
-  if(dia&&mes&&anio&&prev) prev.textContent=`✓ ${dia} DE ${mes} DE ${anio}`;
-}
-
-function onFechaInicioChange(){
-  validarFechas();
-  const inicio=document.getElementById('a-inicio')?.value;
-  const el=document.getElementById('a-inicio-escrito');
-  if(el&&inicio) el.value=fechaEscrita(inicio);
-}
-
-function validarFechas(){
-  const inicio=document.getElementById('a-inicio')?.value;
-  const fin=document.getElementById('a-fin')?.value;
-  const errEl=document.getElementById('err-fechas');
-  const finEl=document.getElementById('a-fin');
-  if(!errEl) return;
-  if(inicio&&fin){
-    if(new Date(fin)<=new Date(inicio)){
-      errEl.style.display='block';
-      if(finEl) finEl.style.borderColor='#ef4444';
-    } else {
-      errEl.style.display='none';
-      if(finEl) finEl.style.borderColor='';
-      const finEscrito=document.getElementById('a-fin-escrito');
-      if(finEscrito) finEscrito.value=fechaEscrita(fin);
-      const plazoEl=document.getElementById('a-duracion');
-      if(plazoEl) plazoEl.value=calcularPlazo(inicio,fin);
-    }
-  }
-}
-
-function numALetras(n){
-  const uns=['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
-             'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
-             'DIECISIETE','DIECIOCHO','DIECINUEVE'];
-  const dec=['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA',
-             'SESENTA','SETENTA','OCHENTA','NOVENTA'];
-  const cen=['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS',
-             'SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-  function grp(n){
-    if(n===0) return '';
-    if(n===100) return 'CIEN';
-    if(n<20) return uns[n];
-    if(n<100){ const d=Math.floor(n/10),u=n%10; return dec[d]+(u?' Y '+uns[u]:''); }
-    const c=Math.floor(n/100),r=n%100; return cen[c]+(r?' '+grp(r):'');
-  }
-  n=Math.floor(n); if(n===0) return 'CERO';
-  let parts=[];
-  if(n>=1000000){ const m=Math.floor(n/1000000); parts.push(m===1?'UN MILLÓN':grp(m)+' MILLONES'); n%=1000000; }
-  if(n>=1000){ const m=Math.floor(n/1000); parts.push(m===1?'MIL':grp(m)+' MIL'); n%=1000; }
-  if(n>0) parts.push(grp(n));
-  return parts.filter(Boolean).join(' ');
-}
-
-function montoALetras(numStr){
-  const clean=String(numStr).replace(/[$,\s]/g,'');
-  const n=parseFloat(clean);
-  if(isNaN(n)) return '';
-  return numALetras(Math.floor(n))+' PESOS 00/100 M.N.';
-}
-
-function onRentaChange(el){
-  fmtMoney(el);
-  const letra=document.getElementById('a-renta-letra');
-  if(letra) letra.value=montoALetras(el.value);
-  const dep=document.getElementById('a-deposito');
-  const depLetra=document.getElementById('a-deposito-letra');
-  if(dep&&!dep._manuallyEdited){
-    dep.value=el.value;
-    if(depLetra) depLetra.value=montoALetras(el.value);
-  }
-}
-
-function onDepositoBlur(el){
-  fmtMoneyBlur(el);
-  el._manuallyEdited=true;
-  const depLetra=document.getElementById('a-deposito-letra');
-  if(depLetra) depLetra.value=montoALetras(el.value);
-}
-
-function onPenaChange(el){
-  fmtMoney(el);
-  const letra=document.getElementById('a-pena-letra');
-  if(letra) letra.value=montoALetras(el.value);
-}
-
-function setSexo(quien, sexo, btn){
-  const container=document.getElementById(`sexo-${quien}`);
-  if(!container) return;
-  container.querySelectorAll('.sexo-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const prev=document.getElementById(`preview-sexo-${quien}`);
-  if(prev){
-    if(quien==='arr'){
-      prev.textContent=sexo==='F'
-        ?'✓ Se usará: LA C. / REPRESENTADA / PROPIETARIA / MEXICANA'
-        :'✓ Se usará: EL C. / REPRESENTADO / PROPIETARIO / MEXICANO';
-    } else if(quien==='os'){
-      prev.textContent=sexo==='F'
-        ?'✓ Se usará: LA C. / MEXICANA'
-        :'✓ Se usará: EL C. / MEXICANO';
-    }
-  }
-}
-
-function onDestinoChange(){
-  const val=document.getElementById('a-destino')?.value;
-  const wrap=document.getElementById('a-destino-otro-wrap');
-  if(wrap) wrap.style.display=val==='otro'?'block':'none';
-}
-
-function validarCP(id){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.value=el.value.replace(/\D/g,'').slice(0,5);
-  el.style.borderColor=(el.value.length>0&&el.value.length<5)?'#ef4444':'';
-}
-
-function showFieldAlert(el,msg){
-  el.style.borderColor='#f59e0b'; el.title=msg;
-  setTimeout(()=>{el.style.borderColor='';el.title='';},3000);
 }
 
 </script>
