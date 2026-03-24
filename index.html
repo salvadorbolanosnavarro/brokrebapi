@@ -126,40 +126,73 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
 .c-violet .mod-icon{background:rgba(139,92,246,.15)} .c-violet .mod-icon svg{color:#a78bfa} .c-violet:hover{border-color:rgba(139,92,246,.3)} .c-violet .mod-tag{background:rgba(139,92,246,.12);color:#c4b5fd}
 .c-emerald .mod-icon{background:rgba(16,185,129,.15)} .c-emerald .mod-icon svg{color:#34d399} .c-emerald:hover{border-color:rgba(16,185,129,.3)} .c-emerald .mod-tag{background:rgba(16,185,129,.12);color:#6ee7b7}
 
-/* ── ISR styles ── */
 
-/* ── PANELS: all hidden by default, absolute fill ── */
-#isr,#props-panel,#panel-ficha-manual,#panel-ficha,#panel-contratos,#panel-avm{
-  position:absolute;top:0;left:0;right:0;bottom:0;
-  display:none;flex-direction:column;overflow:hidden;
-}
-/* ISR scrolls itself */
+/* ══ CALCULADORA ISR ══ */
 #isr{ overflow-y:auto; }
+.isr-scroll{ padding:20px; min-height:100%; }
+.isr-hdr{ margin-bottom:16px; }
+.isr-hdr-title{ font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px; }
+.isr-badge{ font-size:9px;font-weight:700;background:var(--teal3);color:var(--teal2);padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px; }
+.isr-hdr-sub{ font-size:12px;color:var(--mut);line-height:1.5; }
+.isr-card{ background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px; }
+.isr-card-lbl{ font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--teal2);margin-bottom:12px;display:flex;align-items:center;gap:6px; }
+.isr-opt{ font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--mut);font-style:italic; }
+.isr-row1{ margin-bottom:10px; }
+.isr-row1:last-child{ margin-bottom:0; }
+.isr-row2{ display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px; }
+.isr-row2:last-child{ margin-bottom:0; }
+.isr-f{ display:flex;flex-direction:column;gap:4px; }
+.isr-f label{ font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.6px; }
+.isr-f input,.isr-f select{ width:100%;padding:9px 11px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r3);color:var(--txt);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s; }
+.isr-f input:focus,.isr-f select:focus{ border-color:var(--teal);background:var(--bg2); }
+.isr-f input::placeholder{ color:var(--mut2); }
+.isr-f select option{ background:var(--bg2); }
+.isr-hint{ font-size:10px;color:var(--teal2);margin-top:2px; }
+.isr-alert-warn{ border-radius:var(--r3);padding:9px 12px;font-size:12px;line-height:1.5;margin-top:10px;background:rgba(245,158,11,.1);border-left:3px solid #f59e0b;color:#fcd34d; }
+.isr-alert-info{ border-radius:var(--r3);padding:9px 12px;font-size:12px;line-height:1.5;margin-top:10px;background:rgba(59,130,246,.1);border-left:3px solid #3b82f6;color:#93c5fd; }
+.isr-inpc-status{ background:var(--sf);border:1px solid var(--bd);border-radius:var(--r3);padding:10px 14px;margin-bottom:12px;font-size:12px; }
+.isr-spin{ width:13px;height:13px;border:2px solid var(--bd2);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0; }
+@keyframes spin{ to{transform:rotate(360deg)} }
+.isr-calc-btn{ width:100%;padding:13px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:var(--r2);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s; }
+.isr-calc-btn:hover{ opacity:.9; }
+.isr-calc-btn:disabled{ opacity:.5;cursor:not-allowed; }
 
-.isr-wrap{flex:1;overflow-y:auto;padding:20px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--bd2) transparent}
-.isr-ttl{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px;color:#fff}
-.isr-tag{font-size:9px;font-weight:700;background:var(--teal3);color:var(--teal2);padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:8px;letter-spacing:.5px}
-.isr-sub{font-size:12px;color:var(--mut);margin-bottom:16px}
-.isr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.isr-field label{display:block;font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
-.isr-field input,.isr-field select{width:100%;padding:9px 11px;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r3);color:var(--txt);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
-.isr-field input:focus,.isr-field select:focus{border-color:var(--teal)}
-.isr-field input::placeholder{color:var(--mut2)}
-.isr-field select option{background:var(--bg2)}
-.isr-calc-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:var(--r3);color:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .2s}
-.isr-calc-btn:hover{opacity:.9}
-#res{display:none;margin-top:16px}
-#res-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.rc{padding:12px;border-radius:var(--r2);text-align:center;border:1px solid var(--bd)}
-.rc.gn{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.25)} .rc.dk{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25)}
-.rc .rv{font-size:18px;font-weight:700;margin-bottom:2px} .rc.gn .rv{color:#34d399} .rc.dk .rv{color:#f87171}
-.rc .rl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
-#res-bkdn{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);padding:12px}
-.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd);font-size:12px}
-.br:last-child{border-bottom:none} .br.tot{font-weight:700} .br.sub{padding-left:12px;color:var(--mut)} .bv{font-weight:600}
-#res-nota{margin-top:10px;font-size:11px;color:var(--mut);background:var(--sf);border-radius:var(--r2);padding:10px;line-height:1.5;border-left:3px solid var(--teal)}
+/* Resultado */
+#res{ margin-top:0; }
+.res-topbar{ display:flex;align-items:center;justify-content:space-between;margin-bottom:16px; }
+.res-back-btn{ display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--bd2);border-radius:var(--r3);padding:7px 12px;color:var(--mut);font-size:12px;font-family:inherit;cursor:pointer;transition:all .15s; }
+.res-back-btn:hover{ color:var(--txt);border-color:var(--txt); }
+.res-tipo-lbl{ font-size:11px;font-weight:700;background:var(--teal3);color:var(--teal2);padding:4px 10px;border-radius:20px; }
+#res-cards,.res-cards-grid{ display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px; }
+.rc{ background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);padding:14px; }
+.rc.gn{ background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25); }
+.rc.dk{ background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25); }
+.rc-l{ font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px; }
+.rc-v{ font-size:20px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:3px;word-break:break-word; }
+.rc.gn .rc-v{ color:#34d399; } .rc.dk .rc-v{ color:#f87171; }
+.rc-n{ font-size:10px;color:var(--mut);line-height:1.4; }
+.res-inpc-row{ display:flex;align-items:center;gap:8px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px;flex-wrap:wrap; }
+.res-inpc-cell{ flex:1;min-width:80px;text-align:center; }
+.res-inpc-cell.hl .res-inpc-val{ color:var(--teal2); }
+.res-inpc-lbl{ font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin-bottom:3px; }
+.res-inpc-val{ font-size:15px;font-weight:700;color:#fff; }
+.res-inpc-arr{ color:var(--mut);font-size:16px;flex-shrink:0; }
+.res-bkdn{ background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);padding:14px;margin-bottom:12px; }
+.br{ display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px; }
+.br:last-child{ border-bottom:none; }
+.br.tot{ font-weight:700;font-size:13px; }
+.br.sub{ padding-left:14px;color:var(--mut); }
+.bl{ color:var(--mut); } .br.tot .bl{ color:var(--txt); }
+.bv{ font-weight:600;color:#fff; }
+.res-nota{ background:rgba(59,130,246,.08);border-left:3px solid #3b82f6;border-radius:0 var(--r3) var(--r3) 0;padding:11px 14px;font-size:12px;line-height:1.55;color:#93c5fd;margin-bottom:12px; }
+.ai-box{ background:var(--teal3);border:1px solid rgba(14,184,160,.2);border-radius:var(--r2);padding:14px;margin-bottom:12px; }
+.ai-lbl{ font-size:11px;font-weight:700;color:var(--teal2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px; }
+#ai-txt{ font-size:12px;line-height:1.6;color:var(--txt); }
+@media(max-width:600px){
+  .isr-row2{ grid-template-columns:1fr; }
+  #res-cards,.res-cards-grid{ grid-template-columns:1fr 1fr; }
+}
 
-/* ── Props styles ── */
 .props-toolbar{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--bg2)}
 .props-search-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r3);padding:0 10px}
 .props-search-wrap input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13px;padding:8px 0;font-family:inherit}
@@ -298,7 +331,7 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
   .mod-card{padding:14px;gap:8px}
   .mod-desc{font-size:11px}
   .mod-title{font-size:13px}
-  .isr-grid{grid-template-columns:1fr}
+  
   #chat-window{
     bottom:0;right:0;left:0;
     width:100%;max-width:100%;
@@ -437,32 +470,17 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
 
     <!-- ISR -->
     <div id="isr">
-    <div class="isr-wrap">
-      <div class="isr-ttl">Calculadora ISR <span class="isr-tag">Art. 119–128 + 152 LISR</span></div>
-      <div class="isr-sub">Ingresa mes y año exactos de compra y venta para usar el INPC mensual correcto (art. 124 LISR). Los campos de deducciones son opcionales pero mejoran la precisión. Recuerda que las deducciones deben ser comprobables con factura o dictamen de avalúo.</div>
-
-      <div id="res">
-        <div class="res-hdr">
-          <h3>Resultado del cálculo</h3>
-          <span class="res-badge" id="res-tipo">—</span>
-        </div>
-        <div class="res-body">
-          <div class="res-cards" id="res-cards"></div>
-          <div class="bkdn" id="res-bkdn"></div>
-          <div class="nota" id="res-nota"></div>
-          <div class="ai-box" id="ai-box" style="display:none">
-            <div class="ai-lbl">Análisis de Brokr</div>
-            <div id="ai-txt"></div>
-          </div>
-          <button id="reset-btn" onclick="resetISR()">← Nuevo cálculo</button>
-        </div>
+  <div class="isr-scroll">
+    <div id="isr-form">
+      <div class="isr-hdr">
+        <div class="isr-hdr-title">Calculadora ISR <span class="isr-badge">Art. 119–128 + 152 LISR</span></div>
+        <div class="isr-hdr-sub">Ingresa los datos de la operación. Los campos de deducciones son opcionales pero mejoran la precisión.</div>
       </div>
-
-      <div class="card" id="isr-form">
-
-        <div class="frow one">
-          <div class="f">
-            <label>Tipo de operación</label>
+      <div class="isr-card">
+        <div class="isr-card-lbl">Tipo de operación</div>
+        <div class="isr-row1">
+          <div class="isr-f">
+            <label>¿Qué se está vendiendo?</label>
             <select id="f-tipo" onchange="onTipoChange()">
               <option value="casa">Casa habitación o departamento</option>
               <option value="terreno">Terreno</option>
@@ -470,39 +488,19 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
             </select>
           </div>
         </div>
-
-        <div class="sec">Datos de la operación</div>
-        <div class="frow one">
-          <div class="f">
-            <label>Costo de adquisición del hoy vendedor (MXN)</label>
-            <input type="text" id="f-compra" placeholder="Ej. $1,800,000" oninput="propFmtMoney(this)" autocomplete="off"/>
-            <span class="f-note" id="compra-note"></span>
-          </div>
-        </div>
-        <div class="frow">
-          <div class="f">
-            <label>Mes de adquisición del hoy vendedor</label>
-            <select id="f-mes-c">
-              <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
-              <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
-              <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
-              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-            </select>
-          </div>
-          <div class="f">
-            <label>Año de adquisición del hoy vendedor</label>
-            <input type="number" id="f-anio-c" placeholder="Ej. 1975" min="1950" max="2025" onchange="onAnioChange()"/>
-          </div>
-        </div>
-        <div class="frow one">
-          <div class="f">
-            <label>Precio de venta de esta operación (MXN)</label>
+        <div id="iva-note" class="isr-alert-warn" style="display:none">⚠️ <strong>Nota IVA:</strong> La venta de inmuebles comerciales podría causar IVA (16%). Consulta con el notario (art. 9 LIVA).</div>
+      </div>
+      <div class="isr-card">
+        <div class="isr-card-lbl">Precio de venta</div>
+        <div class="isr-row1">
+          <div class="isr-f">
+            <label>Precio de venta (MXN)</label>
             <input type="text" id="f-venta" placeholder="Ej. $3,500,000" oninput="propFmtMoney(this)" autocomplete="off"/>
           </div>
         </div>
-        <div class="frow">
-          <div class="f">
-            <label>Mes de venta de esta operación</label>
+        <div class="isr-row2">
+          <div class="isr-f">
+            <label>Mes de venta</label>
             <select id="f-mes-v">
               <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
               <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
@@ -510,64 +508,86 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
               <option value="10">Octubre</option><option value="11" selected>Noviembre</option><option value="12">Diciembre</option>
             </select>
           </div>
-          <div class="f">
-            <label>Año de venta de esta operación</label>
+          <div class="isr-f">
+            <label>Año de venta</label>
             <input type="number" id="f-anio-v" value="2025" min="1990" max="2030"/>
           </div>
         </div>
-
-        <!-- Alerta pre-1981 -->
-        <div id="iva-note" style="display:none;background:#fff8e1;border-left:3px solid #f9a825;padding:11px 14px;border-radius:0 var(--r2) var(--r2) 0;font-size:13px;color:#5d4037;line-height:1.55;margin-bottom:13px">
-          ⚠️ <strong>Nota IVA:</strong> La venta de inmuebles comerciales podría causar IVA (16%). Consulta con el notario si aplica en esta operación específica (art. 9 LIVA).
-        </div>
-        <div id="alert-pre1981" class="alert-box" style="display:none">
-          <strong>⚠️ Adquisición anterior a 1981:</strong> No existe INPC confiable para este período. El notario usará un <strong>avalúo referencial vigente</strong> como valor de adquisición en lugar del precio de compra original. El campo "Precio de compra" se usará como referencia, pero el cálculo definitivo requiere avalúo. Se aplica el INPC desde enero de 1981.
-        </div>
-
-        <!-- Alerta 1981-1989 -->
-        <div id="alert-pre1990" class="alert-box" style="display:none">
-          <strong>Nota — adquisición 1981–1989:</strong> Se aplica INPC con reconversión monetaria (÷1,000 por la eliminación de tres ceros en 1993). El cálculo es correcto pero el notario deberá verificar el índice exacto del mes de adquisición con BANXICO.
-        </div>
-
-        <div class="sec">Deducciones <span style="font-weight:400;font-style:italic;font-size:11px">(opcionales)</span></div>
-        <div class="frow one">
-          <div class="f"><label>Inversiones en construcciones, mejoras y ampliaciones (MXN)</label><input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="propFmtMoney(this)" autocomplete="off"/></div>
-        </div>
-        <div class="frow one">
-          <div class="f"><label>Gastos de escrituración de cuando adquirió el hoy vendedor (MXN)</label><input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="propFmtMoney(this)" autocomplete="off"/></div>
-        </div>
-        <div class="frow one">
-          <div class="f"><label>Comisión del agente que intermedia hoy (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="propFmtMoney(this)" autocomplete="off"/></div>
-        </div>
-
-        <div id="sec-casa">
-          <div class="sec">Casa habitación</div>
-          <div class="frow">
-            <div class="f">
-              <label>¿Es la casa habitación principal del vendedor?</label>
-              <select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select>
-            </div>
-            <div class="f">
-              <label>¿Usó esta exención en los últimos 3 años?</label>
-              <select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select>
-            </div>
+      </div>
+      <div class="isr-card">
+        <div class="isr-card-lbl">Costo de adquisición del vendedor</div>
+        <div class="isr-row1">
+          <div class="isr-f">
+            <label>¿Cuánto pagó el vendedor cuando compró? (MXN)</label>
+            <input type="text" id="f-compra" placeholder="Ej. $1,800,000" oninput="propFmtMoney(this)" autocomplete="off"/>
+            <span class="isr-hint" id="compra-note"></span>
           </div>
         </div>
-
-        <button id="calc-btn" onclick="calcISR()">Calcular ISR</button>
+        <div class="isr-row2">
+          <div class="isr-f">
+            <label>Mes de adquisición</label>
+            <select id="f-mes-c">
+              <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+              <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+              <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+          <div class="isr-f">
+            <label>Año de adquisición</label>
+            <input type="number" id="f-anio-c" placeholder="Ej. 2005" min="1950" max="2025" onchange="onAnioChange()"/>
+          </div>
+        </div>
+        <div id="alert-pre1981" class="isr-alert-warn" style="display:none">⚠️ <strong>Anterior a 1981:</strong> El notario usará avalúo referencial. Se aplica INPC desde enero de 1981.</div>
+        <div id="alert-pre1990" class="isr-alert-info" style="display:none"><strong>1981–1989:</strong> Se aplica reconversión monetaria (÷1,000 por eliminación de tres ceros en 1993).</div>
+      </div>
+      <div class="isr-card">
+        <div class="isr-card-lbl">Deducciones <span class="isr-opt">opcionales</span></div>
+        <div class="isr-row1"><div class="isr-f"><label>Mejoras y construcciones (MXN)</label><input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+        <div class="isr-row1"><div class="isr-f"><label>Escrituración cuando adquirió (MXN)</label><input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+        <div class="isr-row1"><div class="isr-f"><label>Comisión del agente en esta venta (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+      </div>
+      <div class="isr-card" id="sec-casa">
+        <div class="isr-card-lbl">Exención — Casa habitación</div>
+        <div class="isr-row2">
+          <div class="isr-f"><label>¿Es la casa habitación principal del vendedor?</label><select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select></div>
+          <div class="isr-f"><label>¿Usó esta exención en los últimos 3 años?</label><select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select></div>
+        </div>
+      </div>
+      <div id="inpc-status" class="isr-inpc-status" style="display:none">
+        <div id="inpc-loader" style="display:flex;align-items:center;gap:8px;color:var(--mut)"><div class="isr-spin"></div>Consultando INPC en Banxico…</div>
+        <div id="inpc-ok" style="display:none;color:var(--teal2)">✓ INPC en tiempo real desde Banxico</div>
+        <div id="inpc-err" style="display:none;color:#fbbf24">⚠️ Sin conexión a Banxico — usando datos locales</div>
+      </div>
+      <button id="calc-btn" class="isr-calc-btn" onclick="calcISR()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        Calcular ISR
+      </button>
+    </div>
+    <div id="res" style="display:none">
+      <div class="res-topbar">
+        <button class="res-back-btn" onclick="resetISR()">← Nuevo cálculo</button>
+        <span class="res-tipo-lbl" id="res-tipo"></span>
+      </div>
+      <div id="res-cards"></div>
+      <div id="res-inpc-row" class="res-inpc-row" style="display:none">
+        <div class="res-inpc-cell"><div class="res-inpc-lbl">INPC adquisición</div><div class="res-inpc-val" id="res-inpc-adq">—</div></div>
+        <div class="res-inpc-arr">→</div>
+        <div class="res-inpc-cell"><div class="res-inpc-lbl">INPC mes ant. venta</div><div class="res-inpc-val" id="res-inpc-venta">—</div></div>
+        <div class="res-inpc-arr">=</div>
+        <div class="res-inpc-cell hl"><div class="res-inpc-lbl">Factor</div><div class="res-inpc-val" id="res-factor">—</div></div>
+      </div>
+      <div id="res-bkdn" class="res-bkdn"></div>
+      <div id="res-nota" class="res-nota" style="display:none"></div>
+      <div id="ai-box" class="ai-box" style="display:none">
+        <div class="ai-lbl">Análisis de Brokr</div>
+        <div id="ai-txt"></div>
       </div>
     </div>
   </div>
-<!-- ═══════════════════════════════════════════
-     PANEL: MIS PROPIEDADES
-═══════════════════════════════════════════ -->
+</div>
 
-    <!-- ── PROPS ── -->
-
-    <!-- PROPS -->
-
-    <!-- PROPS -->
-    <div id="props-panel" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+<div id="props-panel" style="display:none;flex-direction:column;height:100%;overflow:hidden">
 
   <!-- TOOLBAR -->
   <div class="props-toolbar">
@@ -1305,6 +1325,19 @@ function calcTablaProgresiva(base) {
 }
 
 function renderResult(d) {
+  // INPC row
+  const inpcRow = document.getElementById('res-inpc-row');
+  if(inpcRow){
+    if(d.gan > 0){ 
+      inpcRow.style.display='flex';
+      const adqEl=document.getElementById('res-inpc-adq');
+      const vntEl=document.getElementById('res-inpc-venta');
+      const fctEl=document.getElementById('res-factor');
+      if(adqEl) adqEl.textContent=d.inpcAdq.toFixed(4);
+      if(vntEl) vntEl.textContent=d.inpcVenta.toFixed(4);
+      if(fctEl) fctEl.textContent=d.factor.toFixed(6);
+    } else { inpcRow.style.display='none'; }
+  }
   const tipos = {casa:'Casa habitación / Depto.',terreno:'Terreno',comercial:'Inmueble comercial'};
   g('res-tipo').textContent = tipos[d.tipo] || '';
 
@@ -1365,7 +1398,7 @@ function renderResult(d) {
   if (d.esc) comp.push('Gastos de escrituración y honorarios notariales');
   if (d.preAnio1981) comp.push('Avalúo vigente del inmueble (adquisición anterior a 1981)');
   const compH = comp.length ? '<ul style="margin:6px 0 0 16px">' + comp.map(c=>`<li>${c}</li>`).join('') + '</ul>' : '';
-  g('res-nota').innerHTML =
+  g('res-nota').style.display='block'; g('res-nota').innerHTML =
     `<strong>⚠️ Importante:</strong> Cálculo orientativo con tabla progresiva art. 152 LISR e INPC mensual art. 124 LISR. El notario realizará el cálculo definitivo.`
     + (comp.length ? `<br><br>El vendedor deberá presentar al notario:${compH}` : '')
     + (d.nota ? `<br><br><strong>Nota:</strong> ${d.nota}` : '');
@@ -1397,6 +1430,8 @@ En 3 oraciones en español: 1) valida si el resultado es razonable, 2) menciona 
 }
 
 function resetISR() {
+  const st=document.getElementById('inpc-status'); if(st) st.style.display='none';
+  const ir=document.getElementById('res-inpc-row'); if(ir) ir.style.display='none';
   g('res').style.display = 'none';
   ['f-venta','f-compra','f-anio-c','f-mej','f-com','f-esc'].forEach(id => g(id).value = '');
   g('f-anio-v').value = '2025';
