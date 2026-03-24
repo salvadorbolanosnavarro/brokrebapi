@@ -81,19 +81,8 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
 
 /* ── ALL PANELS: absolute fill ── */
 #dashboard,
-#isr,
-#props-panel,
-#panel-ficha-manual,
-#panel-ficha,
-#panel-contratos,
-#panel-avm{
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-}
-#isr{overflow-y:auto;}
+
+
 
 /* dashboard visible by default */
 #dashboard{
@@ -105,10 +94,7 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
   align-content:start;
 }
 /* all other panels hidden by default */
-#isr,#props-panel,#panel-ficha-manual,#panel-ficha,#panel-contratos,#panel-avm{
-  display:none;
-  flex-direction:column;
-}
+
 
 /* ── MODULE CARDS ── */
 .mod-card{
@@ -141,6 +127,15 @@ body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var
 .c-emerald .mod-icon{background:rgba(16,185,129,.15)} .c-emerald .mod-icon svg{color:#34d399} .c-emerald:hover{border-color:rgba(16,185,129,.3)} .c-emerald .mod-tag{background:rgba(16,185,129,.12);color:#6ee7b7}
 
 /* ── ISR styles ── */
+
+/* ── PANELS: all hidden by default, absolute fill ── */
+#isr,#props-panel,#panel-ficha-manual,#panel-ficha,#panel-contratos,#panel-avm{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:none;flex-direction:column;overflow:hidden;
+}
+/* ISR scrolls itself */
+#isr{ overflow-y:auto; }
+
 .isr-wrap{flex:1;overflow-y:auto;padding:20px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--bd2) transparent}
 .isr-ttl{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px;color:#fff}
 .isr-tag{font-size:9px;font-weight:700;background:var(--teal3);color:var(--teal2);padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:8px;letter-spacing:.5px}
