@@ -1324,6 +1324,22 @@ const PANEL_MAP = {
 
 function setPanel(name) {
   // Hide dashboard
+  // ── ACCESS GUARD ──
+  if(userProfile && userProfile.plan !== 'admin' && userProfile.plan !== 'pro'){
+    const mods = userProfile.modulos || [];
+    const modForPanel = {
+      'ficha-manual':'ficha-manual', 'ficha':'ficha',
+      'contratos':'contratos', 'avm':'avm', 'isr':'isr', 'props':'props'
+    };
+    // 'fichas' is the unified fichas panel — allow if user has either ficha module
+    if(name === 'fichas'){
+      if(!mods.includes('ficha-manual') && !mods.includes('ficha')) return;
+    } else if(modForPanel[name] && !mods.includes(modForPanel[name])){
+      return;
+    }
+  }
+  // ── END GUARD ──
+
   const db = document.getElementById('dashboard');
   if(db) db.style.display = 'none';
 
@@ -1453,7 +1469,6 @@ function applyUserPermissions(){
   if(!userProfile) return;
   updateUserDisplay();
 
-  // Show admin items
   if(userProfile.plan === 'admin'){
     const lbl = document.getElementById('admin-lbl');
     const btn = document.getElementById('admin-link-btn');
@@ -1461,15 +1476,24 @@ function applyUserPermissions(){
     if(btn) btn.style.display = 'flex';
   }
 
-  // Hide tabs for modules user doesn't have
   if(userProfile.plan !== 'admin' && userProfile.plan !== 'pro'){
     const mods = userProfile.modulos || [];
+
+    // Hide nav tabs
     document.querySelectorAll('.nav-tab').forEach(tab => {
       const mod = tab.getAttribute('data-mod');
       if(mod && !mods.includes(mod)) tab.style.display = 'none';
     });
+
+    // Hide dashboard cards — match by onclick setPanel argument
+    document.querySelectorAll('.mod-card').forEach(card => {
+      const onclickAttr = card.getAttribute('onclick') || '';
+      const match = onclickAttr.match(/setPanel\('([^']+)'\)/);
+      if(match && !mods.includes(match[1])) card.style.display = 'none';
+    });
   }
 }
+
 
 function updateUserDisplay(){
   if(!userProfile) return;
