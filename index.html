@@ -22,9 +22,10 @@
 ══════════════════════════════════════════ */
 :root{
   /* Backgrounds — lighter/warmer dark */
-  --bg:#111827;
-  --bg2:#1a2535;
-  --bg3:#1f2d40;
+  --bg: #f9fafb;
+--bg2: #ffffff;
+--bg3: #f3f4f6;
+--txt: #111827;
   --sf:#243048;
   --sf2:#2a3855;
 
@@ -69,6 +70,7 @@
 
 html{height:100%}
 body{
+   overflow-y: auto;
   height:100%;
   background:var(--bg);
   font-family:'DM Sans',sans-serif;
@@ -104,6 +106,7 @@ body{
 
 /* Logo / Home button */
 #nav-logo{
+   order: 3;
   flex-shrink:0;
   height:100%;
   display:flex;
@@ -2148,4 +2151,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 </body>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  // Activar botones de sexo
+  document.querySelectorAll('.btn-sexo').forEach(boton => {
+    boton.addEventListener('click', function() {
+      document.querySelectorAll('.btn-sexo').forEach(b => b.classList.remove('activo', 'seleccionado'));
+      this.classList.add('activo', 'seleccionado');
+    });
+  });
+
+  // Herramienta PDF para las fichas
+  function descargarFichaPDF(idContenedor) {
+    const elemento = document.getElementById(idContenedor);
+    if(!elemento) return;
+    html2pdf().set({
+      margin: 10, filename: 'BROKR_FichaT.pdf',
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(elemento).save();
+  }
+</script>
 </html>
