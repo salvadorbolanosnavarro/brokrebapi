@@ -20,52 +20,48 @@
 /* ══════════════════════════════════════════
    DESIGN TOKENS — Brighter, more colorful
 ══════════════════════════════════════════ */
-:root{
-  /* Backgrounds — lighter/warmer dark */
+   :root {
+  /* Fondos modo claro */
   --bg: #f9fafb;
---bg2: #ffffff;
---bg3: #f3f4f6;
---txt: #111827;
-  --sf:#243048;
-  --sf2:#2a3855;
+  --bg2: #ffffff;
+  --bg3: #f3f4f6;
+  --sf: #ffffff;
+  --sf2: #f3f4f6;
 
-  /* Borders */
-  --bd:rgba(255,255,255,.09);
-  --bd2:rgba(255,255,255,.16);
+  /* Bordes sutiles oscuros para que se vean */
+  --bd: rgba(0, 0, 0, 0.08);
+  --bd2: rgba(0, 0, 0, 0.15);
 
-  /* Primary accent — vibrant teal */
-  --teal:#00d4b8;
-  --teal2:#00ffe8;
-  --teal3:rgba(0,212,184,.14);
-  --teal-glow:rgba(0,212,184,.35);
+  /* Acentos de color (Se mantienen tus colores vibrantes) */
+  --teal: #00d4b8;
+  --teal2: #00b8a0;
+  --teal3: rgba(0,212,184,.14);
+  --teal-glow: rgba(0,212,184,.35);
 
-  /* Module accent colors — vivid */
-  --amber:#f59e0b;
-  --amber2:#fbbf24;
-  --rose:#f43f5e;
-  --rose2:#fb7185;
-  --violet:#8b5cf6;
-  --violet2:#a78bfa;
-  --emerald:#10b981;
-  --emerald2:#34d399;
-  --sky:#0ea5e9;
-  --sky2:#38bdf8;
-  --orange:#f97316;
-  --orange2:#fb923c;
+  --amber: #f59e0b;
+  --amber2: #d97706;
+  --rose: #f43f5e;
+  --rose2: #e11d48;
+  --violet: #8b5cf6;
+  --violet2: #7c3aed;
+  --emerald: #10b981;
+  --emerald2: #059669;
+  --sky: #0ea5e9;
+  --sky2: #0284c7;
+  --orange: #f97316;
+  --orange2: #ea580c;
 
-  /* Text */
-  --txt:rgba(255,255,255,.93);
-  --mut:rgba(255,255,255,.5);
-  --mut2:rgba(255,255,255,.25);
+  /* Textos oscuros (¡Esto hará que todo vuelva a aparecer y sea legible!) */
+  --txt: #111827;
+  --mut: #4b5563;
+  --mut2: #9ca3af;
 
-  /* Radius */
-  --r:16px;
-  --r2:12px;
-  --r3:8px;
-
-  /* Top bar height + safe area */
-  --topbar:56px;
-  --safe-top:env(safe-area-inset-top,0px);
+  /* Medidas y radios */
+  --r: 16px;
+  --r2: 12px;
+  --r3: 8px;
+  --topbar: 64px; /* Aumenté el alto de la barra para que quepa tu logo más grande */
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 html{height:100%}
