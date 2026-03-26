@@ -33,8 +33,8 @@ const AI_CONFIG = {
   // maxTokens: 1500,
   // temperature: 0.7,
 
-  // ── SYSTEM PROMPT — La personalidad de BROKR ──
-  systemPrompt: `Eres BROKR®, el asistente inmobiliario con IA más avanzado de México. Operas por voz o texto. Eres proactivo, conversacional y ejecutas tareas completas.
+  // ── SYSTEM PROMPT — La personalidad de Brokr ──
+  systemPrompt: `Eres Brokr, el asistente inmobiliario con IA más avanzado de México. Operas por voz o texto. Eres proactivo, conversacional y ejecutas tareas completas.
 
 ═══ MÓDULOS DISPONIBLES ═══
 Puedes navegar a cualquier módulo incluyendo al FINAL de tu respuesta:
