@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mis inmuebles — BROKR®</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap"/>
+<link rel="stylesheet" href="../css/design-system.css"/>
+<style>
+body { overflow: hidden; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+
+/* Toolbar */
+.props-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--bd); display: flex; align-items: center; gap: 8px; flex-shrink: 0; background: var(--bg2); flex-wrap: wrap; }
+.props-search-wrap { flex: 1; min-width: 180px; display: flex; align-items: center; gap: 8px; background: var(--sf); border: 1px solid var(--bd2); border-radius: var(--r3); padding: 0 10px; }
+.props-search-wrap input { flex: 1; background: none; border: none; outline: none; color: var(--txt); font-size: var(--fs-base); padding: 10px 0; font-family: inherit; }
+.props-search-wrap input::placeholder { color: var(--mut2); }
+.props-toolbar select { min-height: var(--touch-min); padding: 0 10px; background: var(--sf); border: 1px solid var(--bd2); border-radius: var(--r3); color: var(--txt); font-size: var(--fs-sm); font-family: inherit; }
+.props-toolbar select option { background: var(--bg2); }
+.btn-new-prop { min-height: var(--touch-min); padding: 0 16px; background: var(--teal); border: none; border-radius: var(--r3); color: #fff; font-size: var(--fs-sm); font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.btn-new-prop:hover { background: var(--teal2); }
+
+/* Grid */
+.props-grid { flex: 1; overflow-y: auto; padding: 14px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; align-content: start; }
+.props-empty { grid-column: 1/-1; text-align: center; padding: 50px 20px; color: var(--mut); }
+
+/* Cards */
+.prop-card { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); overflow: hidden; cursor: pointer; transition: all .18s; }
+.prop-card:hover { border-color: var(--bd2); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+.prop-card-img { width: 100%; height: 140px; overflow: hidden; background: var(--sf2); }
+.prop-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.prop-card-body { padding: 12px; }
+.prop-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.prop-card-title { font-weight: 700; font-size: var(--fs-sm); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prop-card-loc { font-size: var(--fs-xs); color: var(--mut); margin-bottom: 4px; }
+.prop-card-price { color: var(--teal2); font-size: var(--fs-base); font-weight: 700; margin-bottom: 6px; }
+.prop-card-specs { display: flex; flex-wrap: wrap; gap: 4px; }
+.prop-card-specs span { font-size: 10px; background: var(--bg3); padding: 3px 7px; border-radius: 4px; color: var(--mut); }
+.prop-card-actions { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--bd); }
+.prop-act-btn { padding: 6px 12px; border-radius: var(--r3); font-size: var(--fs-xs); font-family: inherit; cursor: pointer; border: 1px solid var(--bd2); background: none; color: var(--mut); transition: all .15s; }
+.prop-act-btn:hover { color: var(--txt); border-color: var(--txt); }
+.prop-act-edit { border-color: var(--teal); color: var(--teal2); }
+.prop-act-del { border-color: var(--danger-bd); color: #fca5a5; }
+
+/* Modal */
+.prop-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+.prop-modal-overlay.open, .prop-modal-overlay[style*="flex"] { display: flex; }
+.prop-modal-box { background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; }
+.prop-modal-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--bd); }
+.prop-modal-hdr h3 { font-family: var(--font-display); font-size: var(--fs-title); font-weight: 700; }
+.prop-modal-close { background: none; border: none; color: var(--mut); font-size: 18px; cursor: pointer; width: var(--touch-min); height: var(--touch-min); display: flex; align-items: center; justify-content: center; }
+.prop-modal-body { padding: 18px; }
+
+/* Form */
+.pf-section { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--teal2); padding: 14px 0 8px; border-bottom: 1px solid var(--bd); margin-bottom: 12px; }
+.pf-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.pf-field { display: flex; flex-direction: column; gap: 4px; }
+.pf-field.full { grid-column: 1 / -1; }
+.pf-field label { font-size: var(--fs-label); font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .7px; }
+.pf-field input, .pf-field textarea, .pf-field select { width: 100%; min-height: var(--touch-min); padding: 10px 12px; background: var(--sf); border: 1px solid var(--bd2); border-radius: var(--r3); color: var(--txt); font-size: var(--fs-sm); font-family: inherit; outline: none; }
+.pf-field input:focus, .pf-field textarea:focus, .pf-field select:focus { border-color: var(--teal); }
+.pf-field textarea { resize: vertical; min-height: 70px; }
+.pf-field select option { background: var(--bg2); }
+.pf-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 14px; border-top: 1px solid var(--bd); margin-top: 14px; }
+.pf-cancel-btn { min-height: var(--touch-min); padding: 0 16px; background: none; border: 1px solid var(--bd2); color: var(--mut); border-radius: var(--r3); font-size: var(--fs-sm); cursor: pointer; font-family: inherit; }
+.pf-save-btn { min-height: var(--touch-min); padding: 0 20px; background: var(--teal); border: none; color: #fff; border-radius: var(--r3); font-size: var(--fs-sm); font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+.pf-save-btn:hover { background: var(--teal2); }
+
+/* Detail modal */
+.prop-detail-box { max-width: 600px; }
+.detail-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; margin-bottom: 12px; }
+.detail-gallery img { width: 100%; height: 90px; object-fit: cover; border-radius: var(--r3); cursor: pointer; }
+.detail-price-hero { font-size: 22px; font-weight: 800; color: var(--teal2); margin-bottom: 4px; }
+.detail-loc { font-size: var(--fs-sm); color: var(--mut); margin-bottom: 10px; }
+.detail-desc { font-size: var(--fs-sm); color: var(--mut); line-height: 1.6; margin-bottom: 10px; padding: 10px; background: var(--bg3); border-radius: var(--r3); }
+.detail-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.detail-info-item { background: var(--bg3); border-radius: var(--r3); padding: 8px 10px; }
+.detail-info-item label { font-size: 9px; text-transform: uppercase; letter-spacing: .7px; color: var(--mut); display: block; margin-bottom: 2px; }
+.detail-info-item span { font-size: var(--fs-sm); font-weight: 600; }
+
+/* Foto upload */
+.foto-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.foto-preview-item { position: relative; }
+.foto-preview-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
+.foto-preview-item button { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: #ef4444; border: none; border-radius: 50%; color: #fff; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* Badge operacion/estatus */
+.badge { display: inline-flex; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
+.badge-venta { background: rgba(14,184,160,.15); color: var(--teal2); }
+.badge-renta { background: rgba(59,130,246,.15); color: #60a5fa; }
+.badge-activa { background: rgba(16,185,129,.15); color: var(--success); }
+.badge-vendida { background: rgba(139,92,246,.15); color: #a78bfa; }
+.badge-rentada { background: rgba(59,130,246,.15); color: #60a5fa; }
+.badge-suspendida { background: rgba(245,158,11,.15); color: var(--warn); }
+
+@media (max-width: 600px) {
+  .props-toolbar { flex-direction: column; }
+  .props-toolbar select { width: 100%; }
+  .props-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="props-toolbar">
+  <div class="props-search-wrap">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:.4"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+    <input id="props-search" type="text" placeholder="Buscar por colonia, tipo, precio..." oninput="filterProps()" />
+  </div>
+  <select id="props-filter-op" onchange="filterProps()">
+    <option value="">Todas las operaciones</option>
+    <option value="venta">Venta</option>
+    <option value="renta">Renta</option>
+  </select>
+  <select id="props-filter-tipo" onchange="filterProps()">
+    <option value="">Todos los tipos</option>
+    <option value="casa">Casa</option>
+    <option value="departamento">Departamento</option>
+    <option value="terreno">Terreno</option>
+    <option value="local">Local comercial</option>
+    <option value="oficina">Oficina</option>
+    <option value="bodega">Bodega</option>
+  </select>
+  <select id="props-filter-est" onchange="filterProps()">
+    <option value="">Todos los estatus</option>
+    <option value="activa">Activas</option>
+    <option value="vendida">Vendidas</option>
+    <option value="rentada">Rentadas</option>
+    <option value="suspendida">Suspendidas</option>
+  </select>
+  <button class="btn-new-prop" onclick="openPropForm(null)">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+    Nueva propiedad
+  </button>
+</div>
+
+<!-- GRID -->
+<div id="props-grid" class="props-grid">
+  <div class="props-empty">Cargando propiedades...</div>
+</div>
+
+<!-- MODAL: FORM -->
+<div id="prop-modal" class="prop-modal-overlay" onclick="if(event.target===this)closePropModal()">
+  <div class="prop-modal-box" onclick="event.stopPropagation()">
+    <div class="prop-modal-hdr">
+      <h3 id="prop-modal-title">Nueva propiedad</h3>
+      <button onclick="closePropModal()" class="prop-modal-close">✕</button>
+    </div>
+    <div class="prop-modal-body">
+      <form id="prop-form" onsubmit="saveProp(event)">
+        <div class="pf-section">Información básica</div>
+        <div class="pf-row"><div class="pf-field full"><label>Título *</label><input type="text" name="titulo" placeholder="Casa en venta en Las Palmas" required/></div></div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Tipo *</label><select name="tipo" required><option value="">Seleccionar</option><option value="casa">Casa</option><option value="departamento">Departamento</option><option value="terreno">Terreno</option><option value="local">Local comercial</option><option value="oficina">Oficina</option><option value="bodega">Bodega</option></select></div>
+          <div class="pf-field"><label>Operación *</label><select name="operacion" required><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
+          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option></select></div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Precio *</label><input type="text" name="precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" required/></div>
+          <div class="pf-field"><label>Moneda</label><select name="moneda"><option value="MXN">MXN</option><option value="USD">USD</option></select></div>
+        </div>
+        <div class="pf-section">Ubicación</div>
+        <div class="pf-row"><div class="pf-field full"><label>Calle y número</label><input type="text" name="calle" placeholder="Av. Madero 123"/></div></div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Colonia *</label><input type="text" name="colonia" placeholder="Las Palmas" required/></div>
+          <div class="pf-field"><label>Ciudad</label><input type="text" name="ciudad" value="Morelia"/></div>
+          <div class="pf-field"><label>C.P.</label><input type="text" name="cp" placeholder="58070"/></div>
+        </div>
+        <div class="pf-section">Características</div>
+        <div class="pf-row">
+          <div class="pf-field"><label>M² construcción</label><input type="number" name="m2_construccion" placeholder="180" min="0"/></div>
+          <div class="pf-field"><label>M² terreno</label><input type="number" name="m2_terreno" placeholder="220" min="0"/></div>
+          <div class="pf-field"><label>Recámaras</label><input type="number" name="recamaras" placeholder="3" min="0"/></div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Baños</label><input type="number" name="banos" placeholder="2.5" min="0" step="0.5"/></div>
+          <div class="pf-field"><label>Estacionamientos</label><input type="number" name="estacionamientos" placeholder="2" min="0"/></div>
+          <div class="pf-field"><label>Año construcción</label><input type="number" name="anio_construccion" placeholder="2010" min="1900" max="2030"/></div>
+        </div>
+        <div class="pf-section">Descripción</div>
+        <div class="pf-row"><div class="pf-field full"><label>Descripción comercial</label><textarea name="descripcion" rows="4" placeholder="Describe la propiedad..."></textarea></div></div>
+        <div class="pf-section">Fotos</div>
+        <div class="pf-row"><div class="pf-field full"><label>Subir fotos</label><input type="file" id="fotos-upload" accept="image/*" multiple style="padding:8px;border:2px dashed var(--bd2);border-radius:var(--r2);cursor:pointer"/><div id="fotos-preview" class="foto-preview"></div><div id="fotos-progress" style="font-size:12px;color:var(--mut);margin-top:4px"></div><input type="hidden" name="fotos_raw" id="fotos-raw-hidden"/></div></div>
+        <div class="pf-row"><div class="pf-field full"><label>Notas internas</label><textarea name="notas" rows="2" placeholder="Notas privadas..."></textarea></div></div>
+        <input type="hidden" name="prop_id" value=""/>
+        <div class="pf-actions">
+          <button type="button" onclick="closePropModal()" class="pf-cancel-btn">Cancelar</button>
+          <button type="submit" class="pf-save-btn"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Guardar propiedad</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE -->
+<div id="prop-detail-modal" class="prop-modal-overlay" onclick="if(event.target===this)closePropDetail()">
+  <div class="prop-modal-box prop-detail-box" onclick="event.stopPropagation()">
+    <div class="prop-modal-hdr">
+      <h3 id="detail-title">Detalle</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="prop-act-btn prop-act-edit" id="detail-edit-btn">✏️ Editar</button>
+        <button onclick="closePropDetail()" class="prop-modal-close">✕</button>
+      </div>
+    </div>
+    <div class="prop-modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PROPIEDADES MODULE
+   ═══════════════════════════════════════════════════════════ */
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+let allProps = [];
+let editingPropId = null;
+let uploadedFotoUrls = [];
+
+function g(id) { return document.getElementById(id); }
+function getRawNum(val) { return parseFloat((val||'').replace(/[$,]/g,'').trim()) || 0; }
+function propFmtMoney(input) {
+  const raw = getRawNum(input.value);
+  if (!raw) { input.value = ''; return; }
+  input.value = '$' + raw.toLocaleString('es-MX', { minimumFractionDigits: 0 });
+}
+function fmtPrecio(p, moneda='MXN') {
+  if (!p) return '—';
+  return (moneda === 'USD' ? 'USD ' : '$') + Number(p).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+}
+
+async function sbFetch(path, method='GET', body=null) {
+  const token = sessionStorage.getItem('sb_token') || SB_KEY;
+  const opts = { method, headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(SB_URL + '/rest/v1/' + path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+// ── LOAD & RENDER ──
+async function loadProps() {
+  const grid = g('props-grid');
+  grid.innerHTML = '<div class="props-empty">Cargando propiedades...</div>';
+  try {
+    allProps = await sbFetch('propiedades?order=created_at.desc&limit=200');
+    renderProps(allProps);
+  } catch(e) { grid.innerHTML = '<div class="props-empty">Error: ' + e.message + '</div>'; }
+}
+
+function renderProps(props) {
+  const grid = g('props-grid');
+  if (!props.length) { grid.innerHTML = '<div class="props-empty"><p>No hay propiedades aún.<br>Agrega la primera con <strong>Nueva propiedad</strong>.</p></div>'; return; }
+  grid.innerHTML = props.map(p => {
+    const foto = p.fotos?.length ? `<img src="${p.fotos[0]}" onerror="this.parentElement.innerHTML='<div style=\\'height:140px;display:flex;align-items:center;justify-content:center;color:var(--mut)\\'>Sin foto</div>'" />` : '<div style="height:140px;display:flex;align-items:center;justify-content:center;color:var(--mut)">Sin foto</div>';
+    const specs = [];
+    if (p.recamaras) specs.push(`<span>🛏 ${p.recamaras}</span>`);
+    if (p.banos) specs.push(`<span>🚿 ${p.banos}</span>`);
+    if (p.m2_construccion) specs.push(`<span>📐 ${p.m2_construccion}m²</span>`);
+    return `<div class="prop-card" onclick="openPropDetail('${p.id}')">
+      <div class="prop-card-img">${foto}</div>
+      <div class="prop-card-body">
+        <div class="prop-card-badges"><span class="badge badge-${p.operacion}">${p.operacion}</span><span class="badge badge-${p.estatus}">${p.estatus}</span></div>
+        <div class="prop-card-title">${p.titulo}</div>
+        <div class="prop-card-loc">📍 ${p.colonia}${p.ciudad ? ', '+p.ciudad : ''}</div>
+        <div class="prop-card-price">${fmtPrecio(p.precio, p.moneda)}</div>
+        <div class="prop-card-specs">${specs.join('')}</div>
+      </div>
+      <div class="prop-card-actions">
+        <button class="prop-act-btn prop-act-edit" onclick="event.stopPropagation();openPropForm('${p.id}')">✏️ Editar</button>
+        <button class="prop-act-btn prop-act-del" onclick="event.stopPropagation();deleteProp('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterProps() {
+  const q = g('props-search').value.toLowerCase();
+  const op = g('props-filter-op').value;
+  const tipo = g('props-filter-tipo').value;
+  const est = g('props-filter-est').value;
+  renderProps(allProps.filter(p =>
+    (!q || (p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) &&
+    (!op || p.operacion === op) && (!tipo || p.tipo === tipo) && (!est || p.estatus === est)
+  ));
+}
+
+// ── FORM ──
+function openPropForm(id) {
+  editingPropId = id;
+  const form = g('prop-form');
+  form.reset();
+  uploadedFotoUrls = [];
+  g('fotos-preview').innerHTML = '';
+  g('fotos-raw-hidden').value = '';
+  g('fotos-progress').textContent = '';
+  if (id) {
+    const p = allProps.find(x => x.id === id);
+    if (!p) return;
+    g('prop-modal-title').textContent = 'Editar propiedad';
+    Object.keys(p).forEach(k => { const el = form.elements[k]; if (!el || p[k] == null) return; if (k === 'precio') { el.value = p[k] ? '$'+Number(p[k]).toLocaleString('es-MX') : ''; } else { el.value = p[k]; } });
+    form.elements['fotos_raw'].value = (p.fotos||[]).join(',');
+    form.elements['prop_id'].value = id;
+    if (p.fotos?.length) {
+      uploadedFotoUrls = [...p.fotos];
+      p.fotos.forEach((url, idx) => { const div = document.createElement('div'); div.className = 'foto-preview-item'; div.innerHTML = `<img src="${url}"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`; g('fotos-preview').appendChild(div); });
+      g('fotos-progress').textContent = `${p.fotos.length} foto(s)`;
+    }
+  } else { g('prop-modal-title').textContent = 'Nueva propiedad'; form.elements['prop_id'].value = ''; }
+  g('prop-modal').style.display = 'flex';
+  initFotoUpload();
+}
+
+function closePropModal() { g('prop-modal').style.display = 'none'; }
+
+async function saveProp(e) {
+  e.preventDefault();
+  const form = e.target; const fd = new FormData(form); const data = {};
+  fd.forEach((v,k) => { if (v !== '') data[k] = v; });
+  const fotosRaw = (data.fotos_raw||'').split(',').map(s=>s.trim()).filter(Boolean);
+  delete data.fotos_raw;
+  data.fotos = fotosRaw.length ? fotosRaw : uploadedFotoUrls;
+  if (data.precio) data.precio = getRawNum(String(data.precio));
+  ['m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
+  data.updated_at = new Date().toISOString();
+  const id = data.prop_id; delete data.prop_id;
+  const btn = form.querySelector('.pf-save-btn');
+  try {
+    btn.innerHTML = 'Guardando...'; btn.disabled = true;
+    if (id) { await sbFetch('propiedades?id=eq.'+id, 'PATCH', data); } else { await sbFetch('propiedades', 'POST', data); }
+    closePropModal(); await loadProps();
+  } catch(err) { alert('Error: ' + err.message); }
+  finally { btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Guardar propiedad'; btn.disabled = false; }
+}
+
+async function deleteProp(id) {
+  if (!confirm('¿Eliminar esta propiedad?')) return;
+  try { await sbFetch(`propiedades?id=eq.${id}`, 'DELETE'); await loadProps(); } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── DETAIL ──
+function openPropDetail(id) {
+  const p = allProps.find(x => x.id === id); if (!p) return;
+  g('detail-title').textContent = p.titulo;
+  g('detail-edit-btn').onclick = () => { closePropDetail(); openPropForm(id); };
+  const fotos = p.fotos?.length ? p.fotos : [];
+  const gallery = fotos.length ? `<div class="detail-gallery">${fotos.map(f=>`<img src="${f}" onclick="window.open('${f}','_blank')"/>`).join('')}</div>` : '';
+  const specs = [{l:'Tipo',v:p.tipo},{l:'Operación',v:p.operacion},{l:'Estatus',v:p.estatus},{l:'M² Const.',v:p.m2_construccion?p.m2_construccion+'m²':'—'},{l:'M² Terreno',v:p.m2_terreno?p.m2_terreno+'m²':'—'},{l:'Recámaras',v:p.recamaras||'—'},{l:'Baños',v:p.banos||'—'},{l:'Estac.',v:p.estacionamientos||'—'}];
+  g('detail-body').innerHTML = `${gallery}<div class="detail-price-hero">${fmtPrecio(p.precio,p.moneda)}</div><div class="detail-loc">📍 ${[p.calle,p.colonia,p.ciudad,p.estado].filter(Boolean).join(', ')}</div>${p.descripcion?`<div class="detail-desc">${p.descripcion}</div>`:''}<div class="detail-info-grid">${specs.map(s=>`<div class="detail-info-item"><label>${s.l}</label><span>${s.v}</span></div>`).join('')}</div>${p.notas?`<div style="background:var(--warn-bg);border-radius:var(--r3);padding:10px;font-size:12px;color:#fcd34d"><strong>📝 Notas:</strong> ${p.notas}</div>`:''}`;
+  g('prop-detail-modal').style.display = 'flex';
+}
+function closePropDetail() { g('prop-detail-modal').style.display = 'none'; }
+
+// ── FOTOS ──
+function initFotoUpload() {
+  const input = g('fotos-upload'); if (!input) return;
+  input.onchange = async (e) => {
+    const files = Array.from(e.target.files); if (!files.length) return;
+    const progress = g('fotos-progress'); const preview = g('fotos-preview');
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      progress.textContent = `Subiendo ${i+1} de ${files.length}...`;
+      try {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':file.type, 'x-upsert':'true' }, body:file });
+        if (!r.ok) throw new Error(await r.text());
+        const url = `${SB_URL}/storage/v1/object/public/fotos-propiedades/${name}`;
+        uploadedFotoUrls.push(url);
+        const div = document.createElement('div'); div.className = 'foto-preview-item';
+        const idx = uploadedFotoUrls.length - 1;
+        div.innerHTML = `<img src="${url}"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
+        preview.appendChild(div);
+      } catch(err) { progress.textContent = `Error: ${err.message}`; return; }
+    }
+    progress.textContent = `✓ ${uploadedFotoUrls.length} foto(s)`;
+    g('fotos-raw-hidden').value = uploadedFotoUrls.join(',');
+  };
+}
+function removeFoto(idx, el) { uploadedFotoUrls.splice(idx,1); el.remove(); g('fotos-raw-hidden').value = uploadedFotoUrls.join(','); }
+
+// ── INIT ──
+loadProps();
+</script>
+</body>
+</html>
