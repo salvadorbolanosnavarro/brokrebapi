@@ -1021,7 +1021,7 @@ async def generar_ficha_pdf(p: dict):
     
     from fastapi.responses import JSONResponse
     id_prop = p.get("public_id") or p.get("id") or "ficha"
-    filename = f"BROKR_{id_prop}.pdf"
+    filename = f"Brokr_{id_prop}.pdf"
     token = str(_uuid.uuid4()).replace("-","")[:16]
     _pdf_store[token] = (pdf_bytes, filename)
     # Clean old entries if too many
