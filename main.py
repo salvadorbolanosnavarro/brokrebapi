@@ -900,9 +900,11 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
 
     CSS = """
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap');
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:white;color:#0f1829}
+body{font-family:'font-family:'Poppins',sans-serif;background:white;color:#0f1829}
 .ficha-page{width:210mm;height:297mm;background:white;display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
 .ficha-page:last-child{page-break-after:avoid}
 .cover-accent{height:4px;background:linear-gradient(90deg,#2a9db5 0%,#4caf7d 100%);flex-shrink:0}
@@ -910,7 +912,7 @@ body{font-family:'DM Sans',sans-serif;background:white;color:#0f1829}
 .cover-hero-placeholder{width:100%;height:120mm;background:linear-gradient(135deg,#0f1829,#1a2744);flex-shrink:0}
 .cover-info{padding:14px 24px 10px;border-bottom:1px solid #e8ecf2}
 .cover-badge{display:inline-block;background:linear-gradient(135deg,#2a9db5,#1f8ba0);color:white;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:7px}
-.cover-precio{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#0f1829;line-height:1;margin-bottom:4px}
+.cover-precio{font-family:'Poppins',sans-serif;font-size:30px;font-weight:700;color:#0f1829;line-height:1;margin-bottom:4px}
 .cover-titulo{font-size:13px;font-weight:600;color:#1a2744;margin-bottom:3px}
 .cover-ubicacion{font-size:11px;color:#6b7a99;display:flex;align-items:center;gap:4px}
 .cover-specs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid #eef2f7;background:#fafbfc}
@@ -920,10 +922,10 @@ body{font-family:'DM Sans',sans-serif;background:white;color:#0f1829}
 .spec-val{font-size:14px;font-weight:700;color:#0f1829;line-height:1}
 .spec-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:#6b7a99}
 .cover-desc-wrap{padding:14px 24px 8px;flex:1;overflow:hidden}
-.cover-desc-ttl{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;color:#0f1829;margin-bottom:7px;padding-bottom:5px;border-bottom:2px solid #4caf7d;display:inline-block}
+.cover-desc-ttl{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:#0f1829;margin-bottom:7px;padding-bottom:5px;border-bottom:2px solid #4caf7d;display:inline-block}
 .cover-desc{font-size:10.5px;color:#3a4a5c;line-height:1.65}
 .section-header{padding:11px 24px 9px;border-bottom:1px solid #e8ecf2;border-left:4px solid #2a9db5;flex-shrink:0;background:#fafbfc}
-.section-header h2{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:#0f1829}
+.section-header h2{font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;color:#0f1829}
 .chars-hdr{border-left-color:#4caf7d}
 .photo-grid-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:82mm 82mm 82mm;gap:2px;padding:2px;height:246mm;flex-shrink:0;overflow:hidden}
 .photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex-shrink:0;overflow:hidden}
