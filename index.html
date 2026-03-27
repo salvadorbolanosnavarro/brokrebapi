@@ -206,9 +206,10 @@ body{
 #profile-drawer{
   position:fixed;
   top:0;left:0;
-  width:280px;
+  width:auto;
+  min-width:200px;
   height:100dvh;
-  background:#065f46;
+  background:#00a896;
   border-right:1px solid var(--bd2);
   z-index:500;
   transform:translateX(-100%);
@@ -264,7 +265,7 @@ body{
   font-size:18px;font-weight:800;color:#fff;flex-shrink:0;
 }
 .drawer-name{font-weight:700;font-size:14px;color:#fff}
-.drawer-plan{font-size:11px;color:var(--teal2);margin-top:2px;font-weight:600}
+.drawer-plan{font-size:11px;color:#d1faf5;margin-top:2px;font-weight:600}
 .drawer-close{
   width:28px;height:28px;background:rgba(255,255,255,.06);
   border:1px solid var(--bd);border-radius:6px;
@@ -278,21 +279,21 @@ body{
 .drawer-nav::-webkit-scrollbar{display:none}
 .drawer-lbl{
   font-size:9px;font-weight:700;letter-spacing:1.2px;
-  color:var(--mut2);text-transform:uppercase;
+  color:rgba(255,255,255,.55);text-transform:uppercase;
   padding:10px 8px 5px;
 }
 .drawer-btn{
   display:flex;align-items:center;gap:9px;width:100%;
   padding:10px 11px;background:none;border:none;
-  border-radius:var(--r3);color:var(--mut);
+  border-radius:var(--r3);color:#fff;
   font-family:inherit;font-size:13px;font-weight:500;
   cursor:pointer;text-align:left;transition:all .15s;
   margin-bottom:2px;
 }
-.drawer-btn:hover{background:rgba(255,255,255,.06);color:var(--txt)}
-.drawer-btn svg{width:16px;height:16px;opacity:.6;flex-shrink:0}
+.drawer-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+.drawer-btn svg{width:16px;height:16px;opacity:.7;flex-shrink:0}
 .drawer-btn:hover svg{opacity:1}
-.drawer-btn.danger:hover{background:rgba(239,68,68,.12);color:#fca5a5}
+.drawer-btn.danger:hover{background:rgba(239,68,68,.25);color:#fca5a5}
 
 .drawer-foot{border-top:1px solid var(--bd);padding:12px 10px}
 
@@ -990,7 +991,7 @@ body{
         <div class="drawer-plan" id="user-plan-display">—</div>
       </div>
     </div>
-    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    <button class="drawer-close" onclick="closeDrawer()" style="display:none">✕</button>
   </div>
   <div class="drawer-nav">
     <div class="drawer-lbl">Mi cuenta</div>
@@ -1019,7 +1020,7 @@ body{
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
       Chat de soporte
     </button>
-    <div class="drawer-lbl" id="admin-lbl" style="display:none">Admin</div>
+    <div class="drawer-lbl" id="admin-lbl" style="display:none;color:var(--amber2)">Admin</div>
     <button class="drawer-btn" id="admin-link-btn" style="display:none" onclick="window.open('admin.html','_blank')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
       Panel Administrador
@@ -1793,7 +1794,7 @@ async function send(){
   inp.value=''; inp.style.height='auto';
   const tid = addTyping(); busy = true; g('snd').disabled = true;
   try{
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres Shaark, el asistente inmobiliario con IA más avanzado de México. Cuando el usuario pida navegar a un módulo, incluye al FINAL de tu respuesta: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props. Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia. Español, preciso y profesional.`},...msgs]})});
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres Brokr, el asistente inmobiliario con IA más avanzado de México. Cuando el usuario pida navegar a un módulo, incluye al FINAL de tu respuesta: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props. Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia. Español, preciso y profesional.`},...msgs]})});
     rmTyping(tid);
     if(!r.ok){ const e=await r.json(); addErr(e.error?.message||'Error'); msgs.pop(); return; }
     const data = await r.json();
