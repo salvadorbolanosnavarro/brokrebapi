@@ -1022,8 +1022,22 @@ async def generar_ficha_pdf(p: dict):
         await browser.close()
     
     from fastapi.responses import JSONResponse
-    id_prop = p.get("public_id") or p.get("id") or "ficha"
-    filename = f"Brokr_{id_prop}.pdf"
+    import re as _re2
+    id_prop   = p.get("public_id") or p.get("id") or ""
+    loc       = p.get("location") or {}
+    colonia   = (loc.get("name") or "").strip()
+    tipo_raw  = (p.get("property_type") or "Propiedad").strip()
+    # Sanitize: remove accents and special chars for filename
+    def _slug(s):
+        for a, b in [('á','a'),('é','e'),('í','i'),('ó','o'),('ú','u'),('ü','u'),('ñ','n'),
+                     ('Á','A'),('É','E'),('Í','I'),('Ó','O'),('Ú','U'),('Ñ','N')]:
+            s = s.replace(a, b)
+        return _re2.sub(r'[^A-Za-z0-9_]', '_', s).strip('_')
+    parts = ["Ficha_Brokr"]
+    if colonia:  parts.append(_slug(colonia))
+    if tipo_raw: parts.append(_slug(tipo_raw))
+    if id_prop:  parts.append(_slug(id_prop))
+    filename = "_".join(parts) + ".pdf"
     token = str(_uuid.uuid4()).replace("-","")[:16]
     _pdf_store[token] = (pdf_bytes, filename)
     # Clean old entries if too many
@@ -1040,9 +1054,13 @@ async def descargar_ficha_pdf(token: str):
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
     pdf_bytes, filename = _pdf_store[token]
-    # inline so Safari opens it with its native PDF viewer + share button
+    # Use attachment for direct download on all devices including PWA
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"inline; filename={filename}"}
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/pdf",
+            "Cache-Control": "no-store",
+        }
     )

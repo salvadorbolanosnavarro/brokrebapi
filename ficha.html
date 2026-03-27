@@ -286,11 +286,11 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:var(--txt)}
     <div class="ui-input-row">
       <input class="ui-input" id="prop-id" type="text" placeholder="EB-AB1234" autocomplete="off"
              onkeydown="if(event.key==='Enter') generarFicha()"/>
-      <button class="ui-btn" onclick="generarFicha()">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      <button class="ui-btn teal" id="gen-btn" onclick="generarFicha()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
         </svg>
-        Generar
+        Descargar ficha
       </button>
     </div>
     <div class="ui-error" id="err-msg"></div>
@@ -301,15 +301,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:var(--txt)}
     <p id="loading-txt">Cargando...</p>
   </div>
 
-  <div id="print-bar">
-    <span id="print-bar-txt">Ficha lista</span>
-    <button class="ui-btn teal" id="pdf-btn" onclick="descargarPDF()">
-      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-      </svg>
-      Descargar PDF
-    </button>
-  </div>
+  <div id="print-bar" style="display:none"></div>
 </div>
 
 <!-- ═══ FICHA ════════════════════════════════ -->
@@ -528,44 +520,31 @@ function renderFicha(p){
 
 
 // ── DESCARGA PDF VÍA RAILWAY ─────────────────────────────────
-async function descargarPDF(){
-  if(!_propData){ alert('Genera primero la ficha.'); return; }
-  const btn = document.getElementById('pdf-btn');
-  const txt = document.getElementById('print-bar-txt');
-  btn.disabled = true;
-  btn.innerHTML = '&#9203; Generando PDF...';
-  txt.textContent = 'Preparando tu ficha...';
-  try{
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
-    const res = await fetch(API + '/ficha-pdf', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(_propData),
-      signal: controller.signal
+function _descargarBlob(url, filename){
+  // PWA-compatible download: fetch as blob then trigger anchor download
+  fetch(url)
+    .then(r => r.blob())
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || 'Ficha_Brokr.pdf';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    })
+    .catch(() => {
+      // fallback: open in new tab if blob fails (desktop)
+      window.open(url, '_blank');
     });
-    clearTimeout(timeout);
-    if(!res.ok) throw new Error('Error servidor: ' + res.status);
-    const data = await res.json();
-    // Open PDF URL directly — Safari shows native PDF viewer with share button
-    const pdfUrl = API + '/ficha-pdf/' + data.token;
-    window.open(pdfUrl, '_blank');
-    txt.textContent = '&#10003; PDF listo — comparte desde el visor';
-  } catch(e){
-    if(e.name === 'AbortError') alert('Tiempo agotado. Intenta de nuevo.');
-    else alert('Error: ' + e.message);
-    txt.textContent = 'Ficha lista';
-  } finally{
-    btn.disabled = false;
-    btn.innerHTML = '&#11015; Descargar / Compartir PDF';
-  }
 }
 
-// ── FETCH ────────────────────────────────────────
 async function generarFicha(){
   hideError();
   const id = g('prop-id').value.trim().toUpperCase();
   if(!id){ showError('Ingresa el ID de la propiedad.'); return; }
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Generando...';
   setLoading(true,'Consultando EasyBroker...');
   try{
     const res = await fetch(`${API}/propiedad/${encodeURIComponent(id)}`);
@@ -576,16 +555,33 @@ async function generarFicha(){
     }
     const p = await res.json();
     setLoading(false, 'Optimizando imágenes para PDF...');
-    // Convert images to base64 for reliable PDF printing on all devices
     if(p.property_images && p.property_images.length) {
       setLoading(true, 'Preparando ' + p.property_images.length + ' fotos...');
       p.property_images = await convertAllImages(p.property_images);
     }
+    setLoading(true, 'Generando PDF...');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+    const pdfRes = await fetch(API + '/ficha-pdf', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(p),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if(!pdfRes.ok) throw new Error('Error servidor: ' + pdfRes.status);
+    const data = await pdfRes.json();
     setLoading(false);
     renderFicha(p);
+    // Download PDF — compatible with PWA, iOS, Android, desktop
+    _descargarBlob(API + '/ficha-pdf/' + data.token, data.filename);
   } catch(e){
     setLoading(false);
-    showError(e.message||'Error desconocido');
+    if(e.name === 'AbortError') showError('Tiempo agotado. Intenta de nuevo.');
+    else showError(e.message||'Error desconocido');
+  } finally{
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Descargar ficha';
   }
 }
 </script>

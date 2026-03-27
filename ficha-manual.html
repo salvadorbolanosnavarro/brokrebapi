@@ -705,9 +705,29 @@ function getDatos(){
 
 
 let _lastPdfToken = null;
+let _lastPdfFilename = 'Ficha_Brokr.pdf';
+
+function _descargarBlob(url, filename){
+  // PWA-compatible download: fetch as blob then trigger anchor download
+  fetch(url)
+    .then(r => r.blob())
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || 'Ficha_Brokr.pdf';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    })
+    .catch(() => {
+      // fallback: open in new tab if blob fails (desktop)
+      window.open(url, '_blank');
+    });
+}
+
 function abrirPDF(){
   if(!_lastPdfToken){ alert('Genera primero la ficha.'); return; }
-  window.open(API + '/ficha-pdf/' + _lastPdfToken, '_blank');
+  _descargarBlob(API + '/ficha-pdf/' + _lastPdfToken, _lastPdfFilename);
 }
 async function generarFicha(){
   const d = getDatos();
@@ -753,11 +773,10 @@ async function generarFicha(){
     });
     if(!res.ok) throw new Error('Error servidor: ' + res.status);
     const data = await res.json();
-    const pdfUrl = API + '/ficha-pdf/' + data.token;
     _lastPdfToken = data.token;
-    window.open(pdfUrl, '_blank');
+    _lastPdfFilename = data.filename || 'Ficha_Brokr.pdf';
     g('print-bar').classList.add('show');
-    document.getElementById('print-bar-txt').textContent = '✓ Ficha lista — comparte desde el visor';
+    document.getElementById('print-bar-txt').textContent = '✓ Ficha lista — presiona Descargar para guardar';
   } catch(e){
     alert('Error generando ficha: ' + e.message);
   } finally{
