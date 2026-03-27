@@ -572,7 +572,10 @@ async function generarDescripcion(){
 // ── FOOTER ──────────────────────────────────
 function footer(){
   return `<div class="ficha-footer">
-    <div class="ft-logo"><img src="${LOGO_B64}" alt="Brokr"/></div>
+    <div class="ft-logo" style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:9px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:.3px">Powered by</span>
+      <img src="logotipo-brokr.svg" alt="Shaark"/>
+    </div>
     <div class="ft-txt">BROKR.MX</div>
   </div>`;
 }
