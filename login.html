@@ -149,14 +149,20 @@ body{overflow-y:auto;}
   z-index:9999;
   transition:opacity 0.7s ease;
 ">
-  <video autoplay muted playsinline style="max-width:360px;width:80%;">
+  <video autoplay muted playsinline style="max-width:360px;width:80%;mix-blend-mode:screen;">
     <source src="brokr-logo-animation.mp4" type="video/mp4">
   </video>
 </div>
 <script>
+  // Bloquear formulario durante splash
+  const splashInputs = document.querySelectorAll('input, button');
+  splashInputs.forEach(el => el.disabled = true);
+
   const splash = document.getElementById('splash');
   setTimeout(() => {
     splash.style.opacity = '0';
+    // Habilitar formulario cuando termina
+    splashInputs.forEach(el => el.disabled = false);
     setTimeout(() => splash.remove(), 700);
   }, 6000);
 </script>
