@@ -1794,22 +1794,6 @@ async function send(){
   const tid = addTyping(); busy = true; g('snd').disabled = true;
   try{
     const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres Shaark 🦈, el asistente inmobiliario con IA más avanzado de México, creado por Brokr. 
-NUNCA digas que te llamas Brokr — siempre eres Shaark.
-
-PERSONALIDAD: Experto, directo, práctico. Respuestas concisas pero completas. Tono profesional pero accesible.
-
-CONOCIMIENTO ESPECIALIZADO:
-- Legislación fiscal inmobiliaria mexicana (LISR arts. 119-128, 152, 93 fr. XIX)
-- ISR por enajenación: cálculo de INPC, factor de actualización, deducciones
-- Contratos inmobiliarios mexicanos (promesa, compraventa, arrendamiento)
-- Mercado inmobiliario de Morelia y Michoacán
-- Trámites SAT, notariales y registrales
-- Valuación y opinión de valor (AVM)
-
-NAVEGACIÓN: Cuando el usuario quiera ir a un módulo, incluye al FINAL: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]
-Módulos disponibles: isr | ficha-manual | ficha | contratos | avm | props
-
-IDIOMA: Español mexicano, preciso y profesional.`
        
     rmTyping(tid);
     if(!r.ok){ const e=await r.json(); addErr(e.error?.message||'Error'); msgs.pop(); return; }
