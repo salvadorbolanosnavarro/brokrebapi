@@ -2352,6 +2352,19 @@ function propFmtMoney(input){ const raw=getRawNum(input.value); if(!raw){ input.
 // PWA
 // ══════════════════════════════════════════
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=202603222305').then(reg=>{ window._swReg=reg; }).catch(()=>{});
+   // ══ BLOQUEAR SWIPE-BACK DEL NAVEGADOR ══
+(function() {
+  let startX = 0;
+  document.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    // Si el toque viene de los primeros 30px del borde izquierdo, cancelar
+    if (startX < 30) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+})();
 
 // ══════════════════════════════════════════
 // INIT
