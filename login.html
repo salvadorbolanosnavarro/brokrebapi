@@ -321,7 +321,7 @@ if(data.id){
     sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
     showMsg('✅ Cuenta creada. Te enviamos un correo de confirmación. Completando tu perfil…', 'ok');
     setTimeout(() => { window.location.href = 'registro.html'; }, 2500);
- } else {
+ } if else {
     showMsg('✅ Casi listo. Te enviamos un correo de confirmación. Por favor revísalo para activar tu cuenta.', 'ok');
   }
 }
