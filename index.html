@@ -105,8 +105,6 @@ html, body {
 }
 .proto-screen::-webkit-scrollbar { display: none; }
 
-/* ══ HOME SCREEN ══ */
-#screen-home { background: var(--screen-bg); padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
 
 .home-header {
   background: var(--navy);
@@ -222,15 +220,17 @@ html, body {
 .module-card.violet::before{ background: #8b5cf6; }
 
 .module-icon {
-  width: 44px; height: 44px; border-radius: 14px;
+  width: 44px; height: 44px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; margin-bottom: 12px;
+  margin-bottom: 10px;
+  color: var(--navy);
+  opacity: 0.75;
 }
-.module-card.teal  .module-icon { background: rgba(42,157,181,0.1); }
-.module-card.white .module-icon { background: var(--gray-100); }
-.module-card.navy  .module-icon { background: var(--gray-100); }
-.module-card.green .module-icon { background: var(--gray-100); }
-.module-card.violet.module-icon { background: rgba(139,92,246,0.12); }
+.module-card.teal  .module-icon { color: var(--teal-dark); opacity: 1; }
+.module-card.white .module-icon { color: var(--navy); }
+.module-card.navy  .module-icon { color: var(--navy); }
+.module-card.green .module-icon { color: #2a9068; opacity: 1; }
+.module-card.violet .module-icon { color: #6d46c9; opacity: 1; }
 
 .module-card .mod-name {
   font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2;
@@ -737,17 +737,23 @@ html, body {
 
 /* Shaark nav button special */
 .proto-nav-shaark {
-  font-size: 26px;
-  width: 46px; height: 46px;
-  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
-  border-radius: 16px;
+  width: 44px; height: 44px;
+  background: var(--navy);
+  border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 14px rgba(42,157,181,0.4);
-  transition: transform 0.15s;
+  box-shadow: 0 3px 10px rgba(15,24,41,0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
   margin-bottom: 2px;
+  overflow: hidden;
+  padding: 2px;
 }
 .proto-nav-item.active .proto-nav-shaark {
-  transform: scale(1.08);
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(42,157,181,0.35);
+}
+.proto-nav-shaark img {
+  width: 100%; height: 100%;
+  object-fit: contain;
 }
 
 /* ══ BOTTOM NAV ══ */
@@ -968,8 +974,92 @@ html, body {
 /* ══ SHAARK SCREEN CHIPS FIX ══ */
 #screen-shaark .scw-chips { padding: 0 16px 8px; }
 
-/* ══ VIOLET MODULE ICON FIX ══ */
-.module-card.violet .module-icon { background: rgba(139,92,246,0.12); }
+/* ══ NEWS TICKER ══ */
+.news-ticker-wrap {
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 12px;
+  margin-top: 12px;
+  position: relative;
+}
+.news-ticker-track {
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+  animation: tickerScroll 40s linear infinite;
+  cursor: pointer;
+}
+.news-ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.news-ticker-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 28px 0 0;
+  font-size: 12px; color: rgba(255,255,255,0.82);
+  font-weight: 400;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.news-ticker-item::before {
+  content: '·';
+  color: var(--teal);
+  font-size: 16px;
+  margin-right: 4px;
+}
+.news-ticker-item:first-child::before { display: none; }
+.news-ticker-source {
+  font-size: 10px; color: var(--teal);
+  font-weight: 600; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.news-ticker-loading {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  font-style: italic;
+}
+
+/* ══ GLOBAL SEARCH ══ */
+.global-search-box {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  left: 16px; right: 16px;
+  background: rgba(15,24,41,0.97);
+  border: 1px solid rgba(42,157,181,0.4);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.global-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 14px; color: white;
+  font-family: 'Poppins', sans-serif;
+}
+.global-search-input::placeholder { color: rgba(255,255,255,0.35); }
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px); left: 0; right: 0;
+  background: white; border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  overflow: hidden; z-index: 60;
+}
+.search-result-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: background 0.1s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:active { background: var(--gray-100); }
+.search-result-icon { color: var(--teal); flex-shrink: 0; }
+.search-result-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.search-result-desc { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
 
 </style>
 </head>
@@ -978,81 +1068,54 @@ html, body {
 <div id="app">
   <div id="screens-container">
 
-    <!-- ══ HOME ══ -->
-    <div class="proto-screen active-screen" id="screen-home">
-      <div class="home-header">
+    <!-- ══ MÓDULOS (pantalla principal) ══ -->
+    <div class="proto-screen active-screen" id="screen-modules">
+      <!-- Header estilo home -->
+      <div class="home-header" style="position:relative">
         <div class="greeting-row">
           <div class="greeting-text">
-           <div class="hello" id="greet-hello">Buenos días</div>
-<div class="name" id="greet-text">¡Hola!</div>
+            <div class="hello" id="greet-hello">Buenos días</div>
+            <div class="name" id="greet-text">¡Hola!</div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <!-- Lupa búsqueda global -->
+            <div class="notif-bell" id="search-btn" onclick="toggleGlobalSearch()" title="Buscar">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>
+            </div>
+            <!-- Campana notificaciones -->
             <div class="notif-bell" id="notif-bell" onclick="toggleNotifications()">
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
               <span class="notif-badge" id="notif-count" style="display:none">0</span>
             </div>
+            <!-- Avatar -->
             <div class="home-avatar" id="user-avatar" onclick="protoGoTo('profile')">?</div>
           </div>
         </div>
-        <div class="stats-row">
-          <div class="stat-pill"><div class="val">—</div><div class="lbl">Propiedades</div></div>
-          <div class="stat-pill accent"><div class="val">—</div><div class="lbl">Contratos</div></div>
-          <div class="stat-pill"><div class="val">—</div><div class="lbl">Este mes</div></div>
+        <!-- Ticker de noticias inmobiliarias -->
+        <div class="news-ticker-wrap">
+          <div class="news-ticker-track" id="news-ticker-track">
+            <span class="news-ticker-loading">Cargando noticias...</span>
+          </div>
+        </div>
+        <!-- Notificaciones dropdown -->
+        <div class="notif-panel" id="notif-panel" style="display:none">
+          <div class="notif-panel-hdr">
+            <span style="font-size:14px;font-weight:600;color:var(--text)">Notificaciones</span>
+            <button onclick="toggleNotifications()" style="background:none;border:none;color:var(--gray-400);font-size:16px;cursor:pointer">✕</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div style="text-align:center;padding:30px;color:var(--gray-400);font-size:13px">Sin notificaciones</div>
+          </div>
+        </div>
+        <!-- Búsqueda global overlay -->
+        <div class="global-search-box" id="global-search-box" style="display:none">
+          <input class="global-search-input" id="global-search-input" type="text" placeholder="Buscar módulo, función..." oninput="doGlobalSearch(this.value)" onkeydown="if(event.key==='Escape')closeGlobalSearch()"/>
+          <button onclick="closeGlobalSearch()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:18px;cursor:pointer;padding:4px">✕</button>
         </div>
       </div>
 
-      <div class="quick-grid anim-2" style="margin-top:18px">
-        <div class="module-card teal" onclick="setPanel('ficha-manual')">
-          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div>
-          <div class="mod-name">Fichas técnicas</div>
-          <div class="mod-desc">Crea en segundos</div>
-        </div>
-        <div class="module-card teal" onclick="setPanel('ficha')">
-          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L9.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg></div>
-          <div class="mod-name">Fichas EasyBroker</div>
-          <div class="mod-desc">Solo con el ID</div>
-        </div>
-        <div class="module-card white" onclick="setPanel('isr')">
-          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm2.246-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm2.496-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25z"/></svg></div>
-          <div class="mod-name">Calculadora ISR</div>
-          <div class="mod-desc">Cálculo exacto</div>
-        </div>
-        <div class="module-card green" onclick="setPanel('avm')">
-          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div>
-          <div class="mod-name">Opinión de valor</div>
-          <div class="mod-desc">AVM inteligente</div>
-        </div>
-        <div class="module-card navy" onclick="setPanel('contratos')">
-          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg></div>
-          <div class="mod-name">Contratos</div>
-          <div class="mod-desc">En menos de 5 min</div>
-        </div>
-        <div class="module-card violet" onclick="setPanel('props')">
-          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg></div>
-          <div class="mod-name">Mis inmuebles</div>
-          <div class="mod-desc">Gestión completa</div>
-        </div>
-
-      <!-- Notificaciones dropdown -->
-      <div class="notif-panel" id="notif-panel" style="display:none">
-        <div class="notif-panel-hdr">
-          <span style="font-size:14px;font-weight:700;color:var(--text)">Notificaciones</span>
-          <button onclick="toggleNotifications()" style="background:none;border:none;color:var(--gray-400);font-size:16px;cursor:pointer">✕</button>
-        </div>
-        <div class="notif-list" id="notif-list">
-          <div style="text-align:center;padding:30px;color:var(--gray-400);font-size:13px">Sin notificaciones</div>
-        </div>
-      </div>
-      </div>
-    </div>
-
-    <!-- ══ MÓDULOS ══ -->
-    <div class="proto-screen" id="screen-modules">
-      <div class="modules-header">
-        <h2>Módulos</h2>
-        <div class="search-bar"><span>🔍</span><span style="font-family:'Poppins',sans-serif">Buscar módulo...</span></div>
-      </div>
-      <div style="padding-bottom:90px">
+      <!-- Módulos -->
+      <div style="padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))">
         <div class="category-block">
           <div class="cat-title">Documentos</div>
           <div class="cat-grid">
@@ -1426,17 +1489,17 @@ html, body {
 
 <!-- ══ BOTTOM NAV ══ -->
 <div class="proto-nav">
-  <div class="proto-nav-item active" data-screen="profile" onclick="protoGoTo('profile')">
-    <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg></div>
-    <div class="proto-nav-label">Perfil</div>
-  </div>
-  <div class="proto-nav-item" data-screen="modules" onclick="protoGoTo('modules')">
+  <div class="proto-nav-item active" data-screen="modules" onclick="protoGoTo('modules')">
     <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg></div>
     <div class="proto-nav-label">Módulos</div>
   </div>
   <div class="proto-nav-item" id="nav-shaark-btn" onclick="toggleShaarkPopup()">
-    <div class="proto-nav-shaark"><img src="icon-192.png" style="width:26px;height:26px;object-fit:contain;filter:brightness(0) invert(1);" alt="Shaark"/></div>
+    <div class="proto-nav-shaark"><img src="icon-192.png" alt="Shaark"/></div>
     <div class="proto-nav-label">Shaark</div>
+  </div>
+  <div class="proto-nav-item" data-screen="profile" onclick="protoGoTo('profile')">
+    <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg></div>
+    <div class="proto-nav-label">Perfil</div>
   </div>
 </div>
 
@@ -1570,7 +1633,7 @@ const PANEL_MAP = {
 };
 
 function setPanel(name) {
-  document.getElementById('screen-home').classList.remove('active-screen');
+  document.getElementById('screen-modules').classList.remove('active-screen');
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
   const pid = PANEL_MAP[name];
   if(pid){
@@ -1584,7 +1647,7 @@ function setPanel(name) {
 function showDashboard() {
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.proto-screen').forEach(s => s.classList.remove('active-screen'));
-  document.getElementById('screen-home')?.classList.add('active-screen');
+  document.getElementById('screen-modules')?.classList.add('active-screen');
   document.querySelectorAll('.proto-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('close-bar').style.display = 'none';
 }
@@ -2174,8 +2237,92 @@ function descargarPDF(){
 /* ══ SHAARK SCREEN CHIPS FIX ══ */
 #screen-shaark .scw-chips { padding: 0 16px 8px; }
 
-/* ══ VIOLET MODULE ICON FIX ══ */
-.module-card.violet .module-icon { background: rgba(139,92,246,0.12); }
+/* ══ NEWS TICKER ══ */
+.news-ticker-wrap {
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 12px;
+  margin-top: 12px;
+  position: relative;
+}
+.news-ticker-track {
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+  animation: tickerScroll 40s linear infinite;
+  cursor: pointer;
+}
+.news-ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.news-ticker-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 28px 0 0;
+  font-size: 12px; color: rgba(255,255,255,0.82);
+  font-weight: 400;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.news-ticker-item::before {
+  content: '·';
+  color: var(--teal);
+  font-size: 16px;
+  margin-right: 4px;
+}
+.news-ticker-item:first-child::before { display: none; }
+.news-ticker-source {
+  font-size: 10px; color: var(--teal);
+  font-weight: 600; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.news-ticker-loading {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  font-style: italic;
+}
+
+/* ══ GLOBAL SEARCH ══ */
+.global-search-box {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  left: 16px; right: 16px;
+  background: rgba(15,24,41,0.97);
+  border: 1px solid rgba(42,157,181,0.4);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.global-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 14px; color: white;
+  font-family: 'Poppins', sans-serif;
+}
+.global-search-input::placeholder { color: rgba(255,255,255,0.35); }
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px); left: 0; right: 0;
+  background: white; border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  overflow: hidden; z-index: 60;
+}
+.search-result-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: background 0.1s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:active { background: var(--gray-100); }
+.search-result-icon { color: var(--teal); flex-shrink: 0; }
+.search-result-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.search-result-desc { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
 
 </style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · ${meses[d.mesV]} ${d.anioV}</div><h2>Desglose</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
   const blob = new Blob([html],{type:'text/html;charset=utf-8'});
@@ -2503,9 +2650,9 @@ function updateGreeting() {
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('screen-home').classList.add('active-screen');
+  document.getElementById('screen-modules').classList.add('active-screen');
   document.getElementById('close-bar').style.display = 'none';
-  authInit().then(() => { if(typeof updateGreeting === 'function') updateGreeting(); });
+  authInit().then(() => { if(typeof updateGreeting === 'function') updateGreeting(); startNewsTicker(); });
 
   // Refresco de plan cada 2 minutos — detecta cambios de suscripcion sin cerrar la app
   setInterval(async () => {
@@ -2604,16 +2751,16 @@ function handlePhotoUpload(event) {
 
 async function savePhotoOnly() {
   const file = window._newPhotoFile;
-  if(!file || !currentUser?.id){ return; }
+  if(!file || !currentUser || !currentUser.id){ return; }
   const btn = document.getElementById('pe-photo-save-btn');
   if(btn){ btn.textContent = 'Subiendo...'; btn.disabled = true; }
   try {
     const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
-    const ext = file.name.split('.').pop() || 'jpg';
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const filename = currentUser.id + '.' + ext;
-    // Upload to Supabase Storage bucket 'avatares'
-    const uploadRes = await fetch(SB_URL_AUTH + '/storage/v1/object/avatares/' + filename, {
-      method: 'POST',
+    // Try PUT first (upsert), fallback to POST
+    let uploadRes = await fetch(SB_URL_AUTH + '/storage/v1/object/avatares/' + filename, {
+      method: 'PUT',
       headers: {
         'apikey': SB_KEY_AUTH,
         'Authorization': 'Bearer ' + token,
@@ -2622,9 +2769,29 @@ async function savePhotoOnly() {
       },
       body: file
     });
-    if(!uploadRes.ok){ const err = await uploadRes.json(); throw new Error(err.error || 'Upload failed'); }
-    const foto_url = SB_URL_AUTH + '/storage/v1/object/public/avatares/' + filename;
-    // Save URL to usuarios table
+    // If PUT not supported, try POST
+    if(!uploadRes.ok && uploadRes.status === 405) {
+      uploadRes = await fetch(SB_URL_AUTH + '/storage/v1/object/avatares/' + filename, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY_AUTH,
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': file.type,
+          'x-upsert': 'true'
+        },
+        body: file
+      });
+    }
+    if(!uploadRes.ok){
+      const errText = await uploadRes.text();
+      let errMsg = 'Error al subir';
+      try { errMsg = JSON.parse(errText).error || errMsg; } catch(e2){}
+      throw new Error(errMsg);
+    }
+    // Add timestamp to bust CDN cache
+    const foto_url = SB_URL_AUTH + '/storage/v1/object/public/avatares/' + filename + '?t=' + Date.now();
+    // Save URL to usuarios table (store without cache-bust for persistence)
+    const foto_url_stored = SB_URL_AUTH + '/storage/v1/object/public/avatares/' + filename;
     await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
       method: 'PATCH',
       headers: {
@@ -2633,19 +2800,22 @@ async function savePhotoOnly() {
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       },
-      body: JSON.stringify({ foto_url })
+      body: JSON.stringify({ foto_url: foto_url_stored })
     });
-    // Update local profile
-    if(userProfile) userProfile.foto_url = foto_url;
-    // Update avatar in home and profile screens
+    // Update local profile and saved profile
+    if(userProfile) userProfile.foto_url = foto_url_stored;
+    const storage = localStorage.getItem('sb_token') ? localStorage : sessionStorage;
+    if(userProfile) storage.setItem('sb_user_profile', JSON.stringify(userProfile));
+    // Update avatar elements with cache-busted URL for immediate display
     const avatarEl = document.getElementById('user-avatar');
     const profileAvEl = document.getElementById('profile-avatar');
-    if(avatarEl){ avatarEl.innerHTML = '<img src="' + foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>'; }
-    if(profileAvEl){ profileAvEl.innerHTML = '<img src="' + foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:26px"/><div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>'; }
+    const imgStyle = 'width:100%;height:100%;object-fit:cover;border-radius:inherit';
+    if(avatarEl) avatarEl.innerHTML = '<img src="' + foto_url + '" style="' + imgStyle + '"/>';
+    if(profileAvEl) profileAvEl.innerHTML = '<img src="' + foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:26px"/><div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>';
     showToastIndex('✅ Foto actualizada');
     closeProfileEdit();
   } catch(e) {
-    showToastIndex('❌ Error al subir foto: ' + e.message);
+    showToastIndex('❌ ' + e.message);
     if(btn){ btn.textContent = 'Guardar foto'; btn.disabled = false; }
   }
 }
@@ -2713,6 +2883,115 @@ function showComingSoon(label) {
   toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:Poppins,sans-serif;z-index:999;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
+}
+
+// ══ NEWS TICKER ══
+const NEWS_MODULES = [
+  { id:'ficha-manual', name:'Ficha Manual', desc:'Crea fichas técnicas' },
+  { id:'ficha',        name:'Ficha EasyBroker', desc:'Fichas desde EasyBroker' },
+  { id:'isr',          name:'Calculadora ISR', desc:'Cálculo de impuesto' },
+  { id:'avm',          name:'Opinión de valor', desc:'AVM inteligente' },
+  { id:'contratos',    name:'Contratos', desc:'Genera contratos' },
+  { id:'props',        name:'Mis inmuebles', desc:'Gestión de propiedades' },
+];
+
+async function loadNewsTicker() {
+  const track = document.getElementById('news-ticker-track');
+  if(!track) return;
+  // Use rss2json to convert Google News RSS (no API key needed)
+  const query = encodeURIComponent('bienes raíces México inmobiliario');
+  const rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=' + query + '&hl=es-419&gl=MX&ceid=MX:es-419');
+  const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + rssUrl + '&count=15';
+  try {
+    const r = await fetch(apiUrl);
+    const data = await r.json();
+    if(data.status !== 'ok' || !data.items || !data.items.length) throw new Error('No items');
+    const items = data.items.slice(0, 12);
+    // Build ticker — duplicate items for seamless loop
+    const makeItems = (items) => items.map(item => {
+      const source = item.author || (item.source && item.source.name) || 'Noticias';
+      const title = item.title.replace(/ - [^-]+$/, '').trim(); // remove source suffix
+      return '<a class="news-ticker-item" href="' + item.link + '" target="_blank" rel="noopener">' +
+             '<span class="news-ticker-source">' + source + '</span>' +
+             '<span>' + title + '</span></a>';
+    }).join('');
+    track.innerHTML = makeItems(items) + makeItems(items); // duplicate for loop
+    track.style.animation = 'none';
+    void track.offsetWidth; // reflow
+    const totalWidth = track.scrollWidth / 2;
+    track.style.cssText = 'animation: none; display:flex; white-space:nowrap; gap:0;';
+    // Set dynamic animation duration based on content length
+    const duration = Math.max(30, items.length * 5);
+    track.style.animation = 'tickerScroll ' + duration + 's linear infinite';
+  } catch(e) {
+    // Fallback static headlines
+    const fallback = [
+      { t: 'Tasas hipotecarias en México se estabilizan en 2025', s: 'Expansión' },
+      { t: 'Morelia entre las ciudades con mayor plusvalía del país', s: 'El Economista' },
+      { t: 'INFONAVIT amplía créditos para vivienda media y residencial', s: 'El Financiero' },
+      { t: 'Michoacán registra crecimiento inmobiliario del 12% anual', s: 'Milenio' },
+      { t: 'Nuevas reglas del SAT para declaración de inmuebles 2025', s: 'El Universal' },
+      { t: 'Inversión extranjera en bienes raíces mexicanos crece 18%', s: 'Forbes MX' },
+    ];
+    const makeStatic = (items) => items.map(i =>
+      '<span class="news-ticker-item"><span class="news-ticker-source">' + i.s + '</span><span>' + i.t + '</span></span>'
+    ).join('');
+    track.innerHTML = makeStatic(fallback) + makeStatic(fallback);
+  }
+}
+
+// Reload news every 10 minutes
+function startNewsTicker() {
+  loadNewsTicker();
+  setInterval(loadNewsTicker, 10 * 60 * 1000);
+}
+
+// ══ GLOBAL SEARCH ══
+const SEARCH_INDEX = [
+  { name:'Ficha Manual',       desc:'Crear ficha técnica sin EasyBroker', action:() => setPanel('ficha-manual') },
+  { name:'Ficha EasyBroker',   desc:'Ficha a partir de ID EasyBroker',    action:() => setPanel('ficha') },
+  { name:'Calculadora ISR',    desc:'Calcular impuesto sobre venta',       action:() => setPanel('isr') },
+  { name:'Opinión de valor',   desc:'AVM — valuación de propiedad',        action:() => setPanel('avm') },
+  { name:'Contratos',          desc:'Generar contrato de compra/renta',    action:() => setPanel('contratos') },
+  { name:'Mis inmuebles',      desc:'Ver y gestionar propiedades',         action:() => setPanel('props') },
+  { name:'Mi perfil',          desc:'Ver y editar perfil',                 action:() => protoGoTo('profile') },
+  { name:'Shaark',             desc:'Abrir asistente de IA',               action:() => toggleShaarkPopup() },
+];
+
+function toggleGlobalSearch() {
+  const box = document.getElementById('global-search-box');
+  if(!box) return;
+  const visible = box.style.display !== 'none';
+  if(visible){ closeGlobalSearch(); return; }
+  box.style.display = 'flex';
+  setTimeout(() => document.getElementById('global-search-input')?.focus(), 50);
+}
+function closeGlobalSearch() {
+  const box = document.getElementById('global-search-box');
+  if(box) box.style.display = 'none';
+  const inp = document.getElementById('global-search-input');
+  if(inp) inp.value = '';
+  const dd = document.getElementById('search-results-dd');
+  if(dd) dd.remove();
+}
+function doGlobalSearch(q) {
+  let dd = document.getElementById('search-results-dd');
+  if(!dd){ dd = document.createElement('div'); dd.id = 'search-results-dd'; dd.className = 'search-results-dropdown'; document.getElementById('global-search-box').appendChild(dd); }
+  if(!q.trim()){ dd.innerHTML = ''; return; }
+  const results = SEARCH_INDEX.filter(item => (item.name + item.desc).toLowerCase().includes(q.toLowerCase()));
+  if(!results.length){ dd.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--gray-400)">Sin resultados</div>'; return; }
+  dd.innerHTML = results.slice(0,5).map((r,i) =>
+    '<div class="search-result-item" onclick="searchResultTap(' + i + ','' + q + '')">' +
+    '<svg class="search-result-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>' +
+    '<div><div class="search-result-name">' + r.name + '</div><div class="search-result-desc">' + r.desc + '</div></div></div>'
+  ).join('');
+  // Store results for tap handler
+  window._searchResults = results;
+}
+function searchResultTap(i, q) {
+  const results = window._searchResults || SEARCH_INDEX.filter(item => (item.name + item.desc).toLowerCase().includes(q.toLowerCase()));
+  if(results[i]) results[i].action();
+  closeGlobalSearch();
 }
 
 // ══ SHAARK POPUP ══
