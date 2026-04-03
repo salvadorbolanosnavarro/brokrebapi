@@ -1975,7 +1975,27 @@ let currentUser = null;
 let userProfile = null;
 
 async function authInit(){
-  const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  // Renovar token si expiró pero hay refresh_token en localStorage
+  let token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  const refresh = localStorage.getItem('sb_refresh');
+  if(!token && refresh){
+    try {
+      const rr = await fetch(`${SB_URL_AUTH}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY_AUTH },
+        body: JSON.stringify({ refresh_token: refresh })
+      });
+      const rd = await rr.json();
+      if(rd.access_token){
+        token = rd.access_token;
+        localStorage.setItem('sb_token', rd.access_token);
+        if(rd.refresh_token) localStorage.setItem('sb_refresh', rd.refresh_token);
+        localStorage.setItem('sb_user', JSON.stringify(rd.user));
+        sessionStorage.setItem('sb_token', rd.access_token);
+        sessionStorage.setItem('sb_user', JSON.stringify(rd.user));
+      }
+    } catch(e){}
+  }
   if(!token){ window.location.href = 'login.html'; return; }
   const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
   if(!user.id){ window.location.href = 'login.html'; return; }
@@ -2104,10 +2124,10 @@ function updateUserDisplay(){
 }
 
 function logout(){
-  const _mic2 = localStorage.getItem('mic_granted');
+  const _mic = localStorage.getItem('mic_granted');
   localStorage.clear();
   sessionStorage.clear();
-  if(_mic2) localStorage.setItem('mic_granted', _mic2);
+  if(_mic) localStorage.setItem('mic_granted', _mic);
   window.location.href = 'login.html';
 }
 
@@ -2736,7 +2756,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await r.json();
       if(!data.length) return;
-      if(data[0].activo === false){ const _mic3=localStorage.getItem('mic_granted'); localStorage.clear(); sessionStorage.clear(); if(_mic3) localStorage.setItem('mic_granted',_mic3); window.location.href = 'login.html'; return; }
+      if(data[0].activo === false){ localStorage.clear(); sessionStorage.clear(); window.location.href = 'login.html'; return; }
       const changed = (data[0].plan !== (userProfile && userProfile.plan)) ||
                       (JSON.stringify(data[0].modulos) !== JSON.stringify(userProfile && userProfile.modulos));
       if(changed && userProfile){
