@@ -3320,6 +3320,100 @@ function closeShaarkWindow() {
   document.getElementById('nav-shaark-btn')?.classList.remove('active');
 }
 
+// ══ MODAL API EASYBROKER ══
+function openApiModal() {
+  const modal = document.getElementById('api-modal');
+  if (!modal) return;
+  // Cargar key guardada si existe
+  const saved = userProfile?.eb_api_key || localStorage.getItem('eb_api_key') || '';
+  const inp = document.getElementById('api-key-input');
+  if (inp) inp.value = saved;
+  const status = document.getElementById('api-key-status');
+  if (status) { status.className = 'prf-api-status'; status.textContent = ''; }
+  modal.classList.add('open');
+}
+function closeApiModal() {
+  document.getElementById('api-modal')?.classList.remove('open');
+}
+function toggleApiKeyVisibility() {
+  const inp = document.getElementById('api-key-input');
+  const btn = document.getElementById('api-key-toggle');
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text'; if (btn) btn.textContent = 'Ocultar'; }
+  else { inp.type = 'password'; if (btn) btn.textContent = 'Ver'; }
+}
+async function saveApiKey() {
+  const inp = document.getElementById('api-key-input');
+  const status = document.getElementById('api-key-status');
+  const btn = document.querySelector('#api-modal .prf-api-save-btn');
+  const key = (inp?.value || '').trim();
+  if (!key) { if (status) { status.className = 'prf-api-status err'; status.textContent = 'Ingresa tu API key antes de guardar.'; } return; }
+  if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+  try {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    if (currentUser?.id && token) {
+      await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
+        method: 'PATCH',
+        headers: { 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ eb_api_key: key })
+      });
+    }
+    localStorage.setItem('eb_api_key', key);
+    if (userProfile) userProfile.eb_api_key = key;
+    if (status) { status.className = 'prf-api-status ok'; status.textContent = '✓ API key guardada correctamente.'; }
+  } catch(e) {
+    if (status) { status.className = 'prf-api-status err'; status.textContent = 'Error al guardar. Intenta de nuevo.'; }
+  }
+  if (btn) { btn.textContent = 'Guardar API Key'; btn.disabled = false; }
+}
+
+// ══ MODAL SUSCRIPCIÓN ══
+function openSuscripcionModal() {
+  const modal = document.getElementById('suscripcion-modal');
+  if (!modal) return;
+  const planMap = { free: 'Free', modulos: 'Personalizado', personalizado: 'Personalizado', pro: 'Pro', admin: 'Admin' };
+  const descMap = {
+    free:          'Acceso al módulo básico de fichas técnicas.',
+    modulos:       'Acceso a los módulos seleccionados en tu plan.',
+    personalizado: 'Acceso a los módulos seleccionados en tu plan.',
+    pro:           'Acceso completo a todos los módulos de Brokr.',
+    admin:         'Acceso total de administrador.'
+  };
+  const plan = userProfile?.plan || 'free';
+  const badge = document.getElementById('sus-plan-badge');
+  const name  = document.getElementById('sus-plan-name');
+  const desc  = document.getElementById('sus-plan-desc');
+  if (badge) badge.textContent = planMap[plan] || plan;
+  if (name)  name.textContent  = 'Plan ' + (planMap[plan] || plan);
+  if (desc)  desc.textContent  = descMap[plan] || '';
+  modal.classList.add('open');
+}
+function closeSuscripcionModal() {
+  document.getElementById('suscripcion-modal')?.classList.remove('open');
+}
+function gestionarStripe() {
+  showToastIndex('Portal de pagos disponible próximamente');
+}
+function cancelarSuscripcion() {
+  showToastIndex('Para cancelar escríbenos a brokr@navarroai.com.mx');
+}
+
+// ══ MODAL SOPORTE ══
+function openSoporteModal() {
+  document.getElementById('soporte-modal')?.classList.add('open');
+}
+function closeSoporteModal() {
+  document.getElementById('soporte-modal')?.classList.remove('open');
+}
+
+// Cerrar modales de perfil al tocar el overlay
+['api-modal','suscripcion-modal','soporte-modal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', function(e) {
+    if (e.target === el) el.classList.remove('open');
+  });
+});
+
 </script>
 
 <!-- ══ MODAL API EASYBROKER ══ -->
