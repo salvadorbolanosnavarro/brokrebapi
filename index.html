@@ -676,8 +676,26 @@ html, body {
   display: flex; gap: 6px; flex-wrap: wrap; padding: 0 12px 8px;
 }
 .shaark-popup .scw-input-row {
-  display: flex; gap: 8px; padding: 10px 12px 12px;
+  display: flex; gap: 6px; padding: 8px 10px 10px;
   border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  align-items: center;
+}
+.scw-mic {
+  width: 36px; height: 36px; border-radius: 11px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.6); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.15s, color 0.15s;
+}
+.scw-mic:active, .scw-mic.listening {
+  background: rgba(239,68,68,0.25);
+  border-color: rgba(239,68,68,0.5);
+  color: #ef4444;
+}
+/* Micrófono solo en móvil */
+@media (hover: hover) and (pointer: fine) {
+  #scw-mic-btn { display: none !important; }
 }
 .scw-avatar {
   width: 34px; height: 34px; border-radius: 11px;
@@ -1486,8 +1504,13 @@ html, body {
       <div class="scw-chip" onclick="shaarkChip('Ver mis propiedades')">🏠 Mis inmuebles</div>
     </div>
     <div class="scw-input-row">
+      <button id="scw-mic-btn" class="scw-mic" onclick="toggleScwVoice()" title="Hablar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+      </button>
       <input class="scw-input" id="scw-input" type="text" placeholder="Pregunta algo..." onkeydown="if(event.key==='Enter') shaarkFabSend()"/>
-      <button class="scw-send" onclick="shaarkFabSend()">➤</button>
+      <button class="scw-send" onclick="shaarkFabSend()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -1592,33 +1615,105 @@ async function shaarkFabFetch(text) {
   const msgs = document.getElementById('scw-msgs');
   msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight;
   try {
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat', {
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat-claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'llama-3.3-70b-versatile', max_tokens:300, temperature:0.7,
-        messages:[
-          {role:'system', content:'Eres Shaark 🦈, asistente BROKR® para agentes inmobiliarios en Morelia México. Responde en español, muy breve (2-3 oraciones máximo). Si el usuario quiere ir a un módulo, incluye al FINAL: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props.'},
-          ...shaarkMsgs
-        ]
+        max_tokens: 600,
+        messages: shaarkMsgs
       })
     });
     const data = await r.json();
     const reply = data.choices?.[0]?.message?.content || 'Sin respuesta.';
-    // Check for navigation action
+    // Ejecutar acciones
     const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
     let accionMatch;
     while((accionMatch = accionRe.exec(reply)) !== null) {
-      try { const ac = JSON.parse(accionMatch[1].trim()); if(ac.tipo==='navegar'&&ac.modulo) setPanel(ac.modulo); } catch(e){}
+      try {
+        const ac = JSON.parse(accionMatch[1].trim());
+        if(ac.tipo === 'navegar' && ac.modulo) setPanel(ac.modulo);
+        if(ac.tipo === 'llenar_isr') llenarISR(ac);
+      } catch(e){}
     }
     const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
     shaarkMsgs.push({role:'assistant', content:clean});
     const t = document.getElementById('scw-typing');
     if(t) t.textContent = clean;
+    // Hablar si la entrada fue por voz
+    if(window._scwLastWasVoice){ speak(clean); window._scwLastWasVoice = false; }
   } catch(e) {
     const t = document.getElementById('scw-typing');
     if(t) t.textContent = 'Error de conexión.';
   }
-  msgs.scrollTop = msgs.scrollHeight;
+  if(msgs) msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Voz para el popup de Shaark
+let scwRecognition = null, scwListening = false;
+function toggleScwVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    alert('Usa Chrome para activar la voz.'); return;
+  }
+  if(scwListening){ stopScwVoice(); return; }
+  startScwVoice();
+}
+function startScwVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  scwRecognition = new SR();
+  scwRecognition.lang = 'es-MX';
+  scwRecognition.continuous = false;
+  scwRecognition.interimResults = true;
+  const btn = document.getElementById('scw-mic-btn');
+  const inp = document.getElementById('scw-input');
+  scwListening = true;
+  if(btn) btn.classList.add('listening');
+  if(inp){ inp.placeholder = '🎙 Escuchando…'; inp.value = ''; }
+  scwRecognition.onresult = (e) => {
+    let final='', interim='';
+    for(let i=0;i<e.results.length;i++){
+      if(e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    if(inp) inp.value = (final || interim).trim();
+  };
+  scwRecognition.onerror = () => stopScwVoice();
+  scwRecognition.onend = () => {
+    const txt = inp ? inp.value.trim() : '';
+    if(scwListening && txt){
+      window._scwLastWasVoice = true;
+      stopScwVoice();
+      setTimeout(() => shaarkFabSend(), 150);
+    } else stopScwVoice();
+  };
+  try{ scwRecognition.start(); } catch(e){ stopScwVoice(); }
+}
+function stopScwVoice(){
+  scwListening = false;
+  const btn = document.getElementById('scw-mic-btn');
+  if(btn) btn.classList.remove('listening');
+  if(scwRecognition){ try{ scwRecognition.abort(); }catch(e){} scwRecognition = null; }
+  const inp = document.getElementById('scw-input');
+  if(inp && inp.placeholder === '🎙 Escuchando…') inp.placeholder = 'Pregunta algo...';
+}
+
+// Pre-llenar calculadora ISR desde Shaark
+function llenarISR(ac){
+  setPanel('isr');
+  setTimeout(() => {
+    try{
+      if(ac.precio_venta){
+        const el = document.getElementById('precioVentaTotal');
+        if(el){ el.value = '$' + Number(ac.precio_venta).toLocaleString('es-MX'); }
+      }
+      if(ac.precio_compra){
+        const el = document.getElementById('costoAdq');
+        if(el){ el.value = '$' + Number(ac.precio_compra).toLocaleString('es-MX'); }
+      }
+      if(ac.anio_compra){
+        const el = document.getElementById('anioAdq');
+        if(el){ el.value = ac.anio_compra; }
+      }
+    } catch(e){}
+  }, 400);
 }
 
 // ══ MAIN APP LOGIC (original) ══
