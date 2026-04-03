@@ -1639,7 +1639,6 @@ async function shaarkFabFetch(text) {
       return;
     }
     const reply = data.choices?.[0]?.message?.content;
-    console.log('SHAARK REPLY:', JSON.stringify(reply)); // DEBUG
     if(!reply){
       typing.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.';
       return;
@@ -1795,9 +1794,9 @@ function llenarISR(ac){
         if(elMesC) elMesC.value = String(ac.mes_compra).padStart(2,'0');
       }
       // Tipo de inmueble
-      if(ac.tipo){
+      if(ac.inmueble){
         const elTipo = document.getElementById('f-tipo');
-        if(elTipo) elTipo.value = ac.tipo; // casa | terreno | comercial
+        if(elTipo) elTipo.value = ac.inmueble; // casa | terreno | comercial
         if(typeof onTipoChange === 'function') onTipoChange();
       }
       // Mejoras, escrituración, comisión
