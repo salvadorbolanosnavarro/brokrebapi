@@ -598,7 +598,10 @@ async function generarFicha(){
   if(!id){ showError('Ingresa el ID de la propiedad.'); return; }
   setLoading(true,'Consultando EasyBroker...');
   try{
-    const res = await fetch(`${API}/propiedad/${encodeURIComponent(id)}`);
+    // Obtener API key del usuario desde localStorage o perfil
+    const ebKey = (window.parent?.userProfile?.eb_api_key) || localStorage.getItem('eb_api_key') || '';
+    const fetchHeaders = ebKey ? { 'X-EB-Key': ebKey } : {};
+    const res = await fetch(`${API}/propiedad/${encodeURIComponent(id)}`, { headers: fetchHeaders });
     if(!res.ok){
       let d='Error al consultar la propiedad';
       try{const j=await res.json();d=j.detail||d;}catch(e){}

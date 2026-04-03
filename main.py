@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -43,8 +43,9 @@ def cache_set(key, data, ttl=None):
     if ttl is not None:
         _cache_ttl[key] = ttl
 
-def eb_headers():
-    return {"X-Authorization": EB_API_KEY, "accept": "application/json"}
+def eb_headers(key: str = None):
+    k = key or EB_API_KEY
+    return {"X-Authorization": k, "accept": "application/json"}
 
 # ────────────────────────────────────────────
 # EASYBROKER — BASE ENDPOINTS
@@ -237,12 +238,15 @@ async def generar_isr_pdf(p: dict):
 
 
 @app.get("/propiedad/{property_id}")
-async def get_propiedad(property_id: str):
-    if not EB_API_KEY:
-        raise HTTPException(status_code=500, detail="EB_API_KEY no configurada")
+async def get_propiedad(property_id: str, request: Request):
+    user_key = request.headers.get("X-EB-Key", "").strip()
+    if not user_key:
+        raise HTTPException(status_code=400, detail="Configura tu API key de EasyBroker en Perfil → API EasyBroker para usar este módulo.")
     async with httpx.AsyncClient(timeout=15) as client:
         r = await client.get(f"{EB_BASE}/properties/{property_id}",
-                             headers=eb_headers())
+                             headers=eb_headers(user_key))
+        if r.status_code == 401:
+            raise HTTPException(status_code=401, detail="API key de EasyBroker inválida. Verifica tu configuración en Perfil → API EasyBroker.")
         if r.status_code == 404:
             raise HTTPException(status_code=404, detail="Propiedad no encontrada")
         if r.status_code != 200:
