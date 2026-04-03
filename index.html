@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <link rel="icon" href="icon-192.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -60,6 +60,11 @@
   @media (display-mode: standalone) {
     :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
   }
+}
+
+/* Evitar zoom de iOS al enfocar inputs */
+input, select, textarea {
+  font-size: max(16px, 1em) !important;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -641,7 +646,7 @@ html, body {
   position: fixed;
   bottom: calc(74px + env(safe-area-inset-bottom, 0px));
   right: 16px;
-  width: min(300px, calc(100vw - 40px));
+  width: min(340px, calc(100vw - 24px));
   z-index: 300;
 }
 .shaark-popup.open {
@@ -739,7 +744,7 @@ html, body {
   flex: 1; background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 12px; padding: 9px 13px;
-  font-size: 13px; color: white;
+  font-size: 16px; color: white;
   font-family: 'Poppins', sans-serif; outline: none;
 }
 .scw-input::placeholder { color: rgba(255,255,255,0.35) !important; }
@@ -1520,7 +1525,11 @@ html, body {
   <div class="proto-nav-item active" data-screen="modules" onclick="protoGoTo('modules')">
     <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg></div>
   </div>
-  <div class="proto-nav-item" id="nav-shaark-btn" onclick="toggleShaarkPopup()">
+  <div class="proto-nav-item" id="nav-shaark-btn"
+    onclick="toggleShaarkPopup()"
+    ontouchstart="navShaarkTouchStart(event)"
+    ontouchend="navShaarkTouchEnd(event)"
+    ontouchcancel="navShaarkTouchEnd(event)">
     <div class="proto-nav-shaark"><img src="icon-192.png" alt="Shaark"/></div>
   </div>
   <div class="proto-nav-item" data-screen="profile" onclick="protoGoTo('profile')">
@@ -1647,8 +1656,9 @@ async function shaarkFabFetch(text) {
   if(msgs) msgs.scrollTop = msgs.scrollHeight;
 }
 
-// Voz para el popup de Shaark
-let scwRecognition = null, scwListening = false;
+// Voz para el popup de Shaark — versión robusta
+let scwRecognition = null, scwListening = false, scwVoiceTimeout = null;
+
 function toggleScwVoice(){
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
     alert('Usa Chrome para activar la voz.'); return;
@@ -1656,9 +1666,11 @@ function toggleScwVoice(){
   if(scwListening){ stopScwVoice(); return; }
   startScwVoice();
 }
+
 function startScwVoice(){
+  if(scwListening) return;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  scwRecognition = new SR();
+  try { scwRecognition = new SR(); } catch(e){ return; }
   scwRecognition.lang = 'es-MX';
   scwRecognition.continuous = false;
   scwRecognition.interimResults = true;
@@ -1667,32 +1679,73 @@ function startScwVoice(){
   scwListening = true;
   if(btn) btn.classList.add('listening');
   if(inp){ inp.placeholder = '🎙 Escuchando…'; inp.value = ''; }
+  // Timeout de seguridad: si en 10s no pasa nada, cancela
+  scwVoiceTimeout = setTimeout(() => stopScwVoice(), 10000);
   scwRecognition.onresult = (e) => {
+    clearTimeout(scwVoiceTimeout);
     let final='', interim='';
-    for(let i=0;i<e.results.length;i++){
+    for(let i=0; i<e.results.length; i++){
       if(e.results[i].isFinal) final += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
     if(inp) inp.value = (final || interim).trim();
   };
-  scwRecognition.onerror = () => stopScwVoice();
+  scwRecognition.onerror = (e) => {
+    clearTimeout(scwVoiceTimeout);
+    stopScwVoice();
+  };
   scwRecognition.onend = () => {
+    clearTimeout(scwVoiceTimeout);
     const txt = inp ? inp.value.trim() : '';
-    if(scwListening && txt){
+    const wasListening = scwListening;
+    stopScwVoice();
+    if(wasListening && txt){
       window._scwLastWasVoice = true;
-      stopScwVoice();
-      setTimeout(() => shaarkFabSend(), 150);
-    } else stopScwVoice();
+      setTimeout(() => shaarkFabSend(), 100);
+    }
   };
   try{ scwRecognition.start(); } catch(e){ stopScwVoice(); }
 }
+
 function stopScwVoice(){
+  clearTimeout(scwVoiceTimeout);
   scwListening = false;
   const btn = document.getElementById('scw-mic-btn');
   if(btn) btn.classList.remove('listening');
-  if(scwRecognition){ try{ scwRecognition.abort(); }catch(e){} scwRecognition = null; }
+  if(scwRecognition){
+    try{ scwRecognition.abort(); } catch(e){}
+    scwRecognition = null;
+  }
   const inp = document.getElementById('scw-input');
   if(inp && inp.placeholder === '🎙 Escuchando…') inp.placeholder = 'Pregunta algo...';
+}
+
+// ── Push-to-talk en el botón de nav Shaark ──
+let _navPttTimer = null, _navPttActive = false;
+
+function navShaarkTouchStart(e){
+  _navPttActive = false;
+  _navPttTimer = setTimeout(() => {
+    _navPttActive = true;
+    // Abrir popup si está cerrado
+    if(!shaarkPopupOpen) toggleShaarkPopup();
+    setTimeout(() => startScwVoice(), 150);
+    // Feedback visual
+    const btn = document.getElementById('nav-shaark-btn');
+    if(btn) btn.style.opacity = '0.6';
+  }, 400); // 400ms = presión larga
+}
+
+function navShaarkTouchEnd(e){
+  clearTimeout(_navPttTimer);
+  const btn = document.getElementById('nav-shaark-btn');
+  if(btn) btn.style.opacity = '';
+  if(_navPttActive){
+    e.preventDefault(); // evitar que dispare el onclick
+    e.stopPropagation();
+    stopScwVoice(); // detener y enviar
+    _navPttActive = false;
+  }
 }
 
 // Pre-llenar calculadora ISR desde Shaark
