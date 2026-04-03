@@ -1639,6 +1639,7 @@ async function shaarkFabFetch(text) {
       return;
     }
     const reply = data.choices?.[0]?.message?.content;
+    console.log('SHAARK REPLY:', JSON.stringify(reply)); // DEBUG
     if(!reply){
       typing.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.';
       return;
