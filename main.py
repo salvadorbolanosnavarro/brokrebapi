@@ -25,18 +25,23 @@ ANTHROPIC_BASE   = "https://api.anthropic.com/v1"
 
 # ── CACHE EN MEMORIA (TTL 6h) ──
 _cache: dict = {}
-CACHE_TTL = 21600  # 6 hours
+CACHE_TTL = 21600  # 6 hours default
+_cache_ttl: dict = {}  # per-key TTL overrides
 
 def cache_get(key):
     if key in _cache:
         data, ts = _cache[key]
-        if time.time() - ts < CACHE_TTL:
+        ttl = _cache_ttl.get(key, CACHE_TTL)
+        if time.time() - ts < ttl:
             return data
         del _cache[key]
+        _cache_ttl.pop(key, None)
     return None
 
-def cache_set(key, data):
+def cache_set(key, data, ttl=None):
     _cache[key] = (data, time.time())
+    if ttl is not None:
+        _cache_ttl[key] = ttl
 
 def eb_headers():
     return {"X-Authorization": EB_API_KEY, "accept": "application/json"}
@@ -1183,9 +1188,7 @@ async def get_noticias():
         return {"items": []}
 
     result = {"items": items}
-    # Cache 30 minutos
-    _cache["noticias_rss"] = (result, time.time())
-    _cache_ttl_override = {"noticias_rss": 1800}
+    cache_set("noticias_rss", result, ttl=1800)  # Cache 30 minutos
     return result
 
 
