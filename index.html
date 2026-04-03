@@ -1759,25 +1759,63 @@ function navShaarkTouchEnd(e){
   }
 }
 
-// Pre-llenar calculadora ISR desde Shaark
+// Pre-llenar calculadora ISR desde Shaark y calcular automáticamente
 function llenarISR(ac){
   setPanel('isr');
   setTimeout(() => {
-    try{
+    try {
+      // Precio de venta
       if(ac.precio_venta){
-        const el = document.getElementById('precioVentaTotal');
+        const el = document.getElementById('f-venta');
         if(el){ el.value = '$' + Number(ac.precio_venta).toLocaleString('es-MX'); }
       }
+      // Precio de compra
       if(ac.precio_compra){
-        const el = document.getElementById('costoAdq');
+        const el = document.getElementById('f-compra');
         if(el){ el.value = '$' + Number(ac.precio_compra).toLocaleString('es-MX'); }
       }
-      if(ac.anio_compra){
-        const el = document.getElementById('anioAdq');
-        if(el){ el.value = ac.anio_compra; }
+      // Año de venta (default año actual)
+      const anioVenta = ac.anio_venta || new Date().getFullYear();
+      const elAnioV = document.getElementById('f-anio-v');
+      if(elAnioV) elAnioV.value = anioVenta;
+      // Mes de venta (default mes actual)
+      if(ac.mes_venta){
+        const elMesV = document.getElementById('f-mes-v');
+        if(elMesV) elMesV.value = String(ac.mes_venta).padStart(2,'0');
       }
-    } catch(e){}
-  }, 400);
+      // Año de compra
+      if(ac.anio_compra){
+        const elAnioC = document.getElementById('f-anio-c');
+        if(elAnioC) elAnioC.value = ac.anio_compra;
+      }
+      // Mes de compra
+      if(ac.mes_compra){
+        const elMesC = document.getElementById('f-mes-c');
+        if(elMesC) elMesC.value = String(ac.mes_compra).padStart(2,'0');
+      }
+      // Tipo de inmueble
+      if(ac.tipo){
+        const elTipo = document.getElementById('f-tipo');
+        if(elTipo) elTipo.value = ac.tipo; // casa | terreno | comercial
+        if(typeof onTipoChange === 'function') onTipoChange();
+      }
+      // Mejoras, escrituración, comisión
+      if(ac.mejoras){
+        const el = document.getElementById('f-mej');
+        if(el) el.value = '$' + Number(ac.mejoras).toLocaleString('es-MX');
+      }
+      if(ac.escrituracion){
+        const el = document.getElementById('f-esc');
+        if(el) el.value = '$' + Number(ac.escrituracion).toLocaleString('es-MX');
+      }
+      if(ac.comision){
+        const el = document.getElementById('f-com');
+        if(el) el.value = '$' + Number(ac.comision).toLocaleString('es-MX');
+      }
+      // Calcular automáticamente
+      if(typeof calcISR === 'function') calcISR();
+    } catch(e){ console.error('llenarISR error:', e); }
+  }, 450);
 }
 
 // ══ MAIN APP LOGIC (original) ══
