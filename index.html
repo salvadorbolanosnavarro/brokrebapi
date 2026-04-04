@@ -1262,6 +1262,64 @@ html, body {
 .prf-soporte-text .sub   { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
 
 
+/* ══ MODAL ELIMINAR CUENTA ══ */
+.prf-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 500;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.prf-modal-overlay.open { display: flex; }
+.prf-modal-box {
+  background: white; border-radius: 28px 28px 0 0;
+  width: 100%; max-height: 88dvh;
+  overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: slideUp .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.prf-modal-box::-webkit-scrollbar { display: none; }
+.prf-modal-hdr {
+  padding: 16px 20px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  position: sticky; top: 0; background: white; z-index: 10;
+}
+.prf-modal-hdr h3 { font-size: 15px; font-weight: 700; color: var(--text); }
+.prf-modal-close {
+  width: 28px; height: 28px; background: var(--gray-100);
+  border: none; border-radius: 8px; font-size: 15px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--gray-600);
+}
+.prf-modal-body { padding: 20px; }
+.delete-step { display: none; }
+.delete-step.active { display: block; }
+.delete-phrase-input {
+  width: 100%; padding: 13px 14px; margin-top: 10px;
+  background: var(--gray-100); border: 1.5px solid transparent;
+  border-radius: 14px; font-size: 13px;
+  font-family: 'Poppins', sans-serif; color: var(--text);
+  outline: none; transition: border-color 0.2s;
+}
+.delete-phrase-input:focus { border-color: #ef4444; background: white; }
+.delete-email-input {
+  width: 100%; padding: 13px 14px; margin-top: 10px;
+  background: var(--gray-100); border: 1.5px solid transparent;
+  border-radius: 14px; font-size: 14px;
+  font-family: 'Poppins', sans-serif; color: var(--text);
+  outline: none; transition: border-color 0.2s;
+}
+.delete-email-input:focus { border-color: #ef4444; background: white; }
+.delete-btn {
+  width: 100%; padding: 14px; border-radius: 14px;
+  font-size: 14px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; border: none; margin-top: 14px;
+  transition: opacity 0.15s; opacity: 0.4; pointer-events: none;
+}
+.delete-btn.ready { opacity: 1; pointer-events: all; }
+.delete-btn.red { background: #ef4444; color: white; }
+.delete-btn.navy { background: var(--navy); color: white; }
+
 </style>
 </head>
 <body>
@@ -1395,6 +1453,22 @@ html, body {
             <div class="pr-icon" style="background:rgba(239,68,68,0.08)"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#e05252" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
             <span class="pr-text" style="font-weight:700">Panel de administrador</span>
             <span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+        </div>
+        <div class="profile-section">
+          <div class="profile-row" onclick="window.open('legal.html','_blank')">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg></div>
+            <span class="pr-text">Aviso legal y privacidad</span>
+            <span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+          <div class="profile-row" onclick="openChangePasswordModal()">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg></div>
+            <span class="pr-text">Cambiar contraseña</span>
+            <span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+          <div class="profile-row" onclick="openDeleteAccountModal()">
+            <div class="pr-icon" style="background:rgba(239,68,68,0.07)"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#e05252" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"/></svg></div>
+            <span class="pr-text" style="color:#e05252">Eliminar mi cuenta</span>
           </div>
         </div>
         <div class="profile-section">
@@ -3414,6 +3488,112 @@ function closeSoporteModal() {
   });
 });
 
+// ══ CAMBIAR CONTRASEÑA ══
+function openChangePasswordModal() {
+  const modal = document.getElementById('change-password-modal');
+  if (!modal) return;
+  document.getElementById('cp-pass1').value = '';
+  document.getElementById('cp-pass2').value = '';
+  const st = document.getElementById('cp-status');
+  if (st) { st.style.display = 'none'; }
+  const btn = document.getElementById('cp-save-btn');
+  if (btn) btn.classList.remove('ready');
+  modal.classList.add('open');
+}
+function closeChangePasswordModal() {
+  document.getElementById('change-password-modal')?.classList.remove('open');
+}
+function checkPasswordMatch() {
+  const p1 = document.getElementById('cp-pass1')?.value || '';
+  const p2 = document.getElementById('cp-pass2')?.value || '';
+  const btn = document.getElementById('cp-save-btn');
+  if (btn) btn.classList.toggle('ready', p1.length >= 8 && p1 === p2);
+}
+async function saveNewPassword() {
+  const p1 = document.getElementById('cp-pass1')?.value || '';
+  const p2 = document.getElementById('cp-pass2')?.value || '';
+  const st = document.getElementById('cp-status');
+  const btn = document.getElementById('cp-save-btn');
+  if (p1 !== p2 || p1.length < 8) return;
+  if (btn) { btn.textContent = 'Guardando...'; btn.classList.remove('ready'); }
+  try {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    const r = await fetch(SB_URL_AUTH + '/auth/v1/user', {
+      method: 'PUT',
+      headers: { 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: p1 })
+    });
+    if (r.ok) {
+      if (st) { st.style.cssText = 'display:block;background:rgba(16,185,129,0.1);color:#059669;padding:10px 14px;border-radius:10px;font-size:12px'; st.textContent = '✓ Contraseña actualizada correctamente.'; }
+      setTimeout(() => closeChangePasswordModal(), 1800);
+    } else { throw new Error(); }
+  } catch(e) {
+    if (st) { st.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:#dc2626;padding:10px 14px;border-radius:10px;font-size:12px'; st.textContent = 'Error al cambiar la contraseña. Intenta de nuevo.'; }
+    if (btn) { btn.textContent = 'Guardar nueva contraseña'; btn.classList.add('ready'); }
+  }
+}
+
+// ══ ELIMINAR CUENTA (2 pasos) ══
+function openDeleteAccountModal() {
+  const modal = document.getElementById('delete-account-modal');
+  if (!modal) return;
+  const phraseInp = document.getElementById('delete-phrase-input');
+  const emailInp  = document.getElementById('delete-email-input');
+  if (phraseInp) phraseInp.value = '';
+  if (emailInp)  emailInp.value = '';
+  document.getElementById('delete-step1-btn')?.classList.remove('ready');
+  document.getElementById('delete-step2-btn')?.classList.remove('ready');
+  document.getElementById('delete-step-1')?.classList.add('active');
+  document.getElementById('delete-step-2')?.classList.remove('active');
+  modal.classList.add('open');
+}
+function closeDeleteAccountModal() {
+  document.getElementById('delete-account-modal')?.classList.remove('open');
+}
+function checkDeletePhrase() {
+  const val = (document.getElementById('delete-phrase-input')?.value || '').trim().toLowerCase();
+  const btn = document.getElementById('delete-step1-btn');
+  if (btn) btn.classList.toggle('ready', val === 'deseo eliminar mi cuenta para siempre');
+}
+function goDeleteStep2() {
+  document.getElementById('delete-step-1')?.classList.remove('active');
+  document.getElementById('delete-step-2')?.classList.add('active');
+  setTimeout(() => document.getElementById('delete-email-input')?.focus(), 100);
+}
+function checkDeleteEmail() {
+  const val   = (document.getElementById('delete-email-input')?.value || '').trim().toLowerCase();
+  const email = (currentUser?.email || userProfile?.email || '').toLowerCase();
+  const btn   = document.getElementById('delete-step2-btn');
+  if (btn) btn.classList.toggle('ready', val === email && val.length > 0);
+}
+async function ejecutarEliminarCuenta() {
+  const btn = document.getElementById('delete-step2-btn');
+  if (!btn || !btn.classList.contains('ready')) return;
+  if (!currentUser?.id) return;
+  btn.textContent = 'Eliminando...'; btn.classList.remove('ready');
+  try {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
+      method: 'PATCH',
+      headers: { 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ activo: false, deleted_at: new Date().toISOString() })
+    });
+    const _mic = localStorage.getItem('mic_granted');
+    localStorage.clear(); sessionStorage.clear();
+    if (_mic) localStorage.setItem('mic_granted', _mic);
+    localStorage.setItem('account_deleted', '1');
+    window.location.href = 'login.html';
+  } catch(e) {
+    const st = document.getElementById('delete-status');
+    if (st) { st.style.cssText = 'display:block;color:#dc2626;font-size:12px;margin-top:8px'; st.textContent = 'Error al eliminar. Escríbenos a brokr@navarroai.com.mx'; }
+    btn.textContent = 'Sí, eliminar permanentemente'; btn.classList.add('ready');
+  }
+}
+['change-password-modal','delete-account-modal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
 </script>
 
 <!-- ══ MODAL API EASYBROKER ══ -->
@@ -3462,7 +3642,7 @@ function closeSoporteModal() {
         Cancelar membresía
       </button>
       <div class="prf-coming-note">
-        La gestión de pagos estará disponible próximamente. Para cambios urgentes escríbenos a <strong>brokr@navarroai.com.mx</strong>
+        La gestión de pagos estará disponible próximamente. Para cambios urgentes escríbenos a <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="debcacb1b5ac9eb0bfa8bfacacb1bfb7f0bdb1b3f0b3a6">[email&#160;protected]</a></strong>
       </div>
     </div>
   </div>
@@ -3479,22 +3659,12 @@ function closeSoporteModal() {
       <p style="font-size:13px;color:var(--gray-600);line-height:1.6;margin-bottom:20px">
         ¿Tienes dudas, reportes o sugerencias? Estamos para ayudarte.
       </p>
-      <a class="prf-soporte-row" href="mailto:brokr@navarroai.com.mx?subject=Soporte Brokr">
+      <a class="prf-soporte-row" href="/cdn-cgi/l/email-protection#e381918c8891a38d82958291918c828acd808c8ecd8e9bdc90968189868097deb08c938c919786c3a1918c8891">
         <div class="prf-soporte-icon">
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
         </div>
         <div class="prf-soporte-text">
           <div class="title">Correo electrónico</div>
-          <div class="sub">brokr@navarroai.com.mx</div>
+          <div class="sub"><span class="__cf_email__" data-cfemail="9bf9e9f4f0e9dbf5faedfae9e9f4faf2b5f8f4f6b5f6e3">[email&#160;protected]</span></div>
         </div>
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--gray-400);margin-left:auto;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-      </a>
-      <p style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:8px;line-height:1.5">
-        Tiempo de respuesta: 24–48 horas hábiles
-      </p>
-    </div>
-  </div>
-</div>
-
-</body>
-</html>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--gray-400);margin-left:auto;flex-shrink:0"><path stroke-linecap="rou
