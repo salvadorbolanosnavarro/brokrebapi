@@ -381,8 +381,8 @@ html, body {
 .panel-topbar {
   background: var(--navy);
   padding: calc(var(--safe-top) + 0px) 16px 0;
-  height: calc(60px + var(--safe-top));
-  display: flex; align-items: flex-end; padding-bottom: 12px;
+  height: calc(30px + var(--safe-top));
+  display: flex; align-items: flex-end; padding-bottom: 6px;
   gap: 12px; flex-shrink: 0;
 }
 .panel-back {
@@ -2095,7 +2095,7 @@ const PANEL_MAP = {
 };
 
 function setPanel(name) {
-  document.getElementById('screen-modules').classList.add('active-screen');
+  document.getElementById('screen-modules').classList.remove('active-screen');
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
   const pid = PANEL_MAP[name];
   if(pid){
