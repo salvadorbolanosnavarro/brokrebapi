@@ -1,228 +1,303 @@
-import { useState, useMemo } from "react";
+<!DOCTYPE html>
 
-// ============ CONSTANTS & HELPERS ============
-const FC = { excelente: 1.0, bueno: 0.919, regular: 0.819, malo: 0.668 };
-const CONSERV_LABELS = { excelente: "Excelente / Como nuevo", bueno: "Bueno", regular: "Regular / Necesita detalles", malo: "Malo / Necesita remodelación" };
-const CALIDAD_VRN = { lujo: 18500, bueno: 14000, medio: 11500, economico: 8500 };
-const CALIDAD_LABELS = { lujo: "Lujo / Residencial plus", bueno: "Bueno / Residencial", medio: "Medio / Estándar", economico: "Económico / Interés social" };
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brokr® — Avalúo Digital</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0B1A2B; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
-const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
-const pf = (v) => parseFloat(v) || 0;
+  <script type="text/babel">
+    const { useState, useMemo } = React;
 
-function rossHeidecke(edad, vidaUtil, conservacion) {
-  if (!vidaUtil || vidaUtil <= 0) return 1;
-  const fc = FC[conservacion] || 1;
-  return Math.max(0, Math.min(1, (1 - Math.pow(edad / vidaUtil, 1.4)) * fc));
-}
+    // ============ CONSTANTS & HELPERS ============
+    const FC = { excelente: 1.0, bueno: 0.919, regular: 0.819, malo: 0.668 };
+    const CONSERV_LABELS = { excelente: "Excelente / Como nuevo", bueno: "Bueno", regular: "Regular / Necesita detalles", malo: "Malo / Necesita remodelación" };
+    const CALIDAD_VRN = { lujo: 18500, bueno: 14000, medio: 11500, economico: 8500 };
+    const CALIDAD_LABELS = { lujo: "Lujo / Residencial plus", bueno: "Bueno / Residencial", medio: "Medio / Estándar", economico: "Económico / Interés social" };
 
-function calcFactors(sujeto, comp) {
-  const s = { m2c: pf(sujeto.m2Construccion), m2t: pf(sujeto.m2Terreno), recamaras: pf(sujeto.recamaras), banos: pf(sujeto.banos), edad: pf(sujeto.edad), estac: pf(sujeto.estacionamiento) };
-  const c = { m2c: pf(comp.m2Construccion), m2t: pf(comp.m2Terreno), recamaras: pf(comp.recamaras), banos: pf(comp.banos), edad: pf(comp.edad), estac: pf(comp.estacionamiento) };
-  const fNeg = 0.95;
-  let fSup = 1.0;
-  if (s.m2c > 0 && c.m2c > 0) { fSup = Math.pow(s.m2c / c.m2c, 0.25); fSup = Math.max(0.80, Math.min(1.25, fSup)); }
-  let fTC = 1.0;
-  if (s.m2t > 0 && s.m2c > 0 && c.m2t > 0 && c.m2c > 0) { const rS = s.m2t / s.m2c; const rC = c.m2t / c.m2c; if (rC > 0) { fTC = Math.pow(rS / rC, 0.15); fTC = Math.max(0.85, Math.min(1.20, fTC)); } }
-  let fEdad = 1.0;
-  if (c.edad > 0 || s.edad > 0) { fEdad = 1 + (c.edad - s.edad) * 0.008; fEdad = Math.max(0.85, Math.min(1.20, fEdad)); }
-  const fZona = comp.mismaZona === "si" ? 1.0 : comp.mismaZona === "similar" ? 1.05 : 1.10;
-  const consOrd = { excelente: 4, bueno: 3, regular: 2, malo: 1 };
-  const fCons = 1 + ((consOrd[comp.conservacion] || 3) - (consOrd[sujeto.conservacion] || 3)) * 0.05;
-  const calOrd = { lujo: 4, bueno: 3, medio: 2, economico: 1 };
-  const fCal = 1 + ((calOrd[comp.calidad] || 2) - (calOrd[sujeto.calidad] || 2)) * 0.08;
-  const fResultante = fNeg * fSup * fTC * fEdad * fZona * fCons * fCal;
-  return { fNeg, fSup, fTC, fEdad, fZona, fCons, fCal, fResultante };
-}
+    const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+    const pf = (v) => parseFloat(v) || 0;
 
-// ============ STYLES ============
-const C = { bg: "#0B1A2B", card: "#122338", accent: "#14B8A6", accentDim: "rgba(20,184,166,0.12)", text: "#E2E8F0", dim: "#94A3B8", border: "#1E3A5F", input: "#0A1628", warn: "#F59E0B", success: "#10B981", purple: "#8B5CF6", danger: "#EF4444" };
-
-const S = {
-  app: { fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: C.bg, color: C.text, minHeight: "100vh", fontSize: 14, paddingBottom: 40 },
-  header: { background: "linear-gradient(135deg, #0B1A2B, #1a3a5c)", padding: "20px 16px", textAlign: "center", borderBottom: `1px solid ${C.border}` },
-  tabs: { display: "flex", background: "#0F1D30", borderBottom: `1px solid ${C.border}`, overflowX: "auto" },
-  tab: (a) => ({ padding: "12px 16px", fontSize: 13, fontWeight: a ? 700 : 500, color: a ? C.accent : C.dim, background: "none", border: "none", borderBottom: a ? `2px solid ${C.accent}` : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }),
-  sec: { padding: 16 },
-  card: { background: C.card, borderRadius: 12, border: `1px solid ${C.border}`, padding: 16, marginBottom: 14 },
-  title: { fontSize: 14, fontWeight: 700, color: C.accent, marginBottom: 12 },
-  label: { fontSize: 11, color: C.dim, fontWeight: 600, marginBottom: 4, display: "block" },
-  input: { background: C.input, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "10px 12px", fontSize: 15, width: "100%", boxSizing: "border-box", outline: "none" },
-  select: { background: C.input, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "10px 12px", fontSize: 15, width: "100%", boxSizing: "border-box", outline: "none", appearance: "auto" },
-  row: { display: "flex", gap: 10, marginBottom: 10 },
-  field: (f = 1) => ({ flex: f, minWidth: 0 }),
-  btn: { padding: "12px 20px", borderRadius: 10, border: "none", background: C.accent, color: "#0B1A2B", fontWeight: 700, fontSize: 14, cursor: "pointer", width: "100%" },
-  btnSm: (v) => ({ padding: "8px 14px", borderRadius: 8, border: v === "danger" ? `1px solid ${C.danger}44` : "none", background: v === "danger" ? `${C.danger}15` : C.accent, color: v === "danger" ? C.danger : "#0B1A2B", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
-  hint: { fontSize: 11, color: C.dim, marginTop: 6, lineHeight: 1.5 },
-  result: (c = C.accent) => ({ background: `${c}12`, border: `1px solid ${c}40`, borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }),
-  bigNum: (c = C.accent) => ({ fontSize: 30, fontWeight: 800, color: c }),
-  divider: { borderTop: `1px solid ${C.border}`, margin: "14px 0" },
-  badge: (c) => ({ display: "inline-block", padding: "3px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: `${c}20`, color: c }),
-};
-
-function F({ label, children, flex = 1 }) { return <div style={S.field(flex)}><label style={S.label}>{label}</label>{children}</div>; }
-function NI({ value, onChange, placeholder }) { return <input type="number" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || ""} style={S.input} />; }
-function SI({ value, onChange, options }) { return <select style={S.select} value={value} onChange={(e) => onChange(e.target.value)}>{Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>; }
-
-function CompCard({ comp, index, onChange, onRemove, sujeto }) {
-  const vum = pf(comp.m2Construccion) > 0 ? pf(comp.precio) / pf(comp.m2Construccion) : 0;
-  const factors = calcFactors(sujeto, comp);
-  const vHomol = vum * factors.fResultante;
-  return (
-    <div style={{ ...S.card, borderLeft: `3px solid ${C.warn}` }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: C.warn }}>Comparable {index + 1}</span>
-        <button style={S.btnSm("danger")} onClick={onRemove}>Quitar</button>
-      </div>
-      <div style={S.row}><F label="Precio de venta $" flex={2}><NI value={comp.precio} onChange={(v) => onChange("precio", v)} placeholder="2,500,000" /></F></div>
-      <div style={S.row}>
-        <F label="m² construidos"><NI value={comp.m2Construccion} onChange={(v) => onChange("m2Construccion", v)} placeholder="120" /></F>
-        <F label="m² terreno"><NI value={comp.m2Terreno} onChange={(v) => onChange("m2Terreno", v)} placeholder="150" /></F>
-      </div>
-      <div style={S.row}>
-        <F label="Recámaras"><NI value={comp.recamaras} onChange={(v) => onChange("recamaras", v)} placeholder="3" /></F>
-        <F label="Baños"><NI value={comp.banos} onChange={(v) => onChange("banos", v)} placeholder="2" /></F>
-        <F label="Estac."><NI value={comp.estacionamiento} onChange={(v) => onChange("estacionamiento", v)} placeholder="2" /></F>
-      </div>
-      <div style={S.row}>
-        <F label="Edad aprox. (años)"><NI value={comp.edad} onChange={(v) => onChange("edad", v)} placeholder="10" /></F>
-        <F label="Estado"><SI value={comp.conservacion} onChange={(v) => onChange("conservacion", v)} options={CONSERV_LABELS} /></F>
-      </div>
-      <div style={S.row}>
-        <F label="Acabados"><SI value={comp.calidad} onChange={(v) => onChange("calidad", v)} options={CALIDAD_LABELS} /></F>
-        <F label="¿Misma zona?"><SI value={comp.mismaZona} onChange={(v) => onChange("mismaZona", v)} options={{ si: "Sí, misma colonia", similar: "Cercana", diferente: "Diferente" }} /></F>
-      </div>
-      {vum > 0 && (
-        <div style={{ background: C.accentDim, borderRadius: 8, padding: 10, marginTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-          <span style={{ color: C.dim }}>Precio/m²: <strong style={{ color: C.text }}>{fmt(vum)}</strong></span>
-          <span style={{ color: C.dim }}>Ajustado: <strong style={{ color: C.warn }}>{fmt(vHomol)}/m²</strong></span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function AVM() {
-  const [tab, setTab] = useState(0);
-  const [sujeto, setSujeto] = useState({ direccion: "", colonia: "", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio" });
-  const [comps, setComps] = useState([]);
-
-  const u = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
-  const addComp = () => setComps((p) => [...p, { id: Date.now(), precio: "", m2Construccion: "", m2Terreno: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio", mismaZona: "si" }]);
-  const removeComp = (id) => setComps((p) => p.filter((c) => c.id !== id));
-  const updateComp = (id, k, v) => setComps((p) => p.map((c) => c.id === id ? { ...c, [k]: v } : c));
-
-  const result = useMemo(() => {
-    const m2c = pf(sujeto.m2Construccion), m2t = pf(sujeto.m2Terreno), edad = pf(sujeto.edad), vidaUtil = 70;
-    const analyzed = comps.filter((c) => pf(c.precio) > 0 && pf(c.m2Construccion) > 0).map((c) => {
-      const vum = pf(c.precio) / pf(c.m2Construccion);
-      const factors = calcFactors(sujeto, c);
-      return { ...c, vum, factors, vHomol: vum * factors.fResultante };
-    });
-    const promHomol = analyzed.length > 0 ? analyzed.reduce((s, c) => s + c.vHomol, 0) / analyzed.length : 0;
-    const valorMercado = promHomol * m2c;
-    const minH = analyzed.length > 0 ? Math.min(...analyzed.map((c) => c.vHomol)) : 0;
-    const maxH = analyzed.length > 0 ? Math.max(...analyzed.map((c) => c.vHomol)) : 0;
-    const valorMin = minH * m2c, valorMax = maxH * m2c;
-    const vrnUnit = CALIDAD_VRN[sujeto.calidad] || 11500;
-    const fec = rossHeidecke(edad, vidaUtil, sujeto.conservacion);
-    const vnrTotal = vrnUnit * m2c * fec;
-    let terrenoUnit = 0;
-    if (analyzed.length > 0) {
-      const le = analyzed.filter((c) => pf(c.m2Terreno) > 0).map((c) => { const cv = pf(c.m2Construccion) * vrnUnit * rossHeidecke(pf(c.edad), vidaUtil, c.conservacion); return Math.max(0, pf(c.precio) * 0.95 - cv) / pf(c.m2Terreno); });
-      if (le.length > 0) terrenoUnit = le.reduce((a, b) => a + b, 0) / le.length;
+    function rossHeidecke(edad, vidaUtil, conservacion) {
+      if (!vidaUtil || vidaUtil <= 0) return 1;
+      const fc = FC[conservacion] || 1;
+      return Math.max(0, Math.min(1, (1 - Math.pow(edad / vidaUtil, 1.4)) * fc));
     }
-    if (terrenoUnit <= 0) terrenoUnit = 5000 * ({ lujo: 1.4, bueno: 1.1, medio: 0.85, economico: 0.6 }[sujeto.calidad] || 1);
-    const valorTerreno = terrenoUnit * m2t;
-    const valorFisico = valorTerreno + vnrTotal;
-    const rentaEstUnit = vrnUnit * fec * 0.005;
-    const rentaBruta = rentaEstUnit * m2c;
-    const rentaAnual = rentaBruta * 0.86 * 12;
-    const valorCapitalizacion = rentaAnual / 0.045;
-    const nComps = analyzed.length;
-    let confianza = "baja", confianzaColor = C.danger;
-    if (nComps >= 5) { confianza = "alta"; confianzaColor = C.success; } else if (nComps >= 3) { confianza = "media"; confianzaColor = C.warn; }
-    const dispersion = promHomol > 0 && analyzed.length > 1 ? ((maxH - minH) / promHomol) * 100 : 0;
-    return { analyzed, promHomol, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, rentaAnual, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
-  }, [sujeto, comps]);
 
-  const valorFinal = result.valorMercado > 0 ? Math.round(result.valorMercado / 1000) * 1000 : result.valorFisico > 0 ? Math.round(result.valorFisico / 1000) * 1000 : 0;
-  const tabs = ["Tu propiedad", "Comparables", "Resultado"];
+    function calcFactors(sujeto, comp) {
+      const s = { m2c: pf(sujeto.m2Construccion), m2t: pf(sujeto.m2Terreno), recamaras: pf(sujeto.recamaras), banos: pf(sujeto.banos), edad: pf(sujeto.edad), estac: pf(sujeto.estacionamiento) };
+      const c = { m2c: pf(comp.m2Construccion), m2t: pf(comp.m2Terreno), recamaras: pf(comp.recamaras), banos: pf(comp.banos), edad: pf(comp.edad), estac: pf(comp.estacionamiento) };
+      const fNeg = 0.95;
+      let fSup = 1.0;
+      if (s.m2c > 0 && c.m2c > 0) { fSup = Math.pow(s.m2c / c.m2c, 0.25); fSup = Math.max(0.80, Math.min(1.25, fSup)); }
+      let fTC = 1.0;
+      if (s.m2t > 0 && s.m2c > 0 && c.m2t > 0 && c.m2c > 0) { const rS = s.m2t / s.m2c; const rC = c.m2t / c.m2c; if (rC > 0) { fTC = Math.pow(rS / rC, 0.15); fTC = Math.max(0.85, Math.min(1.20, fTC)); } }
+      let fEdad = 1.0;
+      if (c.edad > 0 || s.edad > 0) { fEdad = 1 + (c.edad - s.edad) * 0.008; fEdad = Math.max(0.85, Math.min(1.20, fEdad)); }
+      const fZona = comp.mismaZona === "si" ? 1.0 : comp.mismaZona === "similar" ? 1.05 : 1.10;
+      const consOrd = { excelente: 4, bueno: 3, regular: 2, malo: 1 };
+      const fCons = 1 + ((consOrd[comp.conservacion] || 3) - (consOrd[sujeto.conservacion] || 3)) * 0.05;
+      const calOrd = { lujo: 4, bueno: 3, medio: 2, economico: 1 };
+      const fCal = 1 + ((calOrd[comp.calidad] || 2) - (calOrd[sujeto.calidad] || 2)) * 0.08;
+      const fResultante = fNeg * fSup * fTC * fEdad * fZona * fCons * fCal;
+      return { fNeg, fSup, fTC, fEdad, fZona, fCons, fCal, fResultante };
+    }
 
-  return (
-    <div style={S.app}>
-      <div style={S.header}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.accent, letterSpacing: 2, margin: 0 }}>BROKR®</h1>
-        <p style={{ fontSize: 10, color: C.dim, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>Avalúo Digital</p>
-      </div>
-      <div style={S.tabs}>{tabs.map((t, i) => <button key={t} style={S.tab(tab === i)} onClick={() => setTab(i)}>{i === 2 && valorFinal > 0 ? "Resultado ✓" : t}</button>)}</div>
+    // ============ STYLES ============
+    const C = { bg: "#0B1A2B", card: "#122338", accent: "#14B8A6", accentDim: "rgba(20,184,166,0.12)", text: "#E2E8F0", dim: "#94A3B8", border: "#1E3A5F", input: "#0A1628", warn: "#F59E0B", success: "#10B981", purple: "#8B5CF6", danger: "#EF4444" };
 
-      {tab === 0 && (
-        <div style={S.sec}>
-          <div style={S.card}>
-            <div style={S.title}>¿Qué propiedad quieres valuar?</div>
-            <F label="Dirección"><input style={S.input} value={sujeto.direccion} onChange={(e) => u("direccion", e.target.value)} placeholder="Calle y número" /></F>
-            <div style={{ height: 8 }} />
-            <F label="Colonia"><input style={S.input} value={sujeto.colonia} onChange={(e) => u("colonia", e.target.value)} placeholder="Colonia" /></F>
-            <div style={S.divider} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Superficies</div>
-            <div style={S.row}>
-              <F label="m² de terreno"><NI value={sujeto.m2Terreno} onChange={(v) => u("m2Terreno", v)} placeholder="200" /></F>
-              <F label="m² construidos"><NI value={sujeto.m2Construccion} onChange={(v) => u("m2Construccion", v)} placeholder="150" /></F>
+    const S = {
+      app: { fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: C.bg, color: C.text, minHeight: "100vh", fontSize: 14, paddingBottom: 40 },
+      header: { background: "linear-gradient(135deg, #0B1A2B, #1a3a5c)", padding: "20px 16px", textAlign: "center", borderBottom: `1px solid ${C.border}` },
+      tabs: { display: "flex", background: "#0F1D30", borderBottom: `1px solid ${C.border}`, overflowX: "auto" },
+      tab: (a) => ({ padding: "12px 16px", fontSize: 13, fontWeight: a ? 700 : 500, color: a ? C.accent : C.dim, background: "none", border: "none", borderBottom: a ? `2px solid ${C.accent}` : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }),
+      sec: { padding: 16 },
+      card: { background: C.card, borderRadius: 12, border: `1px solid ${C.border}`, padding: 16, marginBottom: 14 },
+      title: { fontSize: 14, fontWeight: 700, color: C.accent, marginBottom: 12 },
+      label: { fontSize: 11, color: C.dim, fontWeight: 600, marginBottom: 4, display: "block" },
+      input: { background: C.input, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "10px 12px", fontSize: 15, width: "100%", boxSizing: "border-box", outline: "none" },
+      select: { background: C.input, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "10px 12px", fontSize: 15, width: "100%", boxSizing: "border-box", outline: "none", appearance: "auto" },
+      row: { display: "flex", gap: 10, marginBottom: 10 },
+      field: (f = 1) => ({ flex: f, minWidth: 0 }),
+      btn: { padding: "12px 20px", borderRadius: 10, border: "none", background: C.accent, color: "#0B1A2B", fontWeight: 700, fontSize: 14, cursor: "pointer", width: "100%" },
+      btnSm: (v) => ({ padding: "8px 14px", borderRadius: 8, border: v === "danger" ? `1px solid ${C.danger}44` : "none", background: v === "danger" ? `${C.danger}15` : C.accent, color: v === "danger" ? C.danger : "#0B1A2B", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
+      hint: { fontSize: 11, color: C.dim, marginTop: 6, lineHeight: 1.5 },
+      result: (c = C.accent) => ({ background: `${c}12`, border: `1px solid ${c}40`, borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }),
+      bigNum: (c = C.accent) => ({ fontSize: 30, fontWeight: 800, color: c }),
+      divider: { borderTop: `1px solid ${C.border}`, margin: "14px 0" },
+      badge: (c) => ({ display: "inline-block", padding: "3px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: `${c}20`, color: c }),
+    };
+
+    function F({ label, children, flex = 1 }) { return <div style={S.field(flex)}><label style={S.label}>{label}</label>{children}</div>; }
+    function NI({ value, onChange, placeholder }) { return <input type="number" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || ""} style={S.input} />; }
+    function SI({ value, onChange, options }) { return <select style={S.select} value={value} onChange={(e) => onChange(e.target.value)}>{Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>; }
+
+    function CompCard({ comp, index, onChange, onRemove, sujeto }) {
+      const vum = pf(comp.m2Construccion) > 0 ? pf(comp.precio) / pf(comp.m2Construccion) : 0;
+      const factors = calcFactors(sujeto, comp);
+      const vHomol = vum * factors.fResultante;
+      return (
+        <div style={{ ...S.card, borderLeft: `3px solid ${C.warn}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: C.warn }}>Comparable {index + 1}</span>
+            <button style={S.btnSm("danger")} onClick={onRemove}>Quitar</button>
+          </div>
+          <div style={S.row}><F label="Precio de venta $" flex={2}><NI value={comp.precio} onChange={(v) => onChange("precio", v)} placeholder="2,500,000" /></F></div>
+          <div style={S.row}>
+            <F label="m² construidos"><NI value={comp.m2Construccion} onChange={(v) => onChange("m2Construccion", v)} placeholder="120" /></F>
+            <F label="m² terreno"><NI value={comp.m2Terreno} onChange={(v) => onChange("m2Terreno", v)} placeholder="150" /></F>
+          </div>
+          <div style={S.row}>
+            <F label="Recámaras"><NI value={comp.recamaras} onChange={(v) => onChange("recamaras", v)} placeholder="3" /></F>
+            <F label="Baños"><NI value={comp.banos} onChange={(v) => onChange("banos", v)} placeholder="2" /></F>
+            <F label="Estac."><NI value={comp.estacionamiento} onChange={(v) => onChange("estacionamiento", v)} placeholder="2" /></F>
+          </div>
+          <div style={S.row}>
+            <F label="Edad aprox. (años)"><NI value={comp.edad} onChange={(v) => onChange("edad", v)} placeholder="10" /></F>
+            <F label="Estado"><SI value={comp.conservacion} onChange={(v) => onChange("conservacion", v)} options={CONSERV_LABELS} /></F>
+          </div>
+          <div style={S.row}>
+            <F label="Acabados"><SI value={comp.calidad} onChange={(v) => onChange("calidad", v)} options={CALIDAD_LABELS} /></F>
+            <F label="¿Misma zona?"><SI value={comp.mismaZona} onChange={(v) => onChange("mismaZona", v)} options={{ si: "Sí, misma colonia", similar: "Cercana", diferente: "Diferente" }} /></F>
+          </div>
+          {vum > 0 && (
+            <div style={{ background: C.accentDim, borderRadius: 8, padding: 10, marginTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+              <span style={{ color: C.dim }}>Precio/m²: <strong style={{ color: C.text }}>{fmt(vum)}</strong></span>
+              <span style={{ color: C.dim }}>Ajustado: <strong style={{ color: C.warn }}>{fmt(vHomol)}/m²</strong></span>
             </div>
-            <div style={S.divider} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Espacios</div>
-            <div style={S.row}>
-              <F label="Recámaras"><NI value={sujeto.recamaras} onChange={(v) => u("recamaras", v)} placeholder="3" /></F>
-              <F label="Baños"><NI value={sujeto.banos} onChange={(v) => u("banos", v)} placeholder="2" /></F>
-              <F label="Estac."><NI value={sujeto.estacionamiento} onChange={(v) => u("estacionamiento", v)} placeholder="2" /></F>
-            </div>
-            <div style={S.divider} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Estado y calidad</div>
-            <div style={S.row}><F label="Edad aproximada (años)"><NI value={sujeto.edad} onChange={(v) => u("edad", v)} placeholder="15" /></F></div>
-            <div style={S.row}><F label="¿Cómo está la propiedad?"><SI value={sujeto.conservacion} onChange={(v) => u("conservacion", v)} options={CONSERV_LABELS} /></F></div>
-            <div style={S.row}><F label="Nivel de acabados"><SI value={sujeto.calidad} onChange={(v) => u("calidad", v)} options={CALIDAD_LABELS} /></F></div>
-            <div style={{ marginTop: 14 }}><button style={S.btn} onClick={() => setTab(1)}>Siguiente → Agregar comparables</button></div>
-          </div>
+          )}
         </div>
-      )}
+      );
+    }
 
-      {tab === 1 && (
-        <div style={S.sec}>
-          <div style={S.card}>
-            <div style={S.title}>Propiedades similares en venta</div>
-            <p style={S.hint}>Busca en Inmuebles24 o Propiedades.com casas parecidas a la tuya en la zona. Copia los datos básicos de cada anuncio. Mínimo 3 para un buen resultado.</p>
+    function AVM() {
+      const [tab, setTab] = useState(0);
+      const [sujeto, setSujeto] = useState({ direccion: "", colonia: "", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio" });
+      const [comps, setComps] = useState([]);
+
+      const u = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
+      const addComp = () => setComps((p) => [...p, { id: Date.now(), precio: "", m2Construccion: "", m2Terreno: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio", mismaZona: "si" }]);
+      const removeComp = (id) => setComps((p) => p.filter((c) => c.id !== id));
+      const updateComp = (id, k, v) => setComps((p) => p.map((c) => c.id === id ? { ...c, [k]: v } : c));
+
+      const result = useMemo(() => {
+        const m2c = pf(sujeto.m2Construccion), m2t = pf(sujeto.m2Terreno), edad = pf(sujeto.edad), vidaUtil = 70;
+        const analyzed = comps.filter((c) => pf(c.precio) > 0 && pf(c.m2Construccion) > 0).map((c) => {
+          const vum = pf(c.precio) / pf(c.m2Construccion);
+          const factors = calcFactors(sujeto, c);
+          return { ...c, vum, factors, vHomol: vum * factors.fResultante };
+        });
+        const promHomol = analyzed.length > 0 ? analyzed.reduce((s, c) => s + c.vHomol, 0) / analyzed.length : 0;
+        const valorMercado = promHomol * m2c;
+        const minH = analyzed.length > 0 ? Math.min(...analyzed.map((c) => c.vHomol)) : 0;
+        const maxH = analyzed.length > 0 ? Math.max(...analyzed.map((c) => c.vHomol)) : 0;
+        const valorMin = minH * m2c, valorMax = maxH * m2c;
+        const vrnUnit = CALIDAD_VRN[sujeto.calidad] || 11500;
+        const fec = rossHeidecke(edad, vidaUtil, sujeto.conservacion);
+        const vnrTotal = vrnUnit * m2c * fec;
+        let terrenoUnit = 0;
+        if (analyzed.length > 0) {
+          const le = analyzed.filter((c) => pf(c.m2Terreno) > 0).map((c) => {
+            const cv = pf(c.m2Construccion) * vrnUnit * rossHeidecke(pf(c.edad), vidaUtil, c.conservacion);
+            return Math.max(0, pf(c.precio) * 0.95 - cv) / pf(c.m2Terreno);
+          });
+          if (le.length > 0) terrenoUnit = le.reduce((a, b) => a + b, 0) / le.length;
+        }
+        if (terrenoUnit <= 0) terrenoUnit = 5000 * ({ lujo: 1.4, bueno: 1.1, medio: 0.85, economico: 0.6 }[sujeto.calidad] || 1);
+        const valorTerreno = terrenoUnit * m2t;
+        const valorFisico = valorTerreno + vnrTotal;
+        const rentaEstUnit = vrnUnit * fec * 0.005;
+        const rentaBruta = rentaEstUnit * m2c;
+        const rentaAnual = rentaBruta * 0.86 * 12;
+        const valorCapitalizacion = rentaAnual / 0.045;
+        const nComps = analyzed.length;
+        let confianza = "baja", confianzaColor = C.danger;
+        if (nComps >= 5) { confianza = "alta"; confianzaColor = C.success; } else if (nComps >= 3) { confianza = "media"; confianzaColor = C.warn; }
+        const dispersion = promHomol > 0 && analyzed.length > 1 ? ((maxH - minH) / promHomol) * 100 : 0;
+        return { analyzed, promHomol, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, rentaAnual, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
+      }, [sujeto, comps]);
+
+      const valorFinal = result.valorMercado > 0 ? Math.round(result.valorMercado / 1000) * 1000 : result.valorFisico > 0 ? Math.round(result.valorFisico / 1000) * 1000 : 0;
+      const tabs = ["Tu propiedad", "Comparables", "Resultado"];
+
+      return (
+        <div style={S.app}>
+          <div style={S.header}>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: C.accent, letterSpacing: 2, margin: 0 }}>BROKR®</h1>
+            <p style={{ fontSize: 10, color: C.dim, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>Avalúo Digital</p>
           </div>
-          {comps.map((c, i) => <CompCard key={c.id} comp={c} index={i} sujeto={sujeto} onChange={(k, v) => updateComp(c.id, k, v)} onRemove={() => removeComp(c.id)} />)}
-          <button style={{ ...S.btn, background: comps.length === 0 ? C.accent : `${C.accent}30`, color: comps.length === 0 ? "#0B1A2B" : C.accent, border: `1px solid ${C.accent}`, marginBottom: 14 }} onClick={addComp}>+ Agregar comparable</button>
-          {comps.length > 0 && comps.length < 3 && <div style={{ ...S.result(C.warn), padding: 12 }}><span style={{ fontSize: 12, color: C.warn }}>⚠️ Llevas {comps.length} comparable{comps.length > 1 ? "s" : ""}. Agrega al menos 3.</span></div>}
-          {comps.length > 0 && <button style={S.btn} onClick={() => setTab(2)}>Ver resultado →</button>}
-        </div>
-      )}
+          <div style={S.tabs}>{tabs.map((t, i) => <button key={t} style={S.tab(tab === i)} onClick={() => setTab(i)}>{i === 2 && valorFinal > 0 ? "Resultado ✓" : t}</button>)}</div>
 
-      {tab === 2 && (
-        <div style={S.sec}>
-          <div style={{ background: `linear-gradient(135deg, ${C.accent}18, ${C.bg})`, border: `2px solid ${C.accent}`, borderRadius: 14, padding: 24, textAlign: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 }}>Valor comercial estimado</div>
-            <div style={S.bigNum(C.accent)}>{fmt(valorFinal)}</div>
-            {sujeto.direccion && <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>{sujeto.direccion}{sujeto.colonia ? `, ${sujeto.colonia}` : ""}</div>}
-            {result.valorMin > 0 && result.valorMax > 0 && result.nComps > 1 && <div style={{ fontSize: 12, color: C.dim, marginTop: 8 }}>Rango: {fmt(Math.round(result.valorMin / 1000) * 1000)} — {fmt(Math.round(result.valorMax / 1000) * 1000)}</div>}
-            <div style={{ marginTop: 10 }}><span style={S.badge(result.confianzaColor)}>Confianza {result.confianza} · {result.nComps} comparable{result.nComps !== 1 ? "s" : ""}</span></div>
-          </div>
-
-          {result.promHomol > 0 && (
-            <div style={S.card}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div><div style={{ fontSize: 11, color: C.dim }}>Precio por m² construido</div><div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(result.promHomol)}</div></div>
-                <div style={{ textAlign: "right" }}><div style={{ fontSize: 11, color: C.dim }}>Precio por m² terreno</div><div style={{ fontSize: 18, fontWeight: 600, color: C.dim }}>{fmt(result.terrenoUnit)}</div></div>
+          {tab === 0 && (
+            <div style={S.sec}>
+              <div style={S.card}>
+                <div style={S.title}>¿Qué propiedad quieres valuar?</div>
+                <F label="Dirección"><input style={S.input} value={sujeto.direccion} onChange={(e) => u("direccion", e.target.value)} placeholder="Calle y número" /></F>
+                <div style={{ height: 8 }} />
+                <F label="Colonia"><input style={S.input} value={sujeto.colonia} onChange={(e) => u("colonia", e.target.value)} placeholder="Colonia" /></F>
+                <div style={S.divider} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Superficies</div>
+                <div style={S.row}>
+                  <F label="m² de terreno"><NI value={sujeto.m2Terreno} onChange={(v) => u("m2Terreno", v)} placeholder="200" /></F>
+                  <F label="m² construidos"><NI value={sujeto.m2Construccion} onChange={(v) => u("m2Construccion", v)} placeholder="150" /></F>
+                </div>
+                <div style={S.divider} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Espacios</div>
+                <div style={S.row}>
+                  <F label="Recámaras"><NI value={sujeto.recamaras} onChange={(v) => u("recamaras", v)} placeholder="3" /></F>
+                  <F label="Baños"><NI value={sujeto.banos} onChange={(v) => u("banos", v)} placeholder="2" /></F>
+                  <F label="Estac."><NI value={sujeto.estacionamiento} onChange={(v) => u("estacionamiento", v)} placeholder="2" /></F>
+                </div>
+                <div style={S.divider} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Estado y calidad</div>
+                <div style={S.row}><F label="Edad aproximada (años)"><NI value={sujeto.edad} onChange={(v) => u("edad", v)} placeholder="15" /></F></div>
+                <div style={S.row}><F label="¿Cómo está la propiedad?"><SI value={sujeto.conservacion} onChange={(v) => u("conservacion", v)} options={CONSERV_LABELS} /></F></div>
+                <div style={S.row}><F label="Nivel de acabados"><SI value={sujeto.calidad} onChange={(v) => u("calidad", v)} options={CALIDAD_LABELS} /></F></div>
+                <div style={{ marginTop: 14 }}><button style={S.btn} onClick={() => setTab(1)}>Siguiente → Agregar comparables</button></div>
               </div>
-              {result.dispersion > 0 && <div style={{ marginTop: 8, fontSize: 11, color: result.dispersion < 20 ? C.success : C.warn }}> Dispersión: {result.dispersion.toFixed(1)}%{result.dispersion < 20 ? " — Datos consistentes ✓" : " — Revisar comparables"}</div>}
             </div>
           )}
 
-          <div style={S.card}>
-            <div style={S.title}>Tres enfoques del avalúo</div>
-            <p style={{ ...S.hint, marginTop: 0, marginBottom: 14 }}>Calculados automáticamente con la metodología de un perito valuador certificado.</p>
-            <div style={{ ...S.result(C.warn), padding: 12 }}><div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque de mercado</div><div style={{ fontSize: 20, fontWeight: 800, color: C.warn }}>{fmt(result.valorMercado)}</div><div style={{ fontSize: 10, color: C.dim }}>{result.nComps} comparables</div></div>
-            <div style={{ ...S.result(C.success), padding: 12 }}><div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque físico</div><div style={{ fontSize: 20, fontWeight: 800, color: C.success }}>{fmt(result.valorFisico)}</div><div style={{ fontSize: 10, color: C.dim }}>Terreno: {fmt(result.valorTerreno)} + Construcción: {fmt(result.vnrTotal)}</div></div>
-            <div style={{ ...S.result(C.purple), padding: 12 }}><div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque de capitalización</div><div style={{ fontSize: 20, fontWeight: 800, color: C.purple }}>{fmt(result.valorCapitalizacion)}</div><div style={{ fontSize: 10, color: C.dim }}>Renta est.: {fmt(result.rentaBruta)}/mes</div></div>
-            {result.valorMercado > 0 && result.valorFisico > 0 && (() => { const d = ((result.valorMercado - result.valorFisico) / result.valorFisico) * 100; return <div style={{ fontSize: 12, color: C.dim }}><strong style
+          {tab === 1 && (
+            <div style={S.sec}>
+              <div style={S.card}>
+                <div style={S.title}>Propiedades similares en venta</div>
+                <p style={S.hint}>Busca en Inmuebles24 o Propiedades.com casas parecidas a la tuya en la zona. Copia los datos básicos de cada anuncio. Mínimo 3 para un buen resultado.</p>
+              </div>
+              {comps.map((c, i) => <CompCard key={c.id} comp={c} index={i} sujeto={sujeto} onChange={(k, v) => updateComp(c.id, k, v)} onRemove={() => removeComp(c.id)} />)}
+              <button style={{ ...S.btn, background: comps.length === 0 ? C.accent : `${C.accent}30`, color: comps.length === 0 ? "#0B1A2B" : C.accent, border: `1px solid ${C.accent}`, marginBottom: 14 }} onClick={addComp}>+ Agregar comparable</button>
+              {comps.length > 0 && comps.length < 3 && <div style={{ ...S.result(C.warn), padding: 12 }}><span style={{ fontSize: 12, color: C.warn }}>⚠️ Llevas {comps.length} comparable{comps.length > 1 ? "s" : ""}. Agrega al menos 3.</span></div>}
+              {comps.length > 0 && <button style={S.btn} onClick={() => setTab(2)}>Ver resultado →</button>}
+            </div>
+          )}
+
+          {tab === 2 && (
+            <div style={S.sec}>
+              <div style={{ background: `linear-gradient(135deg, ${C.accent}18, ${C.bg})`, border: `2px solid ${C.accent}`, borderRadius: 14, padding: 24, textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 }}>Valor comercial estimado</div>
+                <div style={S.bigNum(C.accent)}>{fmt(valorFinal)}</div>
+                {sujeto.direccion && <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>{sujeto.direccion}{sujeto.colonia ? `, ${sujeto.colonia}` : ""}</div>}
+                {result.valorMin > 0 && result.valorMax > 0 && result.nComps > 1 && <div style={{ fontSize: 12, color: C.dim, marginTop: 8 }}>Rango: {fmt(Math.round(result.valorMin / 1000) * 1000)} — {fmt(Math.round(result.valorMax / 1000) * 1000)}</div>}
+                <div style={{ marginTop: 10 }}><span style={S.badge(result.confianzaColor)}>Confianza {result.confianza} · {result.nComps} comparable{result.nComps !== 1 ? "s" : ""}</span></div>
+              </div>
+
+              {result.promHomol > 0 && (
+                <div style={S.card}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div><div style={{ fontSize: 11, color: C.dim }}>Precio por m² construido</div><div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(result.promHomol)}</div></div>
+                    <div style={{ textAlign: "right" }}><div style={{ fontSize: 11, color: C.dim }}>Precio por m² terreno</div><div style={{ fontSize: 18, fontWeight: 600, color: C.dim }}>{fmt(result.terrenoUnit)}</div></div>
+                  </div>
+                  {result.dispersion > 0 && <div style={{ marginTop: 8, fontSize: 11, color: result.dispersion < 20 ? C.success : C.warn }}>Dispersión: {result.dispersion.toFixed(1)}%{result.dispersion < 20 ? " — Datos consistentes ✓" : " — Revisar comparables"}</div>}
+                </div>
+              )}
+
+              <div style={S.card}>
+                <div style={S.title}>Tres enfoques del avalúo</div>
+                <p style={{ ...S.hint, marginTop: 0, marginBottom: 14 }}>Calculados automáticamente con la metodología de un perito valuador certificado.</p>
+                <div style={{ ...S.result(C.warn), padding: 12 }}>
+                  <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque de mercado</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.warn }}>{fmt(result.valorMercado)}</div>
+                  <div style={{ fontSize: 10, color: C.dim }}>{result.nComps} comparables</div>
+                </div>
+                <div style={{ ...S.result(C.success), padding: 12 }}>
+                  <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque físico</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.success }}>{fmt(result.valorFisico)}</div>
+                  <div style={{ fontSize: 10, color: C.dim }}>Terreno: {fmt(result.valorTerreno)} + Construcción: {fmt(result.vnrTotal)}</div>
+                </div>
+                <div style={{ ...S.result(C.purple), padding: 12 }}>
+                  <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque de capitalización</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.purple }}>{fmt(result.valorCapitalizacion)}</div>
+                  <div style={{ fontSize: 10, color: C.dim }}>Renta est.: {fmt(result.rentaBruta)}/mes</div>
+                </div>
+                {result.valorMercado > 0 && result.valorFisico > 0 && (() => {
+                  const d = ((result.valorMercado - result.valorFisico) / result.valorFisico) * 100;
+                  return (
+                    <div style={{ fontSize: 12, color: C.dim, marginTop: 4 }}>
+                      <strong style={{ color: Math.abs(d) < 15 ? C.success : C.warn }}>
+                        {d > 0 ? "+" : ""}{d.toFixed(1)}%
+                      </strong>
+                      {" "}diferencia entre enfoque de mercado y físico
+                      {Math.abs(d) < 15 ? " — Consistente ✓" : " — Revisar datos"}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div style={{ ...S.card, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: C.dim, marginBottom: 8 }}>Ross-Heidecke · Factor de estado físico</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: result.fec > 0.7 ? C.success : result.fec > 0.4 ? C.warn : C.danger }}>
+                  {(result.fec * 100).toFixed(1)}%
+                </div>
+                <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>
+                  Vida útil estimada: 70 años · Edad: {pf(sujeto.edad)} años
+                </div>
+              </div>
+
+              <button style={{ ...S.btn, background: "transparent", border: `1px solid ${C.border}`, color: C.dim, marginTop: 4 }} onClick={() => setTab(0)}>
+                ← Nueva valuación
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<AVM />);
+  </script>
+
+</body>
+</html>
