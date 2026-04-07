@@ -1388,7 +1388,7 @@ async def buscar_comparables(req: ComparablesRequest):
     )
 
     payload = {
-        "startUrls": [{"url": url_busqueda}],
+        "startUrl": url_busqueda,
         "maxItems": req.max_resultados,
     }
 
