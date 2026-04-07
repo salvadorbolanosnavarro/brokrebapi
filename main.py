@@ -1507,7 +1507,7 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
         place_id = pred.get("place_id", "")
 
         lat, lon = 0.0, 0.0
-     if place_id:
+        if place_id:
             try:
                 async with httpx.AsyncClient(timeout=10) as client2:
                     r2 = await client2.get(
