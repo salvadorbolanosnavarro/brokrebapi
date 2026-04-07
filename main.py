@@ -1282,7 +1282,6 @@ async def descargar_ficha_pdf(token: str):
 # AVM — COMPARABLES VÍA APIFY + INMUEBLES24
 # ────────────────────────────────────────────
 
-APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
 APIFY_ACTOR   = "azzouzana~inmuebles24-scraper-pro-by-search-url"
 
 # Mapeo de tipo de inmueble a término de búsqueda en Inmuebles24
