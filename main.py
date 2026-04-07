@@ -1311,53 +1311,76 @@ def construir_url_inmuebles24(tipo: str, colonia: str, ciudad: str, estado: str)
 
 
 def normalizar_listing(item: dict) -> dict:
-    """Convierte un resultado de Apify al formato que espera el AVM."""
-    precio = item.get("price") or item.get("precio") or 0
-    # Apify puede regresar precio como string "$2,500,000" o como número
-    if isinstance(precio, str):
-        precio = re.sub(r"[^\d]", "", precio)
-        precio = int(precio) if precio else 0
+    """Convierte un resultado de Apify (scraper Azzouzana) al formato que espera el AVM."""
+    
+    # Precio
+    precio = item.get("price_amount") or 0
+    moneda = item.get("price_currency", "MN")
+    # Ignorar propiedades en USD (fuera de mercado local)
+    if moneda == "USD":
+        return None
 
-    m2c = item.get("area") or item.get("construction_area") or item.get("m2_construccion") or 0
-    m2t = item.get("lot_area") or item.get("lot_size") or item.get("m2_terreno") or 0
-    recamaras = item.get("bedrooms") or item.get("recamaras") or 0
-    banos = item.get("bathrooms") or item.get("banos") or 0
-    estac = item.get("parking_spaces") or item.get("estacionamiento") or 0
-    edad = item.get("age") or item.get("edad") or 0
-    titulo = item.get("title") or item.get("titulo") or ""
-    url = item.get("url") or item.get("link") or ""
-    imagen = (
-        item.get("main_image") or
-        item.get("image") or
-        (item.get("images", [None])[0] if item.get("images") else None) or
-        ""
-    )
+    # m² de construcción — viene en generatedTitle: "Casa · 120m² · 3 Recámaras"
+    m2c = 0
+    titulo_gen = item.get("generatedTitle", "")
+    match_m2 = re.search(r'(\d+)m²', titulo_gen)
+    if match_m2:
+        m2c = float(match_m2.group(1))
 
-    # Limpiar m2 si vienen como string ("120 m²")
-    def parse_m2(v):
-        if isinstance(v, (int, float)):
-            return float(v)
-        if isinstance(v, str):
-            v = re.sub(r"[^\d.]", "", v)
-            return float(v) if v else 0
-        return 0
+    # Recámaras
+    recamaras = 0
+    match_rec = re.search(r'(\d+)\s+Rec[áa]maras?', titulo_gen, re.IGNORECASE)
+    if match_rec:
+        recamaras = int(match_rec.group(1))
+
+    # Estacionamientos
+    estac = 0
+    match_estac = re.search(r'(\d+)\s+Estacionamientos?', titulo_gen, re.IGNORECASE)
+    if match_estac:
+        estac = int(match_estac.group(1))
+
+    # m² terreno — intentar extraer de descripción
+    m2t = 0
+    desc = item.get("descriptionNormalized", "")
+    patrones_terreno = [
+        r'[Tt]erreno[:\s/]+(\d+[\.,]?\d*)\s*(?:m²|m2|metros cuadrados|metros)',
+        r'(\d+[\.,]?\d*)\s*(?:m²|m2)\s*de\s+terreno',
+        r'[Ss]uperficie\s+de\s+terreno[:\s]+[\d,\s]*(\d+)\s*(?:m²|m2)',
+        r'[Tt]erreno\s+de\s+(\d+[\.,]?\d*)\s*(?:m²|m2)',
+    ]
+    for patron in patrones_terreno:
+        match_t = re.search(patron, desc)
+        if match_t:
+            val = match_t.group(1).replace(',', '').replace('.', '')
+            try:
+                m2t = float(val)
+                if m2t < 10 or m2t > 50000:
+                    m2t = 0
+            except:
+                m2t = 0
+            if m2t > 0:
+                break
+
+    titulo = item.get("title") or ""
+    url = item.get("url") or ""
+    imagenes = item.get("images", [])
+    imagen = imagenes[0].split("?")[0] if imagenes else ""
 
     return {
-        "precio": precio,
-        "m2Construccion": parse_m2(m2c),
-        "m2Terreno": parse_m2(m2t),
-        "recamaras": int(recamaras) if recamaras else 0,
-        "banos": float(banos) if banos else 0,
-        "estacionamiento": int(estac) if estac else 0,
-        "edad": int(edad) if edad else 0,
-        "conservacion": "bueno",   # default — Inmuebles24 no siempre lo publica
-        "calidad": "medio",        # default
+        "precio": int(precio),
+        "m2Construccion": m2c,
+        "m2Terreno": m2t,
+        "recamaras": recamaras,
+        "banos": 0,
+        "estacionamiento": estac,
+        "edad": 0,
+        "conservacion": "bueno",
+        "calidad": "medio",
         "mismaZona": "si",
         "titulo": titulo,
         "url": url,
         "imagen": imagen,
     }
-
 
 @app.post("/api/comparables")
 async def buscar_comparables(req: ComparablesRequest):
