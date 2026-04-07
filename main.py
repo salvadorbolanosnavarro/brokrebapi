@@ -1496,11 +1496,11 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
             return {"colonias": [], "error": str(e)}
 
     colonias = []
+   colonias = []
     for pred in data.get("predictions", []):
         descripcion = pred.get("description", "")
         tipos = pred.get("types", [])
 
-        # Solo sublocality o neighborhood
         if not any(t in tipos for t in ["sublocality", "sublocality_level_1", "neighborhood"]):
             continue
 
@@ -1514,11 +1514,12 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
                     "https://maps.googleapis.com/maps/api/place/details/json",
                     params={
                         "place_id": place_id,
-                        "fields": "geometry",
+                        "fields": "geometry,name",
                         "key": GOOGLE_PLACES_KEY,
                     }
                 )
-                loc = r2.json().get("result", {}).get("geometry", {}).get("location", {})
+                details_data = r2.json()
+                loc = details_data.get("result", {}).get("geometry", {}).get("location", {})
                 lat = loc.get("lat", 0.0)
                 lon = loc.get("lng", 0.0)
             except Exception:
@@ -1526,10 +1527,11 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
 
         if nombre:
             colonias.append({
-                "nombre":   nombre,
-                "display":  descripcion,
-                "latitud":  lat,
-                "longitud": lon,
+                "nombre":    nombre,
+                "display":   descripcion,
+                "latitud":   lat,
+                "longitud":  lon,
+                "place_id":  place_id,
             })
 
     resultado = {"colonias": colonias[:6]}
