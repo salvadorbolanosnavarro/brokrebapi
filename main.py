@@ -1471,7 +1471,7 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
     if len(texto) < 3:
         return {"colonias": []}
 
-    cache_key = f"colonias_g_{ciudad}_{texto}".lower()
+    cache_key = f"colonias_g2_{ciudad}_{texto}".lower()
     cached = cache_get(cache_key)
     if cached:
         return cached
