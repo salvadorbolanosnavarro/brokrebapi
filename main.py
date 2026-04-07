@@ -1462,212 +1462,74 @@ class CercanosRequest(BaseModel):
     radio_km: float = 2.0
     max_resultados: int = 15
 
+GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
+
 @app.get("/api/colonias")
 async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
-    """Busca colonias via Nominatim (OpenStreetMap) — autocompletado."""
+    """Busca colonias via Google Places Autocomplete."""
     if len(texto) < 3:
         return {"colonias": []}
 
-    cache_key = f"colonias_{ciudad}_{texto}".lower()
+    cache_key = f"colonias_g_{ciudad}_{texto}".lower()
     cached = cache_get(cache_key)
     if cached:
         return cached
 
-    headers = {"User-Agent": "Brokr-AVM/1.0 (contacto@brokr.mx)"}
-    colonias = []
-    vistos = set()
+    if not GOOGLE_PLACES_KEY:
+        return {"colonias": [], "error": "GOOGLE_PLACES_KEY no configurada"}
 
-    # Búsqueda 1: colonias/barrios directamente
     async with httpx.AsyncClient(timeout=10) as client:
-        for feature in ["neighbourhood", "suburb", "quarter"]:
-            try:
-                r = await client.get(
-                    "https://nominatim.openstreetmap.org/search",
-                    params={
-                        "q": f"{texto}, {ciudad}, Michoacán, México",
-                        "format": "json",
-                        "addressdetails": 1,
-                        "limit": 10,
-                        "featuretype": feature,
-                    },
-                    headers=headers,
-                )
-                for item in r.json():
-                    addr = item.get("address", {})
-                    nombre = (
-                        addr.get("neighbourhood") or
-                        addr.get("suburb") or
-                        addr.get("quarter") or
-                        addr.get("residential") or
-                        item.get("name", "")
-                    ).strip()
-                    if not nombre or nombre in vistos:
-                        continue
-                    # Solo incluir si está en la ciudad correcta
-                    ciudad_item = (addr.get("city") or addr.get("town") or addr.get("county") or "").lower()
-                    if ciudad.lower() not in ciudad_item and ciudad_item not in ciudad.lower():
-                        continue
-                    vistos.add(nombre)
-                    colonias.append({
-                        "nombre":   nombre,
-                        "display":  f"{nombre}, {ciudad}",
-                        "latitud":  float(item.get("lat", 0)),
-                        "longitud": float(item.get("lon", 0)),
-                    })
-            except Exception:
-                pass
-
-        # Búsqueda 2: si no encontró nada, buscar más amplio
-        if not colonias:
-            try:
-                r = await client.get(
-                    "https://nominatim.openstreetmap.org/search",
-                    params={
-                        "q": f"colonia {texto} {ciudad} Michoacan Mexico",
-                        "format": "json",
-                        "addressdetails": 1,
-                        "limit": 8,
-                    },
-                    headers=headers,
-                )
-                for item in r.json():
-                    addr = item.get("address", {})
-                    nombre = (
-                        addr.get("neighbourhood") or
-                        addr.get("suburb") or
-                        addr.get("quarter") or
-                        item.get("name", "")
-                    ).strip()
-                    if not nombre or nombre in vistos:
-                        continue
-                    vistos.add(nombre)
-                    colonias.append({
-                        "nombre":   nombre,
-                        "display":  f"{nombre}, {ciudad}",
-                        "latitud":  float(item.get("lat", 0)),
-                        "longitud": float(item.get("lon", 0)),
-                    })
-            except Exception:
-                pass
-
-    resultado = {"colonias": colonias[:8]}
-    cache_set(cache_key, resultado, ttl=86400)
-    return resultado
-async def comparables_cercanos(req: CercanosRequest):
-    """Busca propiedades cercanas en Supabase usando PostGIS."""
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise HTTPException(status_code=500, detail="SUPABASE_URL o SUPABASE_ANON_KEY no configuradas")
-
-    cache_key = f"cercanos_{req.tipo}_{req.latitud:.4f}_{req.longitud:.4f}_{req.radio_km}"
-    cached = cache_get(cache_key)
-    if cached:
-        return cached
-
-    # Mapeo de tipo AVM a tipo en la base de datos
-    TIPO_MAP = {
-        "casa":         ["Casas", "Desarrollos horizontales", "Desarrollos Horizontal/Vertical"],
-        "departamento": ["Departamentos", "Desarrollos verticales"],
-        "terreno":      ["Terrenos"],
-        "local":        ["Locales comerciales", "Locales Comerciales"],
-        "oficina":      ["Oficinas"],
-        "bodega":       ["Bodegas"],
-        "edificio":     ["Edificios"],
-    }
-    tipos_db = TIPO_MAP.get(req.tipo, ["Casas"])
-    tipos_str = ", ".join([f"'{t}'" for t in tipos_db])
-
-    # Query PostGIS: buscar propiedades en radio dado, ordenadas por distancia
-    radio_metros = req.radio_km * 1000
-    query = f"""
-    SELECT
-        id, titulo, precio, moneda, tipo_propiedad,
-        metros_construccion, metros_terreno,
-        recamaras, estacionamientos,
-        colonia, ciudad, url,
-        latitud, longitud,
-        ST_Distance(
-            geom::geography,
-            ST_SetSRID(ST_MakePoint({req.longitud}, {req.latitud}), 4326)::geography
-        ) AS distancia_metros
-    FROM propiedades_avm
-    WHERE
-        geom IS NOT NULL
-        AND precio IS NOT NULL
-        AND precio > 0
-        AND tipo_propiedad IN ({tipos_str})
-        AND ST_DWithin(
-            geom::geography,
-            ST_SetSRID(ST_MakePoint({req.longitud}, {req.latitud}), 4326)::geography,
-            {radio_metros}
-        )
-    ORDER BY distancia_metros ASC
-    LIMIT {req.max_resultados};
-    """
-
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/rpc/ejecutar_query",
-            headers={
-                "apikey": SUPABASE_KEY,
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={"query": query},
-        )
-
-        # Supabase REST no permite SQL directo — usamos el endpoint de PostgREST
-        # En su lugar llamamos via SQL con la función RPC
-        if r.status_code not in (200, 201, 204):
-            # Fallback: buscar por ciudad sin PostGIS
-            r2 = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades_avm",
-                headers={
-                    "apikey": SUPABASE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_KEY}",
-                },
+        try:
+            r = await client.get(
+                "https://maps.googleapis.com/maps/api/place/autocomplete/json",
                 params={
-                    "ciudad": f"eq.Morelia",
-                    "precio": "gt.0",
-                    "select": "id,titulo,precio,moneda,tipo_propiedad,metros_construccion,metros_terreno,recamaras,estacionamientos,colonia,ciudad,url,latitud,longitud",
-                    "limit": req.max_resultados,
-                    "order": "precio.asc",
+                    "input": f"{texto}, {ciudad}, Michoacán, México",
+                    "types": "sublocality|neighborhood",
+                    "components": "country:mx",
+                    "language": "es",
+                    "key": GOOGLE_PLACES_KEY,
                 }
             )
-            items = r2.json() if r2.status_code == 200 else []
-        else:
-            items = r.json()
+            data = r.json()
+        except Exception:
+            return {"colonias": []}
 
-    # Normalizar para el AVM
-    comparables = []
-    for item in (items or []):
-        precio = item.get("precio") or 0
-        m2c    = item.get("metros_construccion") or 0
-        if precio <= 0 or m2c <= 0:
+    if data.get("status") not in ("OK", "ZERO_RESULTS"):
+        return {"colonias": [], "error": data.get("status")}
+
+    colonias = []
+    for pred in data.get("predictions", []):
+        descripcion = pred.get("description", "")
+        # Solo incluir si menciona la ciudad
+        if ciudad.lower() not in descripcion.lower():
             continue
-        comparables.append({
-            "precio":          int(precio),
-            "m2Construccion":  float(m2c),
-            "m2Terreno":       float(item.get("metros_terreno") or 0),
-            "recamaras":       int(item.get("recamaras") or 0),
-            "estacionamiento": int(item.get("estacionamientos") or 0),
-            "banos":           0,
-            "edad":            0,
-            "conservacion":    "bueno",
-            "calidad":         "medio",
-            "mismaZona":       "si",
-            "titulo":          item.get("titulo") or "",
-            "url":             item.get("url") or "",
-            "imagen":          "",
-            "colonia":         item.get("colonia") or "",
-            "distancia_metros": int(item.get("distancia_metros") or 0),
+        nombre = descripcion.split(",")[0].strip()
+        place_id = pred.get("place_id", "")
+
+        # Obtener coordenadas via Place Details
+        try:
+            r2 = await client.get(
+                "https://maps.googleapis.com/maps/api/place/details/json",
+                params={
+                    "place_id": place_id,
+                    "fields": "geometry",
+                    "key": GOOGLE_PLACES_KEY,
+                }
+            )
+            details = r2.json()
+            loc = details.get("result", {}).get("geometry", {}).get("location", {})
+            lat = loc.get("lat", 0)
+            lon = loc.get("lng", 0)
+        except Exception:
+            lat, lon = 0, 0
+
+        colonias.append({
+            "nombre":   nombre,
+            "display":  descripcion,
+            "latitud":  lat,
+            "longitud": lon,
         })
 
-    resultado = {
-        "total":       len(comparables),
-        "comparables": comparables,
-        "latitud":     req.latitud,
-        "longitud":    req.longitud,
-        "radio_km":    req.radio_km,
-    }
-    cache_set(cache_key, resultado, ttl=3600)
+    resultado = {"colonias": colonias[:6]}
+    cache_set(cache_key, resultado, ttl=86400)
     return resultado
