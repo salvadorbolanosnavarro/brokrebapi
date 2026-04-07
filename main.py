@@ -1286,13 +1286,13 @@ APIFY_ACTOR   = "azzouzana~inmuebles24-scraper-pro-by-search-url"
 
 # Mapeo de tipo de inmueble a término de búsqueda en Inmuebles24
 TIPO_URL = {
-    "casa":       "casas-en-venta",
-    "departamento": "departamentos-en-venta",
-    "terreno":    "terrenos-en-venta",
-    "local":      "locales-comerciales-en-venta",
-    "oficina":    "oficinas-en-venta",
-    "bodega":     "bodegas-en-venta",
-    "edificio":   "edificios-en-venta",
+    "casa":         "casas",
+    "departamento": "departamentos",
+    "terreno":      "terrenos",
+    "local":        "locales-comerciales",
+    "oficina":      "oficinas",
+    "bodega":       "bodegas",
+    "edificio":     "edificios",
 }
 
 class ComparablesRequest(BaseModel):
