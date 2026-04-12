@@ -1321,6 +1321,13 @@ html, body {
 .delete-btn.navy { background: var(--navy); color: white; }
 
 </style>
+<!-- Facebook JS SDK -->
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({ appId: '1263951555691804', cookie: true, xfbml: false, version: 'v18.0' });
+  };
+</script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/es_LA/sdk.js"></script>
 </head>
 <body>
 
@@ -2882,72 +2889,29 @@ function handleFbRowTap() {
   }
 }
 
-const FB_REDIRECT_URI = 'https://app.navarroai.com.mx';
-
 function connectFacebook() {
-  const redirectUri = encodeURIComponent(FB_REDIRECT_URI);
-  const scope = encodeURIComponent('pages_manage_posts,pages_read_engagement,pages_show_list');
-  const url = 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + FB_APP_ID +
-    '&redirect_uri=' + redirectUri + '&scope=' + scope + '&response_type=code&state=fb_oauth';
-
-  // Móvil (PWA/iOS): popup no funciona bien, usar redirección directa
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    window.location.href = url;
+  if (typeof FB === 'undefined') {
+    showToastIndex('SDK de Facebook cargando, intenta en un segundo…');
     return;
   }
-
-  // Desktop: usar popup para no perder el estado de la app
-  const w = 600, h = 650;
-  const left = Math.max(0, (screen.width - w) / 2);
-  const top  = Math.max(0, (screen.height - h) / 2);
-  const popup = window.open(url, 'fb_oauth', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`);
-  if (!popup) { window.location.href = url; return; } // bloqueador de popups → fallback
-
-  // Escuchar cuando el popup cierre o envíe el code por postMessage
-  const timer = setInterval(() => {
-    try {
-      const pu = new URL(popup.location.href);
-      if (pu.searchParams.get('state') === 'fb_oauth') {
-        clearInterval(timer);
-        const code = pu.searchParams.get('code');
-        const err  = pu.searchParams.get('error');
-        popup.close();
-        if (code) processFbCode(code);
-        else showToastIndex('Error Facebook: ' + err);
+  FB.login(function(resp) {
+    if (!resp.authResponse) { showToastIndex('Login de Facebook cancelado'); return; }
+    FB.api('/me/accounts', { access_token: resp.authResponse.accessToken }, function(data) {
+      if (!data || !data.data || !data.data.length) {
+        alert('No se encontraron páginas de Facebook administradas por esta cuenta. Asegúrate de ser admin de al menos una página.');
+        return;
       }
-    } catch(_) {}
-    if (popup.closed) clearInterval(timer);
-  }, 500);
-}
-
-async function handleFbCallback() {
-  const params = new URLSearchParams(location.search);
-  if (params.get('state') !== 'fb_oauth') return;
-  const code = params.get('code');
-  const err  = params.get('error');
-  history.replaceState({}, '', location.pathname);
-  if (err || !code) { showToastIndex('Error conectando Facebook: ' + (params.get('error_description') || err)); return; }
-  await processFbCode(code);
-}
-
-async function processFbCode(code) {
-  try {
-    const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) +
-      '&redirect_uri=' + encodeURIComponent(FB_REDIRECT_URI));
-    const data = await r.json();
-    if (data.error) throw new Error(data.error);
-    _fbPageId    = data.page_id    || '';
-    _fbPageName  = data.page_name  || '';
-    _fbPageToken = data.page_token || '';
-    localStorage.setItem('fb_page_id',    _fbPageId);
-    localStorage.setItem('fb_page_name',  _fbPageName);
-    localStorage.setItem('fb_page_token', _fbPageToken);
-    refreshFbRow();
-    showToastIndex('Facebook conectado: ' + _fbPageName);
-  } catch(e) {
-    alert('Error al conectar Facebook: ' + e.message);
-  }
+      const page = data.data[0];
+      _fbPageId    = page.id;
+      _fbPageName  = page.name;
+      _fbPageToken = page.access_token;
+      localStorage.setItem('fb_page_id',    _fbPageId);
+      localStorage.setItem('fb_page_name',  _fbPageName);
+      localStorage.setItem('fb_page_token', _fbPageToken);
+      refreshFbRow();
+      showToastIndex('Facebook conectado: ' + _fbPageName);
+    });
+  }, { scope: 'pages_manage_posts,pages_read_engagement,pages_show_list' });
 }
 
 async function tryPublishToFacebook(propiedad) {
@@ -2973,8 +2937,7 @@ async function tryPublishToFacebook(propiedad) {
   }
 }
 
-// Check FB callback on page load
-document.addEventListener('DOMContentLoaded', () => { handleFbCallback(); refreshFbRow(); });
+document.addEventListener('DOMContentLoaded', () => { refreshFbRow(); });
 
 // ══════════════════════════════════════════
 // PROPERTIES

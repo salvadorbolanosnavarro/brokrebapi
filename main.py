@@ -1689,33 +1689,138 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
     if CV2_AVAILABLE:
         arr = np.array(img)
         arr_bgr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
-        denoised = cv2.fastNlMeansDenoisingColored(arr_bgr, None, 10, 10, 7, 21)
-        b_ch, g_ch, r_ch = cv2.split(denoised.astype(float))
-        mean_b, mean_g, mean_r = b_ch.mean(), g_ch.mean(), r_ch.mean()
-        mean_gray = (mean_b + mean_g + mean_r) / 3
-        b_ch = np.clip(b_ch * (mean_gray / (mean_b or 1)), 0, 255)
-        g_ch = np.clip(g_ch * (mean_gray / (mean_g or 1)), 0, 255)
-        r_ch = np.clip(r_ch * (mean_gray / (mean_r or 1)), 0, 255)
-        balanced = cv2.merge([b_ch.astype(np.uint8), g_ch.astype(np.uint8), r_ch.astype(np.uint8)])
-        rgb = cv2.cvtColor(balanced, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(rgb)
-    img = ImageEnhance.Contrast(img).enhance(1.15)
-    img = ImageEnhance.Brightness(img).enhance(1.08)
-    img = ImageEnhance.Sharpness(img).enhance(1.5)
+
+        # 1. Denoising adaptativo (solo si hay ruido real)
+        gray = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2GRAY)
+        noise_est = np.std(cv2.Laplacian(gray.astype(np.float64), cv2.CV_64F))
+        if noise_est > 12:
+            arr_bgr = cv2.fastNlMeansDenoisingColored(arr_bgr, None, 7, 7, 7, 21)
+
+        # 2. Espacio LAB para procesamiento de luminancia
+        lab = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2LAB)
+        l_ch, a_ch, b_ch = cv2.split(lab)
+
+        # 3. CLAHE en canal L (contraste local sin saturar)
+        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+        l_ch = clahe.apply(l_ch)
+
+        # 4. Recuperación de sombras/altas luces via LUT
+        lut = np.arange(256, dtype=np.float32)
+        lut = np.where(lut < 80,  lut * 1.12, lut)
+        lut = np.where(lut > 210, 210 + (lut - 210) * 0.55, lut)
+        lut = np.clip(lut, 0, 255).astype(np.uint8)
+        l_ch = cv2.LUT(l_ch, lut)
+
+        # 5. Boost de saturación en A/B (vibrance)
+        a_ch = np.clip((a_ch.astype(np.int16) - 128) * 1.1 + 128, 0, 255).astype(np.uint8)
+        b_ch = np.clip((b_ch.astype(np.int16) - 128) * 1.1 + 128, 0, 255).astype(np.uint8)
+
+        arr_bgr = cv2.cvtColor(cv2.merge([l_ch, a_ch, b_ch]), cv2.COLOR_LAB2BGR)
+
+        # 6. Balance de blancos parcial (70% corrección gray-world)
+        bc, gc, rc = cv2.split(arr_bgr.astype(np.float32))
+        mb, mg, mr = bc.mean(), gc.mean(), rc.mean()
+        mg_all = (mb + mg + mr) / 3
+        s = 0.7
+        bc = np.clip(bc * (1 + s * (mg_all / max(mb, 1) - 1)), 0, 255)
+        gc = np.clip(gc * (1 + s * (mg_all / max(mg, 1) - 1)), 0, 255)
+        rc = np.clip(rc * (1 + s * (mg_all / max(mr, 1) - 1)), 0, 255)
+        arr_bgr = cv2.merge([bc.astype(np.uint8), gc.astype(np.uint8), rc.astype(np.uint8)])
+
+        # 7. Unsharp masking (nitidez profesional)
+        blur = cv2.GaussianBlur(arr_bgr, (0, 0), 1.5)
+        arr_bgr = np.clip(cv2.addWeighted(arr_bgr, 1.45, blur, -0.45, 0), 0, 255).astype(np.uint8)
+
+        img = Image.fromarray(cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2RGB))
+    else:
+        img = ImageEnhance.Contrast(img).enhance(1.2)
+        img = ImageEnhance.Brightness(img).enhance(1.05)
+        img = ImageEnhance.Color(img).enhance(1.15)
+        img = ImageEnhance.Sharpness(img).enhance(1.6)
+
     out = io.BytesIO()
     fmt = "JPEG" if (content_type or "").lower() in ("image/jpeg", "image/jpg") else "PNG"
-    img.save(out, format=fmt, quality=90)
+    img.save(out, format=fmt, quality=92, optimize=True)
     return out.getvalue()
 
-@app.post("/images/clean")
-async def clean_images(files: List[UploadFile] = File(...)):
+
+import json as _json
+
+async def _remove_furniture_async(img_bytes: bytes, content_type: str) -> bytes:
+    """Detecta muebles con Claude Vision y los borra con inpainting de OpenCV."""
+    if not CV2_AVAILABLE or not PIL_AVAILABLE or not ANTHROPIC_API_KEY:
+        return img_bytes
+    img_b64 = base64.b64encode(img_bytes).decode()
+    try:
+        async with httpx.AsyncClient(timeout=25) as client:
+            r = await client.post(
+                ANTHROPIC_BASE + "/messages",
+                headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                json={
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 512,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {"type": "image", "source": {"type": "base64", "media_type": content_type, "data": img_b64}},
+                            {"type": "text", "text": "Real estate photo. Find ALL non-fixed movable items: beds, sofas, chairs, tables, rugs, curtains, lamps, decorations, personal items, cushions, plants. KEEP walls, floors, ceilings, windows, doors, built-in cabinets. Return ONLY JSON: {\"items\":[{\"x\":10,\"y\":40,\"w\":60,\"h\":45}]} where x,y=top-left%, w,h=size% of image. No extra text."}
+                        ]
+                    }]
+                }
+            )
+        if r.status_code != 200:
+            return img_bytes
+        raw_text = r.json()["content"][0]["text"].strip()
+        if "```" in raw_text:
+            raw_text = raw_text.split("```")[1].lstrip("json\n").strip()
+        items = _json.loads(raw_text).get("items", [])
+        if not items:
+            return img_bytes
+    except Exception:
+        return img_bytes
+
+    def _inpaint(ib, its):
+        pil_img = Image.open(io.BytesIO(ib)).convert("RGB")
+        w, h = pil_img.size
+        arr_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        mask = np.zeros((h, w), dtype=np.uint8)
+        for it in its:
+            x = max(0, int(it.get("x", 0) / 100 * w) - 8)
+            y = max(0, int(it.get("y", 0) / 100 * h) - 8)
+            bw = min(w - x, int(it.get("w", 10) / 100 * w) + 16)
+            bh = min(h - y, int(it.get("h", 10) / 100 * h) + 16)
+            if bw > 0 and bh > 0:
+                mask[y:y+bh, x:x+bw] = 255
+        if mask.sum() == 0:
+            return ib
+        inpainted = cv2.inpaint(arr_bgr, mask, inpaintRadius=14, flags=cv2.INPAINT_TELEA)
+        out = io.BytesIO()
+        fmt = "JPEG" if content_type.lower() in ("image/jpeg", "image/jpg") else "PNG"
+        Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)).save(out, format=fmt, quality=92)
+        return out.getvalue()
+
     loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(_thread_pool, _inpaint, img_bytes, items)
+
+
+from fastapi import Form as _Form
+
+@app.post("/images/clean")
+async def clean_images(
+    files: List[UploadFile] = File(...),
+    remove_furniture: str = _Form("false"),
+):
+    loop = asyncio.get_event_loop()
+    do_remove = remove_furniture.lower() == "true"
+
     async def process_one(uf: UploadFile):
         raw = await uf.read()
         try:
             processed = await loop.run_in_executor(
                 _thread_pool, _process_image_sync, raw, uf.content_type or "image/jpeg"
             )
+            if do_remove:
+                processed = await _remove_furniture_async(processed, uf.content_type or "image/jpeg")
             return {
                 "name": uf.filename,
                 "original_b64": base64.b64encode(raw).decode(),

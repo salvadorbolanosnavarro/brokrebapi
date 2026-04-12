@@ -108,7 +108,11 @@
   <!-- Action bar -->
   <div class="action-bar" id="action-bar" style="display:none">
     <span class="count-badge" id="count-badge">0 fotos seleccionadas</span>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--gray-600);cursor:pointer;background:var(--surface);border:1.5px solid var(--gray-200);border-radius:10px;padding:8px 12px;user-select:none">
+        <input type="checkbox" id="remove-furniture-toggle" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
+        <span>Retirar muebles sueltos <span style="color:var(--teal);font-size:10px">(IA)</span></span>
+      </label>
       <button class="btn-dl-all" id="btn-dl-all" onclick="downloadAllZip()">
         <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Descargar ZIP
@@ -232,24 +236,25 @@ function renderGrid() {
 // ── Clean ────────────────────────────────────────────────────────────────────
 async function cleanAll() {
   if (!files.length) return;
+  const doRemoveFurniture = document.getElementById('remove-furniture-toggle').checked;
   btnClean.disabled = true;
   btnClean.innerHTML = '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg> Procesando…';
   progressWrap.style.display = 'block';
   progressBar.style.width = '0%';
 
-  // Mark all as loading
   files.forEach((_, i) => {
     const s = document.getElementById('status-' + i);
-    if (s) { s.className = 'card-status loading'; s.textContent = 'Procesando…'; }
+    if (s) { s.className = 'card-status loading'; s.textContent = doRemoveFurniture ? 'Analizando con IA…' : 'Procesando…'; }
   });
 
-  const BATCH = 5;
+  const BATCH = doRemoveFurniture ? 2 : 5;  // IA es más lento, lotes más pequeños
   let done = 0;
   for (let start = 0; start < files.length; start += BATCH) {
     const batch = files.slice(start, start + BATCH);
     const batchIdx = batch.map((_, j) => start + j);
     const fd = new FormData();
     batch.forEach(f => fd.append('files', f));
+    fd.append('remove_furniture', doRemoveFurniture ? 'true' : 'false');
     try {
       const r = await fetch(API_BASE + '/images/clean', { method: 'POST', body: fd });
       if (!r.ok) throw new Error('HTTP ' + r.status);
