@@ -2882,8 +2882,10 @@ function handleFbRowTap() {
   }
 }
 
+const FB_REDIRECT_URI = 'https://app.navarroai.com.mx';
+
 function connectFacebook() {
-  const redirectUri = encodeURIComponent(location.origin + location.pathname);
+  const redirectUri = encodeURIComponent(FB_REDIRECT_URI);
   const scope = encodeURIComponent('pages_manage_posts,pages_read_engagement,pages_show_list');
   const url = 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + FB_APP_ID +
     '&redirect_uri=' + redirectUri + '&scope=' + scope + '&response_type=code&state=fb_oauth';
@@ -2892,16 +2894,14 @@ function connectFacebook() {
 
 async function handleFbCallback() {
   const params = new URLSearchParams(location.search);
-  // Facebook regresa con ?code=...&state=fb_oauth
   if (params.get('state') !== 'fb_oauth') return;
   const code = params.get('code');
   const err  = params.get('error');
-  // Limpiar URL
   history.replaceState({}, '', location.pathname);
   if (err || !code) { showToastIndex('Error conectando Facebook: ' + (params.get('error_description') || err)); return; }
   try {
     const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) +
-      '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname));
+      '&redirect_uri=' + encodeURIComponent(FB_REDIRECT_URI));
     const data = await r.json();
     if (data.error) throw new Error(data.error);
     _fbPageId    = data.page_id    || '';
