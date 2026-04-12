@@ -2889,7 +2889,36 @@ function connectFacebook() {
   const scope = encodeURIComponent('pages_manage_posts,pages_read_engagement,pages_show_list');
   const url = 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + FB_APP_ID +
     '&redirect_uri=' + redirectUri + '&scope=' + scope + '&response_type=code&state=fb_oauth';
-  window.location.href = url;
+
+  // Móvil (PWA/iOS): popup no funciona bien, usar redirección directa
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    window.location.href = url;
+    return;
+  }
+
+  // Desktop: usar popup para no perder el estado de la app
+  const w = 600, h = 650;
+  const left = Math.max(0, (screen.width - w) / 2);
+  const top  = Math.max(0, (screen.height - h) / 2);
+  const popup = window.open(url, 'fb_oauth', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`);
+  if (!popup) { window.location.href = url; return; } // bloqueador de popups → fallback
+
+  // Escuchar cuando el popup cierre o envíe el code por postMessage
+  const timer = setInterval(() => {
+    try {
+      const pu = new URL(popup.location.href);
+      if (pu.searchParams.get('state') === 'fb_oauth') {
+        clearInterval(timer);
+        const code = pu.searchParams.get('code');
+        const err  = pu.searchParams.get('error');
+        popup.close();
+        if (code) processFbCode(code);
+        else showToastIndex('Error Facebook: ' + err);
+      }
+    } catch(_) {}
+    if (popup.closed) clearInterval(timer);
+  }, 500);
 }
 
 async function handleFbCallback() {
@@ -2899,6 +2928,10 @@ async function handleFbCallback() {
   const err  = params.get('error');
   history.replaceState({}, '', location.pathname);
   if (err || !code) { showToastIndex('Error conectando Facebook: ' + (params.get('error_description') || err)); return; }
+  await processFbCode(code);
+}
+
+async function processFbCode(code) {
   try {
     const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) +
       '&redirect_uri=' + encodeURIComponent(FB_REDIRECT_URI));
