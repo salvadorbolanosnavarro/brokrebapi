@@ -41,9 +41,11 @@ app.add_middleware(
 EB_API_KEY       = os.environ.get("EB_API_KEY", "")
 GROQ_API_KEY     = os.environ.get("GROQ_API_KEY", "")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GEMINI_API_KEY    = os.environ.get("GEMINI_API_KEY", "")
 EB_BASE          = "https://api.easybroker.com/v1"
 GROQ_BASE        = "https://api.groq.com/openai/v1"
 ANTHROPIC_BASE   = "https://api.anthropic.com/v1"
+GEMINI_BASE      = "https://generativelanguage.googleapis.com/v1beta"
 APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
 GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
 SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
@@ -1683,6 +1685,7 @@ FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
 FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://brokr.app")
 
 def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
+    """Pipeline de mejora automática (sin IA generativa): denoising, CLAHE, WB, unsharp."""
     if not PIL_AVAILABLE:
         return file_bytes
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
@@ -1690,34 +1693,33 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
         arr = np.array(img)
         arr_bgr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
 
-        # 1. Denoising adaptativo (solo si hay ruido real)
+        # 1. Denoising adaptativo
         gray = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2GRAY)
         noise_est = np.std(cv2.Laplacian(gray.astype(np.float64), cv2.CV_64F))
         if noise_est > 12:
             arr_bgr = cv2.fastNlMeansDenoisingColored(arr_bgr, None, 7, 7, 7, 21)
 
-        # 2. Espacio LAB para procesamiento de luminancia
+        # 2. Espacio LAB
         lab = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2LAB)
         l_ch, a_ch, b_ch = cv2.split(lab)
 
-        # 3. CLAHE en canal L (contraste local sin saturar)
+        # 3. CLAHE en L
         clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
         l_ch = clahe.apply(l_ch)
 
-        # 4. Recuperación de sombras/altas luces via LUT
+        # 4. LUT sombras/altas luces
         lut = np.arange(256, dtype=np.float32)
         lut = np.where(lut < 80,  lut * 1.12, lut)
         lut = np.where(lut > 210, 210 + (lut - 210) * 0.55, lut)
         lut = np.clip(lut, 0, 255).astype(np.uint8)
         l_ch = cv2.LUT(l_ch, lut)
 
-        # 5. Boost de saturación en A/B (vibrance)
+        # 5. Vibrance A/B
         a_ch = np.clip((a_ch.astype(np.int16) - 128) * 1.1 + 128, 0, 255).astype(np.uint8)
         b_ch = np.clip((b_ch.astype(np.int16) - 128) * 1.1 + 128, 0, 255).astype(np.uint8)
-
         arr_bgr = cv2.cvtColor(cv2.merge([l_ch, a_ch, b_ch]), cv2.COLOR_LAB2BGR)
 
-        # 6. Balance de blancos parcial (70% corrección gray-world)
+        # 6. Balance de blancos parcial (70% gray-world)
         bc, gc, rc = cv2.split(arr_bgr.astype(np.float32))
         mb, mg, mr = bc.mean(), gc.mean(), rc.mean()
         mg_all = (mb + mg + mr) / 3
@@ -1727,7 +1729,7 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
         rc = np.clip(rc * (1 + s * (mg_all / max(mr, 1) - 1)), 0, 255)
         arr_bgr = cv2.merge([bc.astype(np.uint8), gc.astype(np.uint8), rc.astype(np.uint8)])
 
-        # 7. Unsharp masking (nitidez profesional)
+        # 7. Unsharp masking
         blur = cv2.GaussianBlur(arr_bgr, (0, 0), 1.5)
         arr_bgr = np.clip(cv2.addWeighted(arr_bgr, 1.45, blur, -0.45, 0), 0, 255).astype(np.uint8)
 
@@ -1744,63 +1746,69 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
     return out.getvalue()
 
 
-import json as _json
+async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str) -> bytes:
+    """Envía la imagen a Gemini Flash imagen para edición guiada por prompt.
+    Devuelve los bytes de la imagen editada, o levanta excepción si falla."""
+    if not GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY no configurada")
 
-async def _remove_furniture_async(img_bytes: bytes, content_type: str) -> bytes:
-    """Detecta muebles con Claude Vision y los borra con inpainting de OpenCV."""
-    if not CV2_AVAILABLE or not PIL_AVAILABLE or not ANTHROPIC_API_KEY:
-        return img_bytes
+    # Resize a máx 1536px lado largo para reducir tokens y costo
+    if PIL_AVAILABLE:
+        pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        max_side = 1536
+        w, h = pil.size
+        if max(w, h) > max_side:
+            scale = max_side / max(w, h)
+            pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        buf = io.BytesIO()
+        pil.save(buf, format="JPEG", quality=90)
+        img_bytes = buf.getvalue()
+        content_type = "image/jpeg"
+
     img_b64 = base64.b64encode(img_bytes).decode()
-    try:
-        async with httpx.AsyncClient(timeout=25) as client:
-            r = await client.post(
-                ANTHROPIC_BASE + "/messages",
-                headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-                json={
-                    "model": "claude-haiku-4-5-20251001",
-                    "max_tokens": 512,
-                    "messages": [{
-                        "role": "user",
-                        "content": [
-                            {"type": "image", "source": {"type": "base64", "media_type": content_type, "data": img_b64}},
-                            {"type": "text", "text": "Real estate photo. Find ALL non-fixed movable items: beds, sofas, chairs, tables, rugs, curtains, lamps, decorations, personal items, cushions, plants. KEEP walls, floors, ceilings, windows, doors, built-in cabinets. Return ONLY JSON: {\"items\":[{\"x\":10,\"y\":40,\"w\":60,\"h\":45}]} where x,y=top-left%, w,h=size% of image. No extra text."}
-                        ]
-                    }]
-                }
-            )
+    full_prompt = (
+        "You are a professional real estate photo editor. "
+        "Edit the following photo according to this instruction: " + prompt + ". "
+        "Output ONLY the edited image, with no text, no watermarks, no borders."
+    )
+
+    payload = {
+        "contents": [{
+            "parts": [
+                {"text": full_prompt},
+                {"inline_data": {"mime_type": content_type, "data": img_b64}},
+            ]
+        }],
+        "generationConfig": {
+            "responseModalities": ["IMAGE", "TEXT"],
+        },
+    }
+
+    url = f"{GEMINI_BASE}/models/gemini-2.0-flash-exp-image-generation:generateContent?key={GEMINI_API_KEY}"
+    async with httpx.AsyncClient(timeout=90) as client:
+        r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
         if r.status_code != 200:
-            return img_bytes
-        raw_text = r.json()["content"][0]["text"].strip()
-        if "```" in raw_text:
-            raw_text = raw_text.split("```")[1].lstrip("json\n").strip()
-        items = _json.loads(raw_text).get("items", [])
-        if not items:
-            return img_bytes
-    except Exception:
-        return img_bytes
+            raise RuntimeError(f"Gemini API error {r.status_code}: {r.text[:300]}")
+        data = r.json()
 
-    def _inpaint(ib, its):
-        pil_img = Image.open(io.BytesIO(ib)).convert("RGB")
-        w, h = pil_img.size
-        arr_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-        mask = np.zeros((h, w), dtype=np.uint8)
-        for it in its:
-            x = max(0, int(it.get("x", 0) / 100 * w) - 8)
-            y = max(0, int(it.get("y", 0) / 100 * h) - 8)
-            bw = min(w - x, int(it.get("w", 10) / 100 * w) + 16)
-            bh = min(h - y, int(it.get("h", 10) / 100 * h) + 16)
-            if bw > 0 and bh > 0:
-                mask[y:y+bh, x:x+bw] = 255
-        if mask.sum() == 0:
-            return ib
-        inpainted = cv2.inpaint(arr_bgr, mask, inpaintRadius=14, flags=cv2.INPAINT_TELEA)
-        out = io.BytesIO()
-        fmt = "JPEG" if content_type.lower() in ("image/jpeg", "image/jpg") else "PNG"
-        Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)).save(out, format=fmt, quality=92)
-        return out.getvalue()
-
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(_thread_pool, _inpaint, img_bytes, items)
+    # Extrae inline_data de la respuesta
+    try:
+        parts = data["candidates"][0]["content"]["parts"]
+        for part in parts:
+            if "inlineData" in part:
+                raw_b64 = part["inlineData"]["data"]
+                out_mime = part["inlineData"].get("mimeType", "image/png")
+                img_result = base64.b64decode(raw_b64)
+                # Convertir a JPEG si es PNG para consistencia
+                if PIL_AVAILABLE and out_mime == "image/png":
+                    pil2 = Image.open(io.BytesIO(img_result)).convert("RGB")
+                    buf2 = io.BytesIO()
+                    pil2.save(buf2, format="JPEG", quality=92)
+                    img_result = buf2.getvalue()
+                return img_result
+        raise RuntimeError("Gemini no devolvió imagen en la respuesta")
+    except (KeyError, IndexError) as e:
+        raise RuntimeError(f"Respuesta inesperada de Gemini: {e}")
 
 
 from fastapi import Form as _Form
@@ -1808,34 +1816,49 @@ from fastapi import Form as _Form
 @app.post("/images/clean")
 async def clean_images(
     files: List[UploadFile] = File(...),
+    prompt: str = _Form(""),
+    # legacy field kept for backward compat
     remove_furniture: str = _Form("false"),
 ):
-    loop = asyncio.get_event_loop()
-    do_remove = remove_furniture.lower() == "true"
+    use_gemini = bool(prompt.strip()) and bool(GEMINI_API_KEY)
 
     async def process_one(uf: UploadFile):
         raw = await uf.read()
+        ct = uf.content_type or "image/jpeg"
         try:
-            processed = await loop.run_in_executor(
-                _thread_pool, _process_image_sync, raw, uf.content_type or "image/jpeg"
-            )
-            if do_remove:
-                processed = await _remove_furniture_async(processed, uf.content_type or "image/jpeg")
-            return {
-                "name": uf.filename,
-                "original_b64": base64.b64encode(raw).decode(),
-                "cleaned_b64": base64.b64encode(processed).decode(),
-                "content_type": uf.content_type or "image/jpeg",
-                "error": None,
-            }
+            if use_gemini:
+                processed = await _process_with_gemini(raw, ct, prompt.strip())
+                return {
+                    "name": uf.filename,
+                    "original_b64": base64.b64encode(raw).decode(),
+                    "cleaned_b64": base64.b64encode(processed).decode(),
+                    "content_type": "image/jpeg",
+                    "used_gemini": True,
+                    "error": None,
+                }
+            else:
+                loop = asyncio.get_event_loop()
+                processed = await loop.run_in_executor(
+                    _thread_pool, _process_image_sync, raw, ct
+                )
+                return {
+                    "name": uf.filename,
+                    "original_b64": base64.b64encode(raw).decode(),
+                    "cleaned_b64": base64.b64encode(processed).decode(),
+                    "content_type": ct,
+                    "used_gemini": False,
+                    "error": None,
+                }
         except Exception as exc:
             return {
                 "name": uf.filename,
                 "original_b64": base64.b64encode(raw).decode(),
                 "cleaned_b64": None,
-                "content_type": uf.content_type or "image/jpeg",
+                "content_type": ct,
+                "used_gemini": False,
                 "error": str(exc),
             }
+
     results = await asyncio.gather(*[process_one(f) for f in files])
     return {"images": list(results)}
 

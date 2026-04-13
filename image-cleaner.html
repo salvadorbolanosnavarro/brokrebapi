@@ -34,8 +34,20 @@
   .drop-hint{font-size:13px;color:var(--gray-400)}
   .drop-types{font-size:11px;color:var(--gray-400);margin-top:6px}
 
+  /* Prompt box */
+  .prompt-box{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin:20px 0 0;display:none}
+  .prompt-label{font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .prompt-label .gem-badge{background:linear-gradient(135deg,#4285f4,#34a853);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.3px}
+  .prompt-textarea{width:100%;border:1.5px solid var(--gray-200);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--gray-800);resize:vertical;min-height:72px;outline:none;transition:border-color .2s;line-height:1.5}
+  .prompt-textarea:focus{border-color:var(--teal)}
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .preset-btn{background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--gray-600);cursor:pointer;transition:all .15s;white-space:nowrap}
+  .preset-btn:hover{border-color:var(--teal);color:var(--teal);background:rgba(13,148,136,.06)}
+  .preset-btn.active{border-color:var(--teal);color:var(--teal);background:rgba(13,148,136,.08)}
+  .prompt-hint{font-size:11px;color:var(--gray-400);margin-top:8px;line-height:1.5}
+
   /* Action bar */
-  .action-bar{display:flex;align-items:center;justify-content:space-between;margin:20px 0 16px;flex-wrap:wrap;gap:10px}
+  .action-bar{display:flex;align-items:center;justify-content:space-between;margin:16px 0 16px;flex-wrap:wrap;gap:10px}
   .count-badge{font-size:13px;color:var(--gray-600);font-weight:600}
   .btn-clean{background:linear-gradient(135deg,var(--blue),var(--teal));color:white;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;box-shadow:0 2px 12px rgba(30,95,204,.3)}
   .btn-clean:disabled{opacity:.5;cursor:not-allowed}
@@ -105,14 +117,27 @@
     <div class="drop-types">JPG, PNG, WEBP · máx. 20 fotos a la vez</div>
   </div>
 
+  <!-- Prompt box (visible after files are added) -->
+  <div class="prompt-box" id="prompt-box">
+    <div class="prompt-label">
+      Instrucción para la IA
+      <span class="gem-badge">Gemini Flash</span>
+    </div>
+    <textarea class="prompt-textarea" id="prompt-input" placeholder="Describe qué quieres hacer con las fotos. Ej: Elimina todos los muebles no fijos, mejora la iluminación y hazlo ver como foto profesional de bienes raíces vacío."></textarea>
+    <div class="presets">
+      <button class="preset-btn" onclick="applyPreset(this, 'Foto profesional de bienes raíces: mejora iluminación, contraste y nitidez. Deja el espacio limpio y atractivo.')">✨ Mejorar calidad</button>
+      <button class="preset-btn" onclick="applyPreset(this, 'Elimina todos los muebles no fijos: camas, sofás, sillas, mesas, alfombras, cortinas, lámparas y decoraciones. Conserva paredes, pisos, techos, ventanas y puertas. Muestra el cuarto vacío y limpio.')">🛋️ Retirar muebles</button>
+      <button class="preset-btn" onclick="applyPreset(this, 'Transforma esta foto en una imagen profesional de bienes raíces: cuarto vacío, sin muebles, excelente iluminación, colores vivos y balanceados, listo para publicar.')">🏠 Cuarto vacío profesional</button>
+      <button class="preset-btn" onclick="applyPreset(this, 'Mejora esta foto de jardín o exterior: cielo más azul, vegetación más verde y vibrante, iluminación natural cálida, aspecto de día soleado.')">🌿 Exterior vibrante</button>
+      <button class="preset-btn" onclick="applyPreset(this, 'Corrige la iluminación: aumenta brillo en zonas oscuras, reduce brillos, mejora el balance de blancos para que la foto luzca natural y profesional.')">💡 Corregir iluminación</button>
+    </div>
+    <div class="prompt-hint">Deja el campo vacío para usar solo mejoras automáticas (sin IA generativa).</div>
+  </div>
+
   <!-- Action bar -->
   <div class="action-bar" id="action-bar" style="display:none">
     <span class="count-badge" id="count-badge">0 fotos seleccionadas</span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--gray-600);cursor:pointer;background:var(--surface);border:1.5px solid var(--gray-200);border-radius:10px;padding:8px 12px;user-select:none">
-        <input type="checkbox" id="remove-furniture-toggle" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
-        <span>Retirar muebles sueltos <span style="color:var(--teal);font-size:10px">(IA)</span></span>
-      </label>
       <button class="btn-dl-all" id="btn-dl-all" onclick="downloadAllZip()">
         <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Descargar ZIP
@@ -145,20 +170,21 @@ const API_BASE = (()=>{
   return 'https://brokrebapi-production.up.railway.app';
 })();
 
-let files = [];         // File objects
-let results = [];       // Processed results from backend
+let files = [];
+let results = [];
 let cleaned = false;
 
-const dropZone  = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const grid      = document.getElementById('grid');
-const actionBar = document.getElementById('action-bar');
-const countBadge= document.getElementById('count-badge');
-const btnClean  = document.getElementById('btn-clean');
-const btnDlAll  = document.getElementById('btn-dl-all');
+const dropZone   = document.getElementById('drop-zone');
+const fileInput  = document.getElementById('file-input');
+const grid       = document.getElementById('grid');
+const actionBar  = document.getElementById('action-bar');
+const promptBox  = document.getElementById('prompt-box');
+const countBadge = document.getElementById('count-badge');
+const btnClean   = document.getElementById('btn-clean');
+const btnDlAll   = document.getElementById('btn-dl-all');
 const progressWrap = document.getElementById('progress-wrap');
 const progressBar  = document.getElementById('progress-bar');
-const empty     = document.getElementById('empty');
+const empty      = document.getElementById('empty');
 
 // ── Drag & drop ──────────────────────────────────────────────────────────────
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -182,14 +208,22 @@ function addFiles(newFiles) {
   renderGrid();
 }
 
+function applyPreset(btn, text) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('prompt-input').value = text;
+}
+
 function renderGrid() {
   if (!files.length) {
     actionBar.style.display = 'none';
+    promptBox.style.display = 'none';
     empty.style.display = 'none';
     grid.innerHTML = '';
     return;
   }
   actionBar.style.display = 'flex';
+  promptBox.style.display = 'block';
   countBadge.textContent = files.length + (files.length === 1 ? ' foto seleccionada' : ' fotos seleccionadas');
   grid.innerHTML = files.map((f, i) => {
     const origUrl = URL.createObjectURL(f);
@@ -201,7 +235,7 @@ function renderGrid() {
     if (res && res.cleaned_b64) {
       cleanedSrc = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
       statusClass = 'ok';
-      statusText = '✓ Limpiada';
+      statusText = res.used_gemini ? '✨ Mejorada con Gemini' : '✓ Limpiada';
       dlBtn = `<button class="btn-dl-one" id="dl-btn-${i}" onclick="downloadOne(${i})" style="display:flex">
         <svg viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Descargar
@@ -211,7 +245,7 @@ function renderGrid() {
       statusText = 'Error: ' + res.error.substring(0, 40);
     }
     const rightSrc = cleanedSrc || origUrl;
-    const rightLabel = cleanedSrc ? 'LIMPIADA' : 'ORIGINAL';
+    const rightLabel = cleanedSrc ? (res && res.used_gemini ? 'GEMINI' : 'LIMPIADA') : 'ORIGINAL';
     return `
     <div class="card" id="card-${i}">
       <div class="card-name" title="${f.name}">${f.name}</div>
@@ -221,8 +255,8 @@ function renderGrid() {
           <span class="card-img-label">ORIGINAL</span>
         </div>
         <div class="card-img-wrap" id="right-wrap-${i}">
-          <img src="${rightSrc}" alt="limpiada" id="right-img-${i}"/>
-          <span class="card-img-label">${rightLabel}</span>
+          <img src="${rightSrc}" alt="resultado" id="right-img-${i}"/>
+          <span class="card-img-label" id="right-lbl-${i}">${rightLabel}</span>
         </div>
       </div>
       <div class="card-footer">
@@ -236,7 +270,9 @@ function renderGrid() {
 // ── Clean ────────────────────────────────────────────────────────────────────
 async function cleanAll() {
   if (!files.length) return;
-  const doRemoveFurniture = document.getElementById('remove-furniture-toggle').checked;
+  const prompt = document.getElementById('prompt-input').value.trim();
+  const useGemini = prompt.length > 0;
+
   btnClean.disabled = true;
   btnClean.innerHTML = '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg> Procesando…';
   progressWrap.style.display = 'block';
@@ -244,17 +280,21 @@ async function cleanAll() {
 
   files.forEach((_, i) => {
     const s = document.getElementById('status-' + i);
-    if (s) { s.className = 'card-status loading'; s.textContent = doRemoveFurniture ? 'Analizando con IA…' : 'Procesando…'; }
+    if (s) {
+      s.className = 'card-status loading';
+      s.textContent = useGemini ? 'Procesando con Gemini IA…' : 'Procesando…';
+    }
   });
 
-  const BATCH = doRemoveFurniture ? 2 : 5;  // IA es más lento, lotes más pequeños
+  const BATCH = useGemini ? 1 : 4;  // Gemini: una a la vez (timeout más largo)
   let done = 0;
+
   for (let start = 0; start < files.length; start += BATCH) {
     const batch = files.slice(start, start + BATCH);
     const batchIdx = batch.map((_, j) => start + j);
     const fd = new FormData();
     batch.forEach(f => fd.append('files', f));
-    fd.append('remove_furniture', doRemoveFurniture ? 'true' : 'false');
+    fd.append('prompt', prompt);
     try {
       const r = await fetch(API_BASE + '/images/clean', { method: 'POST', body: fd });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -278,7 +318,7 @@ async function cleanAll() {
   cleaned = results.some(r => r && r.cleaned_b64);
   if (cleaned) {
     btnDlAll.style.display = 'flex';
-    showToast('¡Fotos limpias! Descarga individual o en ZIP.');
+    showToast('¡Fotos procesadas! Descarga individual o en ZIP.');
   }
   btnClean.disabled = false;
   btnClean.innerHTML = '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg> Limpiar fotos';
@@ -288,16 +328,17 @@ async function cleanAll() {
 function updateCard(i, res) {
   const s = document.getElementById('status-' + i);
   const rightImg = document.getElementById('right-img-' + i);
+  const rightLbl = document.getElementById('right-lbl-' + i);
   const rightWrap = document.getElementById('right-wrap-' + i);
   const footer = rightWrap ? rightWrap.closest('.card').querySelector('.card-footer') : null;
   if (res.cleaned_b64) {
     const src = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
     if (rightImg) rightImg.src = src;
-    if (rightWrap) {
-      const lbl = rightWrap.querySelector('.card-img-label');
-      if (lbl) lbl.textContent = 'LIMPIADA';
+    if (rightLbl) rightLbl.textContent = res.used_gemini ? 'GEMINI' : 'LIMPIADA';
+    if (s) {
+      s.className = 'card-status ok';
+      s.textContent = res.used_gemini ? '✨ Mejorada con Gemini' : '✓ Limpiada';
     }
-    if (s) { s.className = 'card-status ok'; s.textContent = '✓ Limpiada'; }
     if (footer) {
       let dlBtn = footer.querySelector('.btn-dl-one');
       if (!dlBtn) {
