@@ -1,4 +1,3 @@
-from fastapi import FastAPI, HTTPException, Query, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -1842,8 +1841,6 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                 # Otro error (400, 403, 429, etc.) — guardar y probar siguiente payload
                 last_err = f"Error {r.status_code} ({model_name}): {r.text[:300]}"
                 continue
-        continue
-        break
 
     raise RuntimeError(last_err)
 
