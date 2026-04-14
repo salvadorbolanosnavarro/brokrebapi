@@ -14,7 +14,7 @@
   --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh;padding-bottom:80px}
 #wrap{max-width:780px;margin:0 auto;padding:32px 20px 60px}
 
 /* Nav */
@@ -673,13 +673,6 @@ let tipoActual = 'arrendamiento';
 })();
 
 // ── Tipo tabs ──
-function onFormaPagoChange(){
-  const v = document.getElementById('a-forma-pago').value;
-  const wrap = document.getElementById('banco-wrap');
-  wrap.style.display = (v === 'transferencia bancaria' || v === 'depósito bancario') ? 'block' : 'none';
-  if(wrap.style.display === 'none') document.getElementById('a-banco').value = '';
-}
-
 function setTipo(tipo){
   tipoActual = tipo;
   document.getElementById('tab-arr').classList.toggle('active', tipo==='arrendamiento');
@@ -729,8 +722,8 @@ function validateArrendamiento(){
   for(const [id, label] of required){
     if(!gv(id)){ return `El campo "${label}" es requerido.`; }
   }
-  if(!gv('a-dia-firma') || !gv('a-mes-firma') || !gv('a-anio-firma'))
-    return 'Completa la fecha de firma del contrato.';
+  if(!gv('a-fecha'))
+    return 'Ingresa la fecha de firma del contrato.';
   if(!gv('a-inicio') || !gv('a-fin'))
     return 'Ingresa las fechas de inicio y término del contrato.';
   if(new Date(gv('a-fin')) <= new Date(gv('a-inicio')))
@@ -740,10 +733,19 @@ function validateArrendamiento(){
 }
 
 function validatePromesa(){
-  const required = ['p-fecha','p-dir','p-colonia','p-cp','p-vendedor','p-dom-vend',
-                    'p-comprador','p-dom-comp','p-fecha-limite'];
-  for(const id of required){
-    if(!gv(id)) return `Por favor completa todos los campos requeridos (${id}).`;
+  const required = [
+    ['p-fecha',       'Fecha del contrato'],
+    ['p-dir',         'Calle y número del inmueble'],
+    ['p-colonia',     'Colonia del inmueble'],
+    ['p-cp',          'Código postal del inmueble'],
+    ['p-vendedor',    'Nombre del vendedor'],
+    ['p-dom-vend',    'Domicilio del vendedor'],
+    ['p-comprador',   'Nombre del comprador'],
+    ['p-dom-comp',    'Domicilio del comprador'],
+    ['p-fecha-limite','Fecha límite para escritura'],
+  ];
+  for(const [id, label] of required){
+    if(!gv(id)) return `El campo "${label}" es requerido.`;
   }
   if(!getMonto('p-precio')) return 'Ingresa el precio total de venta.';
   if(!getMonto('p-arras'))  return 'Ingresa el monto de arras/enganche.';
@@ -764,30 +766,47 @@ async function generarContrato(){
     return;
   }
 
-  // Build data
-  let datos = {
+  // Build data — helper para construir dirección completa
+  const buildAddr = (calle, numext, numint, colonia, cp, mpio) => {
+    let s = calle || '';
+    if(numext) s += ' No. ' + numext;
+    if(numint) s += ' Int. ' + numint;
+    if(colonia) s += ', Col. ' + colonia;
+    if(cp) s += ' C.P. ' + cp;
+    if(mpio) s += ', ' + mpio;
+    return s.trim();
+  };
+
+  let datos;
+  if(tipoActual === 'arrendamiento'){
+    const destino = gv('a-destino') === 'otro' ? gv('a-destino-otro') : gv('a-destino');
+    datos = {
       // Fechas
-      fecha_contrato:     `${gv('a-dia-firma')} DE ${gv('a-mes-firma')} DE ${gv('a-anio-firma')}`,
-      fecha_inicio:       fechaEscrita(gv('a-inicio')),
-      fecha_fin:          fechaEscrita(gv('a-fin')),
-      plazo_contrato:     gv('a-duracion') || calcularPlazo(gv('a-inicio'), gv('a-fin')),
+      fecha_contrato:     gv('a-fecha'),
+      fecha_inicio:       gv('a-inicio'),
+      fecha_fin:          gv('a-fin'),
+      duracion:           gv('a-duracion'),
+      inicio_escrito:     gv('a-inicio-escrito'),
+      fin_escrito:        gv('a-fin-escrito'),
       // Inmueble
+      destino_inmueble:   destino,
+      destino_uso:        destino,
       calle_inmueble:     gv('a-calle-inm'),
       num_ext_inmueble:   gv('a-numext-inm'),
       num_int_inmueble:   gv('a-numint-inm'),
       colonia_inmueble:   gv('a-colonia'),
       cp_inmueble:        gv('a-cp'),
       municipio_estado_inmueble: gv('a-mpio-inm'),
-      destino_uso:        gv('a-destino') === 'otro' ? gv('a-destino-otro') : gv('a-destino'),
+      direccion_inmueble: buildAddr(gv('a-calle-inm'), gv('a-numext-inm'), gv('a-numint-inm'), gv('a-colonia'), gv('a-cp'), gv('a-mpio-inm')),
       // Arrendador
       nombre_arrendador:  gv('a-arrendador'),
       sexo_arrendador:    document.querySelector('#sexo-arr .sexo-btn.active')?.dataset?.sexo || 'M',
       calle_arrendador:   gv('a-calle-arr'),
-      num_ext_arrendador: gv('a-numext-arr') || gv('a-calle-arr'),
-      num_int_arrendador: gv('a-numint-arr'),
+      num_ext_arrendador: gv('a-numext-arr'),
       colonia_arrendador: gv('a-colonia-arr'),
       cp_arrendador:      gv('a-cp-arr'),
       municipio_estado_arrendador: gv('a-mpio-arr'),
+      domicilio_arrendador: buildAddr(gv('a-calle-arr'), gv('a-numext-arr'), '', gv('a-colonia-arr'), gv('a-cp-arr'), gv('a-mpio-arr')),
       // Arrendatario
       nombre_arrendatario: gv('a-arrendatario'),
       sexo_arrendatario:  document.querySelector('#sexo-arrt .sexo-btn.active')?.dataset?.sexo || 'M',
@@ -795,52 +814,32 @@ async function generarContrato(){
       nombre_obligado_solidario: gv('a-os'),
       sexo_os:            document.querySelector('#sexo-os .sexo-btn.active')?.dataset?.sexo || 'M',
       calle_os:           gv('a-calle-os'),
-      num_ext_os:         gv('a-numext-os') || gv('a-calle-os'),
+      num_ext_os:         gv('a-numext-os'),
       num_int_os:         gv('a-numint-os'),
       colonia_os:         gv('a-colonia-os'),
       cp_os:              gv('a-cp-os'),
       municipio_estado_os: gv('a-mpio-os'),
+      domicilio_obligado_solidario: buildAddr(gv('a-calle-os'), gv('a-numext-os'), gv('a-numint-os'), gv('a-colonia-os'), gv('a-cp-os'), gv('a-mpio-os')),
       calle_inm_os:       gv('a-calle-inm-os'),
-      num_ext_inm_os:     gv('a-numext-inm-os') || gv('a-calle-inm-os'),
+      num_ext_inm_os:     gv('a-numext-inm-os'),
       num_int_inm_os:     gv('a-numint-inm-os'),
       colonia_inm_os:     gv('a-colonia-inm-os'),
       cp_inm_os:          gv('a-cp-inm-os'),
       municipio_estado_inm_os: gv('a-mpio-inm-os'),
+      inmueble_os:        buildAddr(gv('a-calle-inm-os'), gv('a-numext-inm-os'), gv('a-numint-inm-os'), gv('a-colonia-inm-os'), gv('a-cp-inm-os'), gv('a-mpio-inm-os')),
       // Renta y pagos
       renta_mensual:      getMonto('a-renta'),
-      renta_letra:        gv('a-renta-letra') || montoALetras(getMonto('a-renta')),
+      renta_letra:        gv('a-renta-letra'),
       deposito_garantia:  getMonto('a-deposito'),
-      deposito_letra:     gv('a-deposito-letra') || montoALetras(getMonto('a-deposito')),
-      dia_pago:           gv('a-dia-pago'),
-      forma_pago:         gv('a-forma-pago'),
-      cuenta_bancaria:    gv('a-banco'),
-      pena_dia_num:       getMonto('a-pena'),
-      pena_dia_letra:     gv('a-pena-letra') || montoALetras(getMonto('a-pena')),
-    };
-  if(tipoActual === 'arrendamiento'){
-    datos = {
-      fecha_contrato:     gv('a-fecha'),
-      fecha_inicio:       gv('a-inicio'),
-      fecha_fin:          gv('a-fin'),
-      duracion:           gv('a-duracion'),
-      destino_inmueble:   gv('a-destino'),
-      direccion_inmueble: gv('a-dir'),
-      colonia_inmueble:   gv('a-colonia'),
-      cp_inmueble:        gv('a-cp'),
-      cajones_estacionamiento: parseInt(gv('a-cajones')) || 0,
-      incluye_bodega:     gv('a-bodega') === 'true',
-      nombre_arrendador:  gv('a-arrendador'),
-      domicilio_arrendador: gv('a-dom-arr'),
-      nombre_arrendatario: gv('a-arrendatario'),
-      nombre_obligado_solidario: gv('a-os'),
-      domicilio_obligado_solidario: gv('a-dom-os'),
-      inmueble_os:        gv('a-inm-os'),
-      renta_mensual:      getMonto('a-renta'),
-      deposito_garantia:  getMonto('a-deposito'),
+      deposito_letra:     gv('a-deposito-letra'),
       dia_pago:           gv('a-dia-pago') || '1',
       forma_pago:         gv('a-forma-pago'),
       cuenta_bancaria:    gv('a-banco'),
       pena_retencion:     getMonto('a-pena') || 500,
+      pena_dia_num:       getMonto('a-pena') || 500,
+      pena_dia_letra:     gv('a-pena-letra'),
+      cajones_estacionamiento: 0,
+      incluye_bodega:     false,
     };
   } else {
     datos = {

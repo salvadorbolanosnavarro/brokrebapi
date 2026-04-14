@@ -95,7 +95,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-
 /* Selection checkbox overlay */
 .card-checkbox{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:6px;border:2px solid white;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:10}
 .card-checkbox.checked{background:var(--teal);border-color:var(--teal)}
-.card-checkbox svg{width:13px;height:13px;stroke:white;fill:none;opacity:0;transition:opacity .15s}
+.card-checkbox svg{width:13px;height:13px;stroke:white;fill:none;opacity:0;transition:opacity .15s;pointer-events:none}
 .card-checkbox.checked svg{opacity:1}
 .sel-mode .card-checkbox{display:flex}
 .sel-mode .card{cursor:pointer}
@@ -275,7 +275,7 @@ function renderGrid() {
       statusClass = 'ok';
       statusText = res.used_gemini ? 'Mejorada con Brokr AI' : 'Mejorada';
       if (!selectionMode) {
-        dlBtn = `<button class="btn-dl-one" id="dl-btn-${i}" onclick="downloadOne(${i})" style="display:flex">
+        dlBtn = `<button class="btn-dl-one" id="dl-btn-${i}" onclick="event.stopPropagation();downloadOne(${i})" style="display:flex">
           <svg viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Descargar
         </button>`;
@@ -290,7 +290,7 @@ function renderGrid() {
     const checkVisible = res && res.cleaned_b64 ? '' : ' style="display:none"';
     return `
     <div class="card${selectedSet.has(i) ? ' selected' : ''}" id="card-${i}" onclick="cardClick(${i})">
-      <div class="card-checkbox ${isChecked}" id="chk-${i}"${checkVisible}>
+      <div class="card-checkbox ${isChecked}" id="chk-${i}"${checkVisible} onclick="event.stopPropagation();cardClick(${i})">
         <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="card-name" title="${f.name}">${f.name}</div>
@@ -509,6 +509,8 @@ function downloadOne(i) {
 async function downloadAll() {
   const processed = results.map((r, i) => ({r, i})).filter(({r}) => r && r.cleaned_b64);
   if (!processed.length) { showToast('No hay fotos editadas aún'); return; }
+  // Suppress Shaark wake-word during download to avoid false triggers
+  try { window.parent.postMessage({ type: 'brokr-suppress-wake', duration: 5000 }, '*'); } catch(e){}
   showToast(`Descargando ${processed.length} imagen${processed.length !== 1 ? 'es' : ''}…`);
   for (const {i} of processed) {
     downloadOne(i);
@@ -520,6 +522,7 @@ function downloadSelected() {
   if (selectedSet.size === 0) { showToast('Selecciona al menos una imagen'); return; }
   const toDownload = [...selectedSet].filter(i => results[i] && results[i].cleaned_b64);
   if (!toDownload.length) { showToast('Sin imágenes válidas en la selección'); return; }
+  try { window.parent.postMessage({ type: 'brokr-suppress-wake', duration: 5000 }, '*'); } catch(e){}
   showToast(`Descargando ${toDownload.length} imagen${toDownload.length !== 1 ? 'es' : ''}…`);
   toDownload.forEach((i, idx) => {
     setTimeout(() => downloadOne(i), idx * 250);

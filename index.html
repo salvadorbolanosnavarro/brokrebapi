@@ -644,27 +644,28 @@ html, body {
   display: none;
   position: fixed;
   bottom: calc(74px + env(safe-area-inset-bottom, 0px));
-  right: 16px;
-  width: min(340px, calc(100vw - 24px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 20px));
   z-index: 300;
 }
 .shaark-popup.open {
   display: block;
-  animation: popIn .2s cubic-bezier(.16,1,.3,1);
+  animation: popIn .22s cubic-bezier(.16,1,.3,1);
 }
 .shaark-popup.open .shaark-popup-inner {
   display: flex;
   flex-direction: column;
 }
-@keyframes popIn { from { opacity:0; transform:scale(.88) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes popIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .shaark-popup-inner {
   background: #0f1829;
   color: white;
-  border-radius: 20px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.40);
   border: 1px solid rgba(42,157,181,0.25);
-  max-height: min(420px, calc(100dvh - 160px));
+  max-height: min(380px, calc(100dvh - 160px));
 }
 /* scw- styles used inside popup */
 .shaark-popup .scw-header {
@@ -1999,6 +2000,23 @@ async function shaarkFabFetch(text) {
 // SHAARK VOICE — Persistent mic + wake-word "Oye Shaark"
 // ════════════════════════════════════════════════════════════════════
 
+// ── Añadir puntuación inteligente a transcripciones de voz ──────────
+function _addPunctuation(text) {
+  if (!text) return text;
+  // Already ends with punctuation
+  if (/[.?!;,]$/.test(text)) return text;
+  // Question patterns (Spanish interrogative words)
+  const questionWords = /\b(qué|que|cómo|como|cuándo|cuando|dónde|donde|cuánto|cuanto|cuánta|cuanta|cuántos|cuantos|cuántas|cuantas|por qué|por que|quién|quien|quiénes|quienes|cuál|cual|cuáles|cuales)\b/i;
+  if (questionWords.test(text) || text.trimStart().startsWith('¿')) {
+    return text + '?';
+  }
+  // Commands / imperative hints
+  const cmdWords = /^(dime|dinos|explica|explícame|muéstrame|muéstrame|genera|crea|calcula|busca|abre|cierra|descarga)/i;
+  if (cmdWords.test(text.trimStart())) return text + '.';
+  // Default: period
+  return text + '.';
+}
+
 let scwRecognition = null, scwListening = false, scwVoiceTimeout = null;
 
 // ── Permisos: solicitar UNA vez y recordar en localStorage ──────────
@@ -2006,6 +2024,19 @@ let _micGranted = localStorage.getItem('mic_granted') === '1';
 
 async function ensureMicPermission() {
   if (_micGranted) return true;
+  // Check current OS-level permission before calling getUserMedia (avoids re-prompt on iOS)
+  if (navigator.permissions) {
+    try {
+      const status = await navigator.permissions.query({ name: 'microphone' });
+      if (status.state === 'granted') {
+        _micGranted = true;
+        localStorage.setItem('mic_granted', '1');
+        return true;
+      }
+      if (status.state === 'denied') return false;
+      // status === 'prompt' — fall through to getUserMedia below
+    } catch(e) { /* permissions API not supported on this browser */ }
+  }
   if (!('mediaDevices' in navigator)) return false;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -2056,7 +2087,8 @@ async function startScwVoice(){
       if(e.results[i].isFinal) final += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
-    if(inp) inp.value = (final || interim).trim();
+    const raw = (final || interim).trim();
+    if(inp) inp.value = final ? _addPunctuation(raw) : raw;
   };
   scwRecognition.onerror = () => {
     clearTimeout(scwVoiceTimeout);
@@ -2175,6 +2207,11 @@ function _resumeWake() {
 }
 
 function _onWakeWordDetected() {
+  // Ignore if suppressed (e.g. during iframe downloads)
+  if (Date.now() < _wakeSuppressUntil) {
+    _resumeWake();
+    return;
+  }
   // Vibrate on supported devices
   if (navigator.vibrate) navigator.vibrate(60);
   if (!shaarkPopupOpen) toggleShaarkPopup();
@@ -2485,6 +2522,14 @@ function showDashboard() {
 
 function goISR()  { setPanel('isr'); }
 function goProps(){ setPanel('props'); }
+
+// ── Supresión del wake-word durante descargas en Editor de imágenes ──
+let _wakeSuppressUntil = 0;
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== 'brokr-suppress-wake') return;
+  const ms = e.data.duration || 4000;
+  _wakeSuppressUntil = Date.now() + ms;
+});
 
 // ── "Utilizar en ficha" — recibe imágenes del Editor y las pasa a ficha-manual ──
 window.addEventListener('message', function(e) {
