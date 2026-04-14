@@ -2982,17 +2982,18 @@ function tryAutoFbConnect() {
       }
       FB.api('/me/accounts', { access_token: resp.authResponse.accessToken }, function(data) {
         if (!data || data.error) {
-          showFail('Facebook no otorgó permisos de páginas' + (data && data.error ? ': ' + data.error.message : '') + '.');
+          showFail('Error al obtener páginas' + (data && data.error ? ': ' + data.error.message : '') + '.');
           return;
         }
         if (!data.data || !data.data.length) {
-          showFail('No se encontraron páginas administradas.');
+          showFail('Facebook no encontró páginas asociadas a tu cuenta. Asegúrate de ser administrador de al menos una Página (no perfil personal) y que la seleccionaste al autorizar.');
           return;
         }
+        // Si hay varias páginas tomar la primera; en el futuro se puede mostrar selector
         const page = data.data[0];
         finishFbConnect(page.id, page.name, page.access_token);
       });
-    }, { scope: 'pages_manage_posts,pages_read_engagement,pages_show_list' });
+    }, { scope: 'pages_show_list' });
   } catch(e) {
     showFail('Error iniciando login: ' + e.message);
   }
