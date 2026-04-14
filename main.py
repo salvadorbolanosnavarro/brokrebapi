@@ -1789,16 +1789,13 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
     if os.environ.get("GEMINI_IMAGE_MODEL"):
         _candidates.append(("https://generativelanguage.googleapis.com/v1beta", os.environ["GEMINI_IMAGE_MODEL"]))
         _candidates.append(("https://generativelanguage.googleapis.com/v1",     os.environ["GEMINI_IMAGE_MODEL"]))
-    _candidates += [
-        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash-preview-image-generation"),
-        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash-preview-image-generation"),
-        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash-exp-image-generation"),
-        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash-exp-image-generation"),
-        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash-exp"),
-        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash-exp"),
-        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash"),
-        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash"),
-    ]
+    for _n in [
+        "gemini-3.1-flash-image-preview",           # Gemini 3 Flash Image (Nano Banana 2) — principal
+        "gemini-2.0-flash-preview-image-generation", # fallback Gemini 2.0
+        "gemini-2.0-flash-exp-image-generation",
+    ]:
+        _candidates.append(("https://generativelanguage.googleapis.com/v1beta", _n))
+        _candidates.append(("https://generativelanguage.googleapis.com/v1",     _n))
 
     last_err = "Sin modelos disponibles"
     for base_url, model_name in _candidates:
