@@ -1805,6 +1805,13 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                     last_err = f"Modelo no encontrado: {model_name}"
                     break  # este modelo no existe, probar siguiente
 
+                if r.status_code == 429:
+                    # Cuota agotada — no tiene sentido probar otros modelos
+                    raise RuntimeError(
+                        "Cuota de Gemini agotada. Espera a que se reinicie tu límite gratuito "
+                        "(~24h) o activa billing en https://aistudio.google.com/apikey."
+                    )
+
                 if r.status_code == 200:
                     try:
                         data = r.json()
