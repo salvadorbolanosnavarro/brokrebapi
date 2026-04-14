@@ -1750,7 +1750,7 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY no configurada")
 
-    # Resize a máx 1024px para reducir payload
+    # Resize a máx 1024px para reducir payload y tiempo de proceso
     if PIL_AVAILABLE:
         pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
         w, h = pil.size
@@ -1758,7 +1758,7 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
             scale = 1024 / max(w, h)
             pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
         buf = io.BytesIO()
-        pil.save(buf, format="JPEG", quality=88)
+        pil.save(buf, format="JPEG", quality=85)
         img_bytes = buf.getvalue()
 
     img_b64 = base64.b64encode(img_bytes).decode()
@@ -1768,25 +1768,17 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         "Output only the edited image."
     )
 
-    # Los modelos Nano Banana generan imagen por defecto — NO usar responseModalities
-    # Variantes de payload en orden de preferencia
-    _parts_with_img = [
-        {"text": full_prompt},
-        {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
-    ]
-    _parts_text_only = [{"text": full_prompt}]
-
+    # Solo v1beta — los modelos Nano Banana no están en v1
+    # Solo 2 payloads: con imagen (preferido) y solo texto (fallback)
     _payloads = [
-        # 1. Con imagen de entrada, sin generationConfig (imagen por defecto)
-        {"contents": [{"parts": _parts_with_img}]},
-        # 2. Solo texto (text-to-image)
-        {"contents": [{"parts": _parts_text_only}]},
-        # 3. Con imagen + responseModalities explícito (por si algún modelo lo requiere)
-        {"contents": [{"parts": _parts_with_img}],
-         "generationConfig": {"responseModalities": ["IMAGE"]}},
+        {"contents": [{"parts": [
+            {"text": full_prompt},
+            {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
+        ]}]},
+        {"contents": [{"parts": [{"text": full_prompt}]}]},
     ]
 
-    # Modelos disponibles en esta API key (verificados en lista de modelos)
+    # Modelos en orden de preferencia — solo v1beta
     _model_names = [m for m in [
         os.environ.get("GEMINI_IMAGE_MODEL", ""),
         "gemini-3.1-flash-image-preview",   # Nano Banana 2
@@ -1794,16 +1786,13 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         "gemini-3-pro-image-preview",        # Nano Banana Pro
     ] if m]
 
-    _candidates = []
-    for _n in _model_names:
-        for _base in ["https://generativelanguage.googleapis.com/v1beta",
-                      "https://generativelanguage.googleapis.com/v1"]:
-            _candidates.append((_base, _n))
-
+    GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
     last_err = "Sin modelos disponibles"
-    async with httpx.AsyncClient(timeout=120) as client:
-        for base_url, model_name in _candidates:
-            url = f"{base_url}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+
+    # Timeout 25s por petición — Railway corta a ~60s total, necesitamos margen
+    async with httpx.AsyncClient(timeout=25) as client:
+        for model_name in _model_names:
+            url = f"{GEMINI_BASE_URL}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
             for payload in _payloads:
                 try:
                     r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
@@ -1833,13 +1822,11 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                                 return out.getvalue()
                             return raw
 
-                    text_parts = [p.get("text","") for p in parts if "text" in p]
+                    text_parts = [p.get("text", "") for p in parts if "text" in p]
                     last_err = f"Sin imagen en respuesta ({model_name}): {' '.join(text_parts)[:150]}"
-                    # No romper — puede que otro payload sí devuelva imagen
                     continue
 
-                # Otro error (400, 403, 429, etc.) — guardar y probar siguiente payload
-                last_err = f"Error {r.status_code} ({model_name}): {r.text[:300]}"
+                last_err = f"Error {r.status_code} ({model_name}): {r.text[:200]}"
                 continue
 
     raise RuntimeError(last_err)
@@ -1864,7 +1851,6 @@ async def clean_images(
                 processed = await _process_with_gemini(raw, ct, prompt.strip())
                 return {
                     "name": uf.filename,
-                    "original_b64": base64.b64encode(raw).decode(),
                     "cleaned_b64": base64.b64encode(processed).decode(),
                     "content_type": "image/jpeg",
                     "used_gemini": True,
@@ -1877,7 +1863,6 @@ async def clean_images(
                 )
                 return {
                     "name": uf.filename,
-                    "original_b64": base64.b64encode(raw).decode(),
                     "cleaned_b64": base64.b64encode(processed).decode(),
                     "content_type": ct,
                     "used_gemini": False,
@@ -1886,7 +1871,6 @@ async def clean_images(
         except Exception as exc:
             return {
                 "name": uf.filename,
-                "original_b64": base64.b64encode(raw).decode(),
                 "cleaned_b64": None,
                 "content_type": ct,
                 "used_gemini": False,
