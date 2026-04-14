@@ -1761,81 +1761,100 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         buf = io.BytesIO()
         pil.save(buf, format="JPEG", quality=88)
         img_bytes = buf.getvalue()
-        content_type = "image/jpeg"
 
     img_b64 = base64.b64encode(img_bytes).decode()
     full_prompt = (
         "You are a professional real estate photo editor. "
-        "Edit this photo following the instruction: " + prompt + ". "
-        "Return only the edited image."
+        "Edit this photo: " + prompt + ". "
+        "Output only the edited image."
     )
 
-    # responseModalities: solo IMAGE para forzar salida de imagen
-    payload = {
-        "contents": [{
-            "parts": [
+    # Variantes de payload (camelCase / snake_case / con y sin imagen de entrada)
+    _payloads = [
+        # 1. Con imagen de entrada, camelCase (formato estándar REST)
+        {
+            "contents": [{"parts": [
                 {"text": full_prompt},
                 {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
-            ]
-        }],
-        "generationConfig": {
-            "responseModalities": ["IMAGE"],
+            ]}],
+            "generationConfig": {"responseModalities": ["IMAGE"]},
         },
-    }
+        # 2. Con imagen de entrada, snake_case (algunas versiones del API)
+        {
+            "contents": [{"parts": [
+                {"text": full_prompt},
+                {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
+            ]}],
+            "generation_config": {"response_modalities": ["IMAGE"]},
+        },
+        # 3. Solo texto (text-to-image, sin imagen de entrada)
+        {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {"responseModalities": ["IMAGE"]},
+        },
+        # 4. Solo texto, snake_case
+        {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generation_config": {"response_modalities": ["IMAGE"]},
+        },
+    ]
 
-    # Combinaciones (base_url, model_name) a intentar en orden
-    # Primero env var para override manual, luego todas las variantes conocidas
-    _candidates = []
-    if os.environ.get("GEMINI_IMAGE_MODEL"):
-        _candidates.append(("https://generativelanguage.googleapis.com/v1beta", os.environ["GEMINI_IMAGE_MODEL"]))
-        _candidates.append(("https://generativelanguage.googleapis.com/v1",     os.environ["GEMINI_IMAGE_MODEL"]))
-    for _n in [
-        "gemini-3.1-flash-image-preview",           # Gemini 3 Flash Image (Nano Banana 2) — principal
-        "gemini-2.0-flash-preview-image-generation", # fallback Gemini 2.0
+    # Modelos a probar: primero env var override, luego lista fija
+    _model_names = [m for m in [
+        os.environ.get("GEMINI_IMAGE_MODEL", ""),
+        "gemini-3.1-flash-image-preview",
+        "gemini-2.0-flash-preview-image-generation",
         "gemini-2.0-flash-exp-image-generation",
-    ]:
-        _candidates.append(("https://generativelanguage.googleapis.com/v1beta", _n))
-        _candidates.append(("https://generativelanguage.googleapis.com/v1",     _n))
+    ] if m]
+
+    # Expandir: cada modelo × cada base_url
+    _candidates = []
+    for _n in _model_names:
+        for _base in ["https://generativelanguage.googleapis.com/v1beta",
+                      "https://generativelanguage.googleapis.com/v1"]:
+            _candidates.append((_base, _n))
 
     last_err = "Sin modelos disponibles"
-    for base_url, model_name in _candidates:
-        url = f"{base_url}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
-        try:
-            async with httpx.AsyncClient(timeout=120) as client:
-                r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
-        except Exception as e:
-            last_err = f"Timeout/red ({model_name}): {e}"
-            continue
+    async with httpx.AsyncClient(timeout=120) as client:
+        for base_url, model_name in _candidates:
+            url = f"{base_url}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+            for payload in _payloads:
+                try:
+                    r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
+                except Exception as e:
+                    last_err = f"Timeout ({model_name}): {e}"
+                    break  # red fallida, pasar al siguiente modelo
 
-        if r.status_code in (404, 400):
-            last_err = f"Modelo no disponible ({r.status_code}): {model_name} — {r.text[:200]}"
-            continue  # probar siguiente candidato
+                if r.status_code == 404:
+                    last_err = f"Modelo no encontrado: {model_name}"
+                    break  # este modelo no existe, probar siguiente
 
-        if r.status_code != 200:
-            last_err = f"Error {r.status_code} ({model_name}): {r.text[:400]}"
-            continue  # seguir probando
+                if r.status_code == 200:
+                    try:
+                        data = r.json()
+                        parts = data["candidates"][0]["content"]["parts"]
+                    except Exception as e:
+                        last_err = f"JSON inválido ({model_name}): {e}"
+                        continue
 
-        # --- Respuesta 200 ---
-        try:
-            data = r.json()
-            parts = data["candidates"][0]["content"]["parts"]
-        except Exception as e:
-            last_err = f"JSON inválido ({model_name}): {e}"
-            continue
+                    for part in parts:
+                        if "inlineData" in part:
+                            raw = base64.b64decode(part["inlineData"]["data"])
+                            if PIL_AVAILABLE:
+                                pil2 = Image.open(io.BytesIO(raw)).convert("RGB")
+                                out = io.BytesIO()
+                                pil2.save(out, format="JPEG", quality=92)
+                                return out.getvalue()
+                            return raw
 
-        for part in parts:
-            if "inlineData" in part:
-                raw = base64.b64decode(part["inlineData"]["data"])
-                if PIL_AVAILABLE:
-                    pil2 = Image.open(io.BytesIO(raw)).convert("RGB")
-                    out = io.BytesIO()
-                    pil2.save(out, format="JPEG", quality=92)
-                    return out.getvalue()
-                return raw
+                    text_parts = [p.get("text","") for p in parts if "text" in p]
+                    last_err = f"Sin imagen en respuesta ({model_name}): {' '.join(text_parts)[:150]}"
+                    # No romper — puede que otro payload sí devuelva imagen
+                    continue
 
-        # 200 pero sin imagen — modelo no soporta salida de imagen, probar otro
-        text_parts = [p.get("text","") for p in parts if "text" in p]
-        last_err = f"Sin imagen en respuesta ({model_name}): {' '.join(text_parts)[:150]}"
+                # Otro error (400, 403, 429, etc.) — guardar y probar siguiente payload
+                last_err = f"Error {r.status_code} ({model_name}): {r.text[:300]}"
+                continue
         continue
         break
 
