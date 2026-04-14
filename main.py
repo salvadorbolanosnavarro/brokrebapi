@@ -1783,16 +1783,26 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         },
     }
 
-    # Modelos a intentar en orden; env var GEMINI_IMAGE_MODEL para forzar uno
-    model_names = [m for m in [
-        os.environ.get("GEMINI_IMAGE_MODEL", ""),
-        "gemini-2.0-flash-preview-image-generation",
-        "gemini-2.0-flash-exp-image-generation",
-    ] if m]
+    # Combinaciones (base_url, model_name) a intentar en orden
+    # Primero env var para override manual, luego todas las variantes conocidas
+    _candidates = []
+    if os.environ.get("GEMINI_IMAGE_MODEL"):
+        _candidates.append(("https://generativelanguage.googleapis.com/v1beta", os.environ["GEMINI_IMAGE_MODEL"]))
+        _candidates.append(("https://generativelanguage.googleapis.com/v1",     os.environ["GEMINI_IMAGE_MODEL"]))
+    _candidates += [
+        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash-preview-image-generation"),
+        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash-preview-image-generation"),
+        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash-exp-image-generation"),
+        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash-exp-image-generation"),
+        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash-exp"),
+        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash-exp"),
+        ("https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash"),
+        ("https://generativelanguage.googleapis.com/v1",     "gemini-2.0-flash"),
+    ]
 
     last_err = "Sin modelos disponibles"
-    for model_name in model_names:
-        url = f"{GEMINI_BASE}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+    for base_url, model_name in _candidates:
+        url = f"{base_url}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
         try:
             async with httpx.AsyncClient(timeout=120) as client:
                 r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
@@ -1800,26 +1810,25 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
             last_err = f"Timeout/red ({model_name}): {e}"
             continue
 
-        if r.status_code == 404:
-            last_err = f"Modelo no encontrado: {model_name}"
-            continue  # probar siguiente
+        if r.status_code in (404, 400):
+            last_err = f"Modelo no disponible ({r.status_code}): {model_name} — {r.text[:200]}"
+            continue  # probar siguiente candidato
 
         if r.status_code != 200:
             last_err = f"Error {r.status_code} ({model_name}): {r.text[:400]}"
-            break  # error real, no tiene caso probar otros
+            continue  # seguir probando
 
         # --- Respuesta 200 ---
         try:
             data = r.json()
             parts = data["candidates"][0]["content"]["parts"]
         except Exception as e:
-            last_err = f"JSON inválido ({model_name}): {e} — raw: {r.text[:200]}"
-            break
+            last_err = f"JSON inválido ({model_name}): {e}"
+            continue
 
         for part in parts:
             if "inlineData" in part:
                 raw = base64.b64decode(part["inlineData"]["data"])
-                # Convertir a JPEG siempre para consistencia
                 if PIL_AVAILABLE:
                     pil2 = Image.open(io.BytesIO(raw)).convert("RGB")
                     out = io.BytesIO()
@@ -1827,9 +1836,10 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                     return out.getvalue()
                 return raw
 
-        # 200 pero sin imagen en la respuesta — puede haber texto en su lugar
+        # 200 pero sin imagen — modelo no soporta salida de imagen, probar otro
         text_parts = [p.get("text","") for p in parts if "text" in p]
-        last_err = f"Gemini respondió sin imagen ({model_name}). Texto: {' '.join(text_parts)[:200]}"
+        last_err = f"Sin imagen en respuesta ({model_name}): {' '.join(text_parts)[:150]}"
+        continue
         break
 
     raise RuntimeError(last_err)
