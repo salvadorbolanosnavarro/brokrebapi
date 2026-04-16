@@ -559,6 +559,7 @@
         if (!resultado) return;
         setPdfLoading(true);
         try {
+          // Paso 1: pedir a Railway que genere el PDF y devuelva el token
           const r = await fetch(`${API}/avm-pdf`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -566,7 +567,23 @@
           });
           const data = await r.json();
           if (!r.ok) throw new Error(data.detail || "Error generando PDF");
-          window.open(`${API}/avm-pdf/${data.token}`, "_blank");
+
+          // Paso 2: descargar los bytes del PDF directamente (resuelve cross-origin en PWA/Chrome)
+          const pdfResp = await fetch(`${API}/avm-pdf/${data.token}`);
+          if (!pdfResp.ok) throw new Error("No se pudo obtener el PDF");
+          const blob = await pdfResp.blob();
+          const blobUrl = URL.createObjectURL(blob);
+
+          // Paso 3: forzar descarga con blob local (funciona en PWA Chrome Android/iOS)
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = data.filename || "Opinion_Valor.pdf";
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+          }, 500);
         } catch (e) {
           alert("Error al generar PDF: " + e.message);
         } finally { setPdfLoading(false); }
@@ -580,17 +597,19 @@
       if (estado === "idle" || estado === "error") return (
         <div className="avm-body">
           <div className="avm-card">
+            <div className="card-label">🤖 Análisis con IA y búsqueda en internet</div>
             <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 14, lineHeight: 1.6 }}>
-             Nuestra IA busca comparables en tiempo real en los mejores portales inmobiliarios y emplea su criterio entrenado y conocimientos periciales para emitir un resultado fundamentado. Brokr no sugiere que esta opinión de valor sustituya un avalúo realizado por un perito certificado.
+              La IA busca comparables reales en Lamudi, Vivanuncios e Inmuebles24 y genera una opinión de valor fundamentada con datos de mercado actuales.
             </p>
 
-            <div className="card-label" style={{ marginBottom: 10 }}>Tipo de inmueble</div>
-            <div className="tipo-grid" style={{ marginBottom: 16 }}>
-              {TIPOS.map(t => (
-                <button key={t.id} className={"tipo-btn" + (form.tipo === t.id ? " selected" : "")} onClick={() => u("tipo", t.id)}>
-                  <span className="tipo-icon">{t.icon}</span>{t.label}
-                </button>
-              ))}
+            <div className="field-row" style={{ marginBottom: 14 }}>
+              <F label="Tipo de inmueble">
+                <select value={form.tipo} onChange={e => u("tipo", e.target.value)}>
+                  {TIPOS.map(t => (
+                    <option key={t.id} value={t.id}>{t.icon} {t.label}</option>
+                  ))}
+                </select>
+              </F>
             </div>
 
             <div className="toggle-opt">
@@ -600,37 +619,42 @@
           </div>
 
           <div className="avm-card">
+            <div className="card-label">📍 Ubicación</div>
             <div className="field-row">
-              <F label="Colonia o fraccionamiento*">
+              <F label="Colonia / Fraccionamiento *">
                 <input type="text" value={form.colonia}
                   onChange={e => u("colonia", e.target.value)}
+                  placeholder="Ej: Vistas Altozano, Chapultepec..." />
               </F>
             </div>
             <div className="field-row">
               <F label="Ciudad">
                 <input type="text" value={form.ciudad}
                   onChange={e => u("ciudad", e.target.value)}
+                  placeholder="Morelia" />
               </F>
             </div>
           </div>
 
           <div className="avm-card">
+            <div className="card-label">📐 Superficies</div>
             <div className="field-row">
               {(esTerreno || esConstruccion) &&
                 <F label="m² de terreno">
-                  <NI value={form.m2_terreno} onChange={v => u("m2_terreno",v)} placeholder="200" />
+                  <NI value={form.m2_terreno} onChange={v => u("m2_terreno",v)} placeholder="183" />
                 </F>}
               {esConstruccion &&
                 <F label="m² construidos *">
-                  <NI value={form.m2_construccion} onChange={v => u("m2_construccion",v)} placeholder="200" />
+                  <NI value={form.m2_construccion} onChange={v => u("m2_construccion",v)} placeholder="150" />
                 </F>}
             </div>
             {esTerreno && (
               <div className="field-row">
-                <F label="Topografía del terreno">
+                <F label="Condición del terreno">
                   <select value={form.condicion_terreno} onChange={e => u("condicion_terreno", e.target.value)}>
                     <option value="plano">Plano</option>
                     <option value="pendiente">Con pendiente</option>
+                    <option value="irregular">Irregular</option>
                   </select>
                 </F>
               </div>
@@ -639,7 +663,7 @@
 
           {esConstruccion && (
             <div className="avm-card">
-              <div className="card-label">Características</div>
+              <div className="card-label">🚪 Características</div>
               <div className="field-row">
                 <F label="Recámaras"><NI value={form.recamaras} onChange={v => u("recamaras",v)} placeholder="3" /></F>
                 <F label="Baños"><NI value={form.banos} onChange={v => u("banos",v)} placeholder="2" /></F>
@@ -649,9 +673,9 @@
           )}
 
           <div className="avm-card">
-            <div className="card-label">Comentarios adicionales (opcional)</div>
+            <div className="card-label">💬 Comentarios adicionales (opcional)</div>
             <textarea value={form.comentarios} onChange={e => u("comentarios", e.target.value)}
-              placeholder="Ejemplo: esquina, vista panorámica, con bardas..."
+              placeholder="Ej: esquina, vista panorámica, con bardas, cerca del campo de golf..."
               style={{ width:"100%", padding:"10px 12px", background:"var(--gray-100)", border:"1px solid rgba(0,0,0,0.1)", borderRadius:10, color:"var(--text)", outline:"none", fontFamily:"'Poppins',sans-serif", fontSize:13, minHeight:72, resize:"vertical" }} />
           </div>
 
@@ -660,7 +684,7 @@
           )}
 
           <button id="btn-analizar-ia" className="btn-primary teal" onClick={analizar}>
-            Generar opinión de valor
+            🔍 Analizar con IA y web
           </button>
         </div>
       );
@@ -670,10 +694,10 @@
         <div className="avm-body">
           <div className="avm-card">
             <div className="ia-loading">
-              <div className="ia-loading-icon ia-pulse">🦈</div>
-              <div className="ia-loading-txt">Buscando comparables...</div>
-              <div className="ia-loading-sub" style={{ marginTop: 8 }}>Consultando Lamudi, Vivanuncios, Inmuebles24...</div>
-              <div className="ia-loading-sub ia-pulse" style={{ marginTop: 16, color: "var(--teal)" }}>Esto puede tomar 1 minuto</div>
+              <div className="ia-loading-icon ia-pulse">🔍</div>
+              <div className="ia-loading-txt">Buscando comparables en el mercado...</div>
+              <div className="ia-loading-sub" style={{ marginTop: 8 }}>Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+              <div className="ia-loading-sub ia-pulse" style={{ marginTop: 16, color: "var(--teal)" }}>Esto puede tomar 20–40 segundos</div>
             </div>
           </div>
         </div>
@@ -705,7 +729,7 @@
             </div>
 
             <div className="avm-card">
-              <div className="card-label">Resumen ejecutivo</div>
+              <div className="card-label">📋 Resumen ejecutivo</div>
               <p style={{ fontSize: 13, color: "var(--gray-600)", lineHeight: 1.7 }}>
                 {resultado.resumen_ejecutivo}
               </p>
@@ -713,7 +737,7 @@
 
             {comparables.length > 0 && (
               <div className="avm-card">
-                <div className="card-label">Comparables encontrados en el mercado</div>
+                <div className="card-label">🏘️ Comparables encontrados en el mercado</div>
                 {comparables.map((c, i) => (
                   <div key={i} className="comp-row">
                     <div className="comp-row-desc">{c.descripcion}</div>
@@ -751,7 +775,7 @@
 
             {recs.length > 0 && (
               <div className="avm-card">
-                <div className="card-label">Recomendaciones</div>
+                <div className="card-label">💡 Recomendaciones</div>
                 {recs.map((r, i) => (
                   <div key={i} style={{ display:"flex", gap:8, marginBottom:6, fontSize:12, color:"var(--text)", alignItems:"flex-start" }}>
                     <span style={{ color:"var(--teal)", fontWeight:700, flexShrink:0 }}>→</span>
@@ -768,7 +792,7 @@
             )}
 
             <button className="btn-pdf" onClick={descargarPDF} disabled={pdfLoading}>
-              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "Descargar opinión de valor"}
+              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "⬇️ Descargar opinión de valor en PDF"}
             </button>
 
             <button className="btn-primary outline" style={{ marginTop: 10 }}
@@ -921,259 +945,11 @@
         return { analyzed, analyzedT, promHomol, promHomolT, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
       }, [sujeto, allComps]);
 
-      const esTerreno  = sujeto.tipo === "terreno";
-      const valorFinal = result.valorMercado > 0 ? Math.round(result.valorMercado / 1000) * 1000 : result.valorFisico > 0 ? Math.round(result.valorFisico / 1000) * 1000 : 0;
-      const tabs       = ["Propiedad", "Comparables", "Resultado", "IA + Web"];
 
       return (
         <div style={{ fontFamily: "'Poppins', sans-serif", background: "var(--screen-bg)", minHeight: "100vh" }}>
 
-          {/* TABS */}
-          <div className="avm-tabs">
-            {tabs.map((t, i) => (
-              <button key={t} className={`avm-tab${tab === i ? " active" : ""}`} onClick={() => setTab(i)}>
-                {i === 2 && valorFinal > 0 ? "Resultado ✓" : i === 3 ? "🤖 IA + Web" : t}
-              </button>
-            ))}
-          </div>
-
-          {/* ═══ TAB 0 — PROPIEDAD ═══ */}
-          {tab === 0 && (
-            <div className="avm-body">
-
-              <div className="avm-card">
-                <div className="card-label">🏷️ Tipo de inmueble</div>
-                <div className="tipo-grid">
-                  {TIPOS.map((t) => (
-                    <button key={t.id} className={`tipo-btn${sujeto.tipo === t.id ? " selected" : ""}`} onClick={() => u("tipo", t.id)}>
-                      <span className="tipo-icon">{t.icon}</span>{t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="avm-card">
-                <div className="card-label">📍 Ubicación</div>
-                <div className="field-row"><F label="Dirección"><input type="text" value={sujeto.direccion} onChange={(e) => u("direccion", e.target.value)} placeholder="Calle y número" /></F></div>
-                <div className="field-row">
-                  <div className="field">
-                    <label>COLONIA *</label>
-                    <ColoniaInput
-                      value={coloniaObj}
-                      ciudad={sujeto.ciudad || "Morelia"}
-                      onSelect={(col) => {
-                        setColoniaObj(col);
-                        u("colonia", col ? col.nombre : "");
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="field-row"><F label="Ciudad"><input type="text" value={sujeto.ciudad} onChange={(e) => u("ciudad", e.target.value)} placeholder="Morelia" /></F></div>
-              </div>
-
-              <div className="avm-card">
-                <div className="card-label">📐 Superficies</div>
-                <div className="field-row">
-                  {campos.terreno      && <F label="m² terreno"><NI value={sujeto.m2Terreno} onChange={(v) => u("m2Terreno", v)} placeholder="200" /></F>}
-                  {campos.construccion && <F label="m² construidos"><NI value={sujeto.m2Construccion} onChange={(v) => u("m2Construccion", v)} placeholder="150" /></F>}
-                </div>
-              </div>
-
-              {(campos.recamaras || campos.banos || campos.estac || campos.nivel || campos.unidades) && (
-                <div className="avm-card">
-                  <div className="card-label">🚪 Características</div>
-                  {(campos.recamaras || campos.banos || campos.estac) && (
-                    <div className="field-row">
-                      {campos.recamaras && <F label="Recámaras"><NI value={sujeto.recamaras} onChange={(v) => u("recamaras", v)} placeholder="3" /></F>}
-                      {campos.banos     && <F label="Baños"><NI value={sujeto.banos} onChange={(v) => u("banos", v)} placeholder="2" /></F>}
-                      {campos.estac     && <F label="Estac."><NI value={sujeto.estacionamiento} onChange={(v) => u("estacionamiento", v)} placeholder="2" /></F>}
-                    </div>
-                  )}
-                  {campos.nivel    && <div className="field-row"><F label="Piso / Nivel"><NI value={sujeto.nivel} onChange={(v) => u("nivel", v)} placeholder="3" /></F></div>}
-                  {campos.unidades && <div className="field-row"><F label="Número de unidades"><NI value={sujeto.unidades} onChange={(v) => u("unidades", v)} placeholder="12" /></F></div>}
-                </div>
-              )}
-
-              {campos.edad && (
-                <div className="avm-card">
-                  <div className="card-label">🔧 Estado y calidad</div>
-                  <div className="field-row"><F label="Edad aprox. (años)"><NI value={sujeto.edad} onChange={(v) => u("edad", v)} placeholder="15" /></F></div>
-                  <div className="field-row"><F label="Estado de conservación"><SI value={sujeto.conservacion} onChange={(v) => u("conservacion", v)} options={CONSERV_OPTS} /></F></div>
-                  <div className="field-row"><F label="Nivel de acabados"><SI value={sujeto.calidad} onChange={(v) => u("calidad", v)} options={CALIDAD_OPTS} /></F></div>
-                </div>
-              )}
-
-              <button className="btn-primary teal" onClick={() => setTab(1)}>Siguiente → Buscar comparables</button>
-            </div>
-          )}
-
-          {/* ═══ TAB 1 — COMPARABLES ═══ */}
-          {tab === 1 && (
-            <div className="avm-body">
-
-              <div className="avm-card">
-                <div className="card-label">🔍 Comparables automáticos</div>
-                <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 12, lineHeight: 1.6 }}>
-                  Buscamos propiedades similares en Inmuebles24 según la colonia y tipo que ingresaste. Toca las que quieras incluir.
-                </p>
-                {error && <div className="alert warn">{error}</div>}
-                <button className="btn-primary" onClick={buscarComparables} disabled={loading}>
-                  {loading ? <><div className="spinner" />Buscando en Inmuebles24...</> : "🔍 Buscar en Inmuebles24"}
-                </button>
-              </div>
-
-              {autoComps.length > 0 && (
-                <div className="avm-card">
-                  <div className="card-label">
-                    📋 {autoComps.length} propiedades encontradas
-                    {autoSel.size > 0 && <span style={{ marginLeft: 8, background: "var(--teal-glow)", color: "var(--teal)", padding: "2px 8px", borderRadius: 20, fontSize: 10 }}>{autoSel.size} seleccionadas</span>}
-                  </div>
-                  {autoComps.map((c, i) => {
-                    const sel = autoSel.has(i);
-                    return (
-                      <div key={i} className={`comp-auto-card${sel ? " selected" : ""}`} onClick={() => toggleAutoComp(i)}>
-                        <div className="comp-auto-top">
-                          <div className="comp-auto-info">
-                            <div className="comp-auto-titulo">{c.titulo}</div>
-                            <div className="comp-auto-precio">{fmt(c.precio)}</div>
-                          </div>
-                          {sel && <span className="sel-badge">✓</span>}
-                        </div>
-                        <div className="comp-auto-datos">
-                          {c.m2Construccion > 0  && <span className="comp-chip">🏠 {c.m2Construccion} m²</span>}
-                          {c.m2Terreno      > 0  && <span className="comp-chip">🌳 {c.m2Terreno} m² terreno</span>}
-                          {c.recamaras      > 0  && <span className="comp-chip">🛏 {c.recamaras} rec.</span>}
-                          {c.estacionamiento > 0 && <span className="comp-chip">🚗 {c.estacionamiento} est.</span>}
-                          {c.m2Construccion > 0  && <span className="comp-chip" style={{ color: "var(--teal-dark)", background: "var(--teal-glow)" }}>{fmt(c.precio / c.m2Construccion)}/m²</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="avm-card">
-                <div className="card-label">✏️ Agregar manualmente</div>
-                <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 12, lineHeight: 1.6 }}>
-                  ¿No encontraste lo que buscas? Agrega comparables a mano desde cualquier portal.
-                </p>
-                {comps.map((c, i) => (
-                  <CompManualCard key={c.id} comp={c} index={i} sujeto={sujeto} onChange={(k, v) => updateComp(c.id, k, v)} onRemove={() => removeComp(c.id)} />
-                ))}
-                <button className="btn-primary outline" onClick={addComp}>+ Agregar comparable manual</button>
-              </div>
-
-              {allComps.length === 0 && <div className="alert warn">Selecciona al menos 3 comparables para un resultado confiable.</div>}
-              {allComps.length > 0 && allComps.length < 3 && <div className="alert warn">Llevas {allComps.length} comparable{allComps.length > 1 ? "s" : ""}. Agrega al menos 3.</div>}
-              {allComps.length >= 3 && <div className="alert success">✓ {allComps.length} comparables listos.</div>}
-              {allComps.length > 0 && <button className="btn-primary teal" style={{ marginTop: 4 }} onClick={() => setTab(2)}>Ver resultado →</button>}
-            </div>
-          )}
-
-          {/* ═══ TAB 2 — RESULTADO ═══ */}
-          {tab === 2 && (
-            <div className="avm-body">
-
-              <div className="result-hero">
-                <div className="result-lbl">Valor comercial estimado</div>
-                <div className="result-val">{fmt(valorFinal)}</div>
-                {sujeto.direccion && <div className="result-sub">{sujeto.direccion}{sujeto.colonia ? `, ${sujeto.colonia}` : ""}</div>}
-                {result.valorMin > 0 && result.valorMax > 0 && result.nComps > 1 && (
-                  <div className="result-range">Rango: {fmt(Math.round(result.valorMin / 1000) * 1000)} — {fmt(Math.round(result.valorMax / 1000) * 1000)}</div>
-                )}
-                <span className="result-badge" style={{ background: `${result.confianzaColor}20`, color: result.confianzaColor, border: `1px solid ${result.confianzaColor}40` }}>
-                  Confianza {result.confianza} · {result.nComps} comparable{result.nComps !== 1 ? "s" : ""}
-                </span>
-              </div>
-
-              {(result.promHomol > 0 || result.terrenoUnit > 0) && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                  {result.promHomol > 0 && (
-                    <div className="metric-card">
-                      <div className="metric-val">{fmt(result.promHomol)}</div>
-                      <div className="metric-lbl">$/m² construcción</div>
-                    </div>
-                  )}
-                  {result.terrenoUnit > 0 && (
-                    <div className="metric-card">
-                      <div className="metric-val">{fmt(result.terrenoUnit)}</div>
-                      <div className="metric-lbl">$/m² terreno</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {result.dispersion > 0 && (
-                <div className={`alert ${result.dispersion < 20 ? "success" : "warn"}`} style={{ marginBottom: 14 }}>
-                  Dispersión: {result.dispersion.toFixed(1)}%{result.dispersion < 20 ? " — Datos consistentes ✓" : " — Revisar comparables"}
-                </div>
-              )}
-
-              <div className="avm-card">
-                <div className="card-label">📊 Tres enfoques del avalúo</div>
-                <p style={{ fontSize: 11, color: "var(--gray-400)", marginBottom: 14, lineHeight: 1.5 }}>Metodología de perito valuador certificado.</p>
-
-                <div className="enfoque-card">
-                  <div>
-                    <div className="enfoque-lbl">Enfoque de mercado</div>
-                    <div className="enfoque-val" style={{ color: "var(--amber)" }}>{fmt(result.valorMercado)}</div>
-                    <div className="enfoque-sub">{result.nComps} comparables homologados</div>
-                  </div>
-                  <div className="enfoque-icon" style={{ background: "rgba(245,158,11,0.1)" }}>📈</div>
-                </div>
-
-                {!esTerreno && (
-                  <>
-                    <div className="enfoque-card">
-                      <div>
-                        <div className="enfoque-lbl">Enfoque físico</div>
-                        <div className="enfoque-val" style={{ color: "var(--emerald)" }}>{fmt(result.valorFisico)}</div>
-                        <div className="enfoque-sub">Terreno {fmt(result.valorTerreno)} + Const. {fmt(result.vnrTotal)}</div>
-                      </div>
-                      <div className="enfoque-icon" style={{ background: "rgba(16,185,129,0.1)" }}>🏗️</div>
-                    </div>
-                    <div className="enfoque-card">
-                      <div>
-                        <div className="enfoque-lbl">Enfoque de capitalización</div>
-                        <div className="enfoque-val" style={{ color: "var(--violet)" }}>{fmt(result.valorCapitalizacion)}</div>
-                        <div className="enfoque-sub">Renta est. {fmt(result.rentaBruta)}/mes</div>
-                      </div>
-                      <div className="enfoque-icon" style={{ background: "rgba(139,92,246,0.1)" }}>💰</div>
-                    </div>
-                  </>
-                )}
-
-                {!esTerreno && result.valorMercado > 0 && result.valorFisico > 0 && (() => {
-                  const d = ((result.valorMercado - result.valorFisico) / result.valorFisico) * 100;
-                  return (
-                    <div style={{ fontSize: 12, color: "var(--gray-400)", marginTop: 8 }}>
-                      <strong style={{ color: Math.abs(d) < 15 ? "var(--emerald)" : "var(--amber)" }}>{d > 0 ? "+" : ""}{d.toFixed(1)}%</strong>
-                      {" "}diferencia mercado vs físico{Math.abs(d) < 15 ? " — Consistente ✓" : " — Revisar datos"}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {!esTerreno && (
-                <div className="avm-card" style={{ textAlign: "center", marginBottom: 14 }}>
-                  <div className="card-label" style={{ justifyContent: "center" }}>🔬 Factor Ross-Heidecke</div>
-                  <div style={{ fontSize: 36, fontWeight: 800, color: result.fec > 0.7 ? "var(--emerald)" : result.fec > 0.4 ? "var(--amber)" : "var(--rose)" }}>
-                    {(result.fec * 100).toFixed(1)}%
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>
-                    Vida útil 70 años · Edad: {pf(sujeto.edad)} años · {CONSERV_OPTS[sujeto.conservacion]}
-                  </div>
-                </div>
-              )}
-
-              <button className="btn-primary outline" onClick={() => setTab(0)}>← Nueva valuación</button>
-            </div>
-          )}
-
-          {/* ═══ TAB 3 — IA + WEB ═══ */}
-          {tab === 3 && (
-            <AvmIA />
-          )}
+          <AvmIA />
 
         </div>
       );

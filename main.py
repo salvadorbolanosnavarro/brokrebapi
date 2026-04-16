@@ -1367,144 +1367,87 @@ async def generar_avm_pdf(p: dict):
 <meta charset="UTF-8"/>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2035; background: white; font-size: 13px; }}
-  .page {{ padding: 32px 36px; max-width: 760px; margin: 0 auto; }}
+  body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2035; background: white; font-size: 13px; line-height: 1.5; }}
+  .page {{ padding: 40px 44px; max-width: 720px; margin: 0 auto; }}
 
-  /* HEADER */
-  .hdr {{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f1829; padding-bottom: 16px; margin-bottom: 24px; }}
-  .hdr-logo {{ font-size: 26px; font-weight: 900; color: #0f1829; letter-spacing: 2px; }}
-  .hdr-logo span {{ color: #2a9db5; }}
-  .hdr-right {{ text-align: right; }}
-  .hdr-right .doc-title {{ font-size: 15px; font-weight: 700; color: #0f1829; }}
-  .hdr-right .doc-sub {{ font-size: 11px; color: #9aa0ad; margin-top: 2px; }}
+  .valor-bloque {{ margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e8eaee; }}
+  .valor-lbl {{ font-size: 11px; color: #9aa0ad; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }}
+  .valor-num {{ font-size: 44px; font-weight: 900; color: #0f1829; line-height: 1; margin-bottom: 6px; }}
+  .valor-rango {{ font-size: 13px; color: #5a6070; margin-bottom: 12px; }}
+  .valor-meta {{ display: flex; gap: 24px; }}
+  .meta-item .meta-lbl {{ font-size: 10px; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }}
+  .meta-item .meta-val {{ font-size: 13px; font-weight: 600; color: #1a2035; }}
 
-  /* HERO VALOR */
-  .hero {{ background: #0f1829; border-radius: 14px; padding: 24px 28px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
-  .hero-left .hero-lbl {{ font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }}
-  .hero-left .hero-val {{ font-size: 38px; font-weight: 900; color: #2a9db5; line-height: 1; }}
-  .hero-left .hero-range {{ font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; }}
-  .hero-right {{ text-align: right; }}
-  .hero-right .conf-badge {{ display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: {conf_bg}; color: {conf_color}; }}
-  .hero-right .vpm {{ font-size: 18px; font-weight: 700; color: white; margin-top: 8px; }}
-  .hero-right .vpm-lbl {{ font-size: 10px; color: rgba(255,255,255,0.4); }}
+  .seccion {{ margin-bottom: 24px; }}
+  .sec-titulo {{ font-size: 10px; font-weight: 700; color: #2a9db5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }}
+  .resumen {{ font-size: 13px; color: #1a2035; line-height: 1.7; }}
 
-  /* INFO PROPIEDAD */
-  .prop-grid {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }}
-  .prop-cell {{ background: #f5f6f8; border-radius: 10px; padding: 10px 12px; }}
-  .prop-cell .lbl {{ font-size: 10px; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }}
-  .prop-cell .val {{ font-size: 13px; font-weight: 600; color: #1a2035; }}
-
-  /* SECCIONES */
-  .section {{ margin-bottom: 20px; }}
-  .section-title {{ font-size: 10px; font-weight: 700; color: #2a9db5; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e8eaee; padding-bottom: 6px; margin-bottom: 12px; }}
-  .resumen {{ background: #f5f6f8; border-left: 3px solid #2a9db5; border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13px; line-height: 1.7; color: #1a2035; }}
-
-  /* TABLA COMPARABLES */
   table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
-  th {{ background: #f5f6f8; font-weight: 600; color: #5a6070; text-align: left; padding: 7px 10px; border-bottom: 1px solid #e8eaee; font-size: 11px; }}
-  td {{ padding: 8px 10px; border-bottom: 1px solid #f0f2f7; color: #1a2035; vertical-align: top; }}
-  td.num {{ text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }}
-  td.src {{ color: #9aa0ad; font-size: 11px; }}
+  th {{ font-weight: 600; color: #9aa0ad; text-align: left; padding: 6px 0; border-bottom: 1px solid #e8eaee; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }}
+  td {{ padding: 8px 0; border-bottom: 1px solid #f5f6f8; color: #1a2035; vertical-align: top; }}
+  td.r {{ text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }}
+  td.g {{ color: #9aa0ad; font-size: 11px; }}
   tr:last-child td {{ border-bottom: none; }}
 
-  /* FACTORES */
-  .factores-table td {{ padding: 6px 10px; }}
-
-  /* RECOMENDACIONES */
-  .recs ul {{ padding-left: 18px; }}
-  .recs li {{ margin-bottom: 5px; line-height: 1.5; color: #1a2035; }}
-
-  /* ZONA */
-  .zona-txt {{ font-size: 12px; line-height: 1.7; color: #5a6070; }}
-
-  /* ADVERTENCIA */
-  .advertencia {{ background: #FAEEDA; border-left: 3px solid #EF9F27; border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: 11px; color: #633806; line-height: 1.6; margin-bottom: 20px; }}
-
-  /* FOOTER */
-  .footer {{ border-top: 1px solid #e8eaee; padding-top: 12px; margin-top: 8px; display: flex; justify-content: space-between; font-size: 10px; color: #9aa0ad; }}
+  .footer {{ margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaee; display: flex; justify-content: space-between; font-size: 10px; color: #c4c8d0; }}
 </style>
 </head>
 <body>
 <div class="page">
 
-  <div class="hdr">
-    <div>
-      <div class="hdr-logo">BROKR<span>®</span></div>
-      <div style="font-size:10px;color:#9aa0ad;margin-top:2px;">Tu Co-Piloto Inmobiliario</div>
-    </div>
-    <div class="hdr-right">
-      <div class="doc-title">Opinión de Valor</div>
-      <div class="doc-sub">Análisis de Mercado con IA · {fecha_hoy}</div>
-      <div class="doc-sub" style="margin-top:3px;">{agente}</div>
+  <div class="valor-bloque">
+    <div class="valor-lbl">Opinión de valor comercial</div>
+    <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
+    <div class="valor-rango">Rango estimado: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
+    <div class="valor-meta">
+      <div class="meta-item">
+        <div class="meta-lbl">Inmueble</div>
+        <div class="meta-val">{resultado.get('tipo_inmueble','—')}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-lbl">Superficie</div>
+        <div class="meta-val">{superficie_str}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-lbl">Ubicación</div>
+        <div class="meta-val">{resultado.get('colonia','—')}, {resultado.get('ciudad','Morelia')}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-lbl">Operación</div>
+        <div class="meta-val">{resultado.get('operacion','venta').capitalize()}</div>
+      </div>
     </div>
   </div>
 
-  <div class="hero">
-    <div class="hero-left">
-      <div class="hero-lbl">Valor comercial estimado</div>
-      <div class="hero-val">{fmt_mx(resultado.get('valor_estimado',0))}</div>
-      <div class="hero-range">Rango: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
-    </div>
-    <div class="hero-right">
-      <div class="conf-badge">Confianza {confianza}</div>
-      <div class="vpm">{fmt_mx(resultado.get('valor_por_m2',0))}/m²</div>
-      <div class="vpm-lbl">Valor unitario</div>
-    </div>
-  </div>
-
-  <div class="prop-grid">
-    <div class="prop-cell"><div class="lbl">Inmueble</div><div class="val">{resultado.get('tipo_inmueble','—')}</div></div>
-    <div class="prop-cell"><div class="lbl">Operación</div><div class="val">{resultado.get('operacion','venta').upper()}</div></div>
-    <div class="prop-cell"><div class="lbl">Superficie</div><div class="val">{superficie_str}</div></div>
-    <div class="prop-cell"><div class="lbl">Colonia</div><div class="val">{resultado.get('colonia','—')}</div></div>
-    <div class="prop-cell"><div class="lbl">Ciudad</div><div class="val">{resultado.get('ciudad','Morelia')}, {resultado.get('estado','Michoacán') if resultado.get('estado') else 'Michoacán'}</div></div>
-    <div class="prop-cell"><div class="lbl">Fecha de análisis</div><div class="val">{fecha_hoy}</div></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Resumen ejecutivo</div>
+  <div class="seccion">
+    <div class="sec-titulo">Análisis</div>
     <div class="resumen">{resultado.get('resumen_ejecutivo','—')}</div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Comparables de mercado utilizados</div>
+  <div class="seccion">
+    <div class="sec-titulo">Comparables de mercado</div>
     <table>
-      <thead><tr><th>Comparable</th><th>Superficie</th><th style="text-align:right">Precio</th><th style="text-align:right">$/m²</th><th>Fuente</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Propiedad</th>
+          <th style="text-align:right">Superficie</th>
+          <th style="text-align:right">Precio</th>
+          <th style="text-align:right">$/m²</th>
+          <th>Fuente</th>
+        </tr>
+      </thead>
       <tbody>{comps_html}</tbody>
     </table>
   </div>
 
-  <div class="section">
-    <div class="section-title">Factores de homologación aplicados</div>
-    <table class="factores-table">
-      <thead><tr><th>Factor</th><th>Descripción</th></tr></thead>
-      <tbody>{factores_html}</tbody>
-    </table>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Análisis de zona y plusvalía</div>
-    <div class="zona-txt">{resultado.get('analisis_zona','—')}</div>
-  </div>
-
-  <div class="section recs">
-    <div class="section-title">Recomendaciones</div>
-    <ul>{recs_html}</ul>
-  </div>
-
-  <div class="advertencia">
-    <strong>Nota importante:</strong> {resultado.get('advertencias','Esta opinión de valor tiene fines informativos y se basa en oferta activa de mercado. No sustituye un avalúo pericial certificado para efectos notariales o fiscales.')}
-  </div>
-
   <div class="footer">
-    <span>BROKR® — Tu Co-Piloto Inmobiliario · app.navarroai.com.mx</span>
-    <span>Generado con IA · {fecha_hoy}</span>
+    <span>Powered by BROKR®</span>
+    <span>{fecha_hoy}</span>
   </div>
 
 </div>
 </body>
 </html>"""
-
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
         page = await browser.new_page()
@@ -1542,6 +1485,8 @@ async def descargar_avm_pdf(token: str):
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
             "Content-Type": "application/pdf",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
         }
     )
 
