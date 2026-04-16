@@ -241,6 +241,52 @@
       margin-left: auto; background: none; border: none;
       color: var(--gray-400); font-size: 16px; cursor: pointer; padding: 0;
     }
+
+    /* ── IA WEB TAB ── */
+    .ia-hero {
+      background: linear-gradient(135deg, var(--navy), #1a2d4a);
+      border: 1.5px solid var(--teal); border-radius: 18px;
+      padding: 20px; margin-bottom: 14px; text-align: center;
+    }
+    .ia-hero-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+    .ia-hero-val { font-size: 34px; font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 4px; }
+    .ia-hero-range { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
+    .ia-conf { display: inline-block; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+    .ia-conf.alta   { background: rgba(16,185,129,0.15); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+    .ia-conf.media  { background: rgba(245,158,11,0.15); color: var(--amber);   border: 1px solid rgba(245,158,11,0.3); }
+    .ia-conf.baja   { background: rgba(244,63,94,0.15);  color: var(--rose);    border: 1px solid rgba(244,63,94,0.3); }
+    .ia-uvm { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+    .ia-uvm strong { color: white; }
+    .comp-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--gray-200); font-size: 12px; gap: 8px; }
+    .comp-row:last-child { border-bottom: none; }
+    .comp-row-desc { flex: 1; color: var(--text); font-weight: 500; line-height: 1.4; }
+    .comp-row-right { text-align: right; flex-shrink: 0; }
+    .comp-row-precio { font-size: 13px; font-weight: 700; color: var(--teal-dark); }
+    .comp-row-m2 { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+    .comp-row-src { font-size: 10px; color: var(--gray-400); font-style: italic; margin-top: 1px; }
+    .factor-row-ia { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-size: 12px; }
+    .factor-row-ia:last-child { border-bottom: none; }
+    .factor-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .factor-nombre { font-weight: 600; color: var(--text); flex: 1; }
+    .factor-desc { color: var(--gray-600); font-size: 11px; margin-top: 2px; }
+    .btn-pdf {
+      width: 100%; padding: 14px 20px; background: var(--teal); color: white;
+      border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-pdf:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ia-loading { text-align: center; padding: 40px 20px; }
+    .ia-loading-icon { font-size: 36px; margin-bottom: 12px; }
+    .ia-loading-txt { font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+    .ia-loading-sub { font-size: 11px; color: var(--gray-400); margin-top: 6px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .ia-pulse { animation: pulse 1.5s ease-in-out infinite; }
+    .toggle-opt { display: flex; background: var(--gray-100); border-radius: 10px; padding: 3px; margin-bottom: 10px; }
+    .toggle-btn { flex: 1; padding: 7px 4px; font-size: 11px; font-weight: 600; font-family: 'Poppins', sans-serif; border: none; border-radius: 8px; cursor: pointer; color: var(--gray-600); background: transparent; transition: all 0.15s; }
+    .toggle-btn.active { background: white; color: var(--teal-dark); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -428,6 +474,321 @@
       );
     }
 
+
+    // ─── COMPONENTE IA WEB SEARCH ───────────────────────────────
+    function AvmIA() {
+      const [form, setForm] = React.useState({
+        tipo: "terreno", operacion: "venta",
+        colonia: "", ciudad: "Morelia",
+        m2_terreno: "", m2_construccion: "",
+        recamaras: "", banos: "", estacionamientos: "",
+        condicion_terreno: "plano", comentarios: ""
+      });
+      const [estado, setEstado] = React.useState("idle"); // idle | loading | result | error
+      const [resultado, setResultado] = React.useState(null);
+      const [errorMsg, setErrorMsg] = React.useState("");
+      const [pdfLoading, setPdfLoading] = React.useState(false);
+
+      const u = (k, v) => setForm(p => ({ ...p, [k]: v }));
+      const esTerreno = form.tipo === "terreno";
+      const esConstruccion = ["casa","departamento","local","oficina","bodega"].includes(form.tipo);
+
+      // Expone __avmIAFill para que Shaark pueda activar la pestaña IA con datos precargados
+      React.useEffect(() => {
+        window.__avmIAFill = (data) => {
+          if (data.tipo_inmueble) setForm(p => ({ ...p, tipo: data.tipo_inmueble }));
+          if (data.colonia)       setForm(p => ({ ...p, colonia: data.colonia }));
+          if (data.ciudad)        setForm(p => ({ ...p, ciudad: data.ciudad }));
+          if (data.m2_terreno)    setForm(p => ({ ...p, m2_terreno: String(data.m2_terreno) }));
+          if (data.m2_construccion) setForm(p => ({ ...p, m2_construccion: String(data.m2_construccion) }));
+          if (data.recamaras)     setForm(p => ({ ...p, recamaras: String(data.recamaras) }));
+          if (data.banos)         setForm(p => ({ ...p, banos: String(data.banos) }));
+          if (data.condicion_terreno) setForm(p => ({ ...p, condicion_terreno: data.condicion_terreno }));
+          if (data.operacion)     setForm(p => ({ ...p, operacion: data.operacion }));
+        };
+        const onMsg = (e) => {
+          if (e.data && e.data.tipo === "opinion_valor_web") {
+            window.__avmIAFill(e.data);
+            // Auto-ejecutar la búsqueda
+            setTimeout(() => { document.getElementById("btn-analizar-ia") && document.getElementById("btn-analizar-ia").click(); }, 300);
+          }
+        };
+        window.addEventListener("message", onMsg);
+        return () => { window.removeEventListener("message", onMsg); delete window.__avmIAFill; };
+      }, []);
+
+      const analizar = async () => {
+        if (!form.colonia.trim()) { setErrorMsg("Escribe la colonia o fraccionamiento."); return; }
+        const supPrincipal = esTerreno ? parseFloat(form.m2_terreno) : parseFloat(form.m2_construccion);
+        if (!supPrincipal || supPrincipal <= 0) {
+          setErrorMsg(esTerreno ? "Ingresa los m² de terreno." : "Ingresa los m² de construcción.");
+          return;
+        }
+        setErrorMsg("");
+        setEstado("loading");
+        try {
+          const body = {
+            colonia: form.colonia.trim(),
+            tipo_inmueble: form.tipo,
+            operacion: form.operacion,
+            m2_terreno: parseFloat(form.m2_terreno) || 0,
+            m2_construccion: parseFloat(form.m2_construccion) || 0,
+            recamaras: parseInt(form.recamaras) || 0,
+            banos: parseFloat(form.banos) || 0,
+            estacionamientos: parseInt(form.estacionamientos) || 0,
+            condicion_terreno: form.condicion_terreno || "",
+            ciudad: form.ciudad || "Morelia",
+            comentarios: form.comentarios || ""
+          };
+          const r = await fetch(`${API}/api/avm-websearch`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail || "Error en el análisis");
+          setResultado(data);
+          setEstado("result");
+        } catch (e) {
+          setErrorMsg(e.message || "No se pudo conectar. Intenta de nuevo.");
+          setEstado("error");
+        }
+      };
+
+      const descargarPDF = async () => {
+        if (!resultado) return;
+        setPdfLoading(true);
+        try {
+          const r = await fetch(`${API}/avm-pdf`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ resultado, agente: "Agente BROKR®" })
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail || "Error generando PDF");
+          window.open(`${API}/avm-pdf/${data.token}`, "_blank");
+        } catch (e) {
+          alert("Error al generar PDF: " + e.message);
+        } finally { setPdfLoading(false); }
+      };
+
+      const fmtMXN = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+      const confClass = (c) => c === "alta" ? "ia-conf alta" : c === "media" ? "ia-conf media" : "ia-conf baja";
+      const dotColor = (imp) => imp === "positivo" ? "var(--emerald)" : imp === "negativo" ? "var(--rose)" : "var(--gray-400)";
+
+      // ── ESTADO: FORMULARIO ──
+      if (estado === "idle" || estado === "error") return (
+        <div className="avm-body">
+          <div className="avm-card">
+            <div className="card-label">🤖 Análisis con IA y búsqueda en internet</div>
+            <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 14, lineHeight: 1.6 }}>
+              La IA busca comparables reales en Lamudi, Vivanuncios e Inmuebles24 y genera una opinión de valor fundamentada con datos de mercado actuales.
+            </p>
+
+            <div className="card-label" style={{ marginBottom: 10 }}>🏷️ Tipo de inmueble</div>
+            <div className="tipo-grid" style={{ marginBottom: 16 }}>
+              {TIPOS.map(t => (
+                <button key={t.id} className={"tipo-btn" + (form.tipo === t.id ? " selected" : "")} onClick={() => u("tipo", t.id)}>
+                  <span className="tipo-icon">{t.icon}</span>{t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="toggle-opt">
+              <button className={"toggle-btn" + (form.operacion === "venta" ? " active" : "")} onClick={() => u("operacion","venta")}>Venta</button>
+              <button className={"toggle-btn" + (form.operacion === "renta" ? " active" : "")} onClick={() => u("operacion","renta")}>Renta</button>
+            </div>
+          </div>
+
+          <div className="avm-card">
+            <div className="card-label">📍 Ubicación</div>
+            <div className="field-row">
+              <F label="Colonia / Fraccionamiento *">
+                <input type="text" value={form.colonia}
+                  onChange={e => u("colonia", e.target.value)}
+                  placeholder="Ej: Vistas Altozano, Chapultepec..." />
+              </F>
+            </div>
+            <div className="field-row">
+              <F label="Ciudad">
+                <input type="text" value={form.ciudad}
+                  onChange={e => u("ciudad", e.target.value)}
+                  placeholder="Morelia" />
+              </F>
+            </div>
+          </div>
+
+          <div className="avm-card">
+            <div className="card-label">📐 Superficies</div>
+            <div className="field-row">
+              {(esTerreno || esConstruccion) &&
+                <F label="m² de terreno">
+                  <NI value={form.m2_terreno} onChange={v => u("m2_terreno",v)} placeholder="183" />
+                </F>}
+              {esConstruccion &&
+                <F label="m² construidos *">
+                  <NI value={form.m2_construccion} onChange={v => u("m2_construccion",v)} placeholder="150" />
+                </F>}
+            </div>
+            {esTerreno && (
+              <div className="field-row">
+                <F label="Condición del terreno">
+                  <select value={form.condicion_terreno} onChange={e => u("condicion_terreno", e.target.value)}>
+                    <option value="plano">Plano</option>
+                    <option value="pendiente">Con pendiente</option>
+                    <option value="irregular">Irregular</option>
+                  </select>
+                </F>
+              </div>
+            )}
+          </div>
+
+          {esConstruccion && (
+            <div className="avm-card">
+              <div className="card-label">🚪 Características</div>
+              <div className="field-row">
+                <F label="Recámaras"><NI value={form.recamaras} onChange={v => u("recamaras",v)} placeholder="3" /></F>
+                <F label="Baños"><NI value={form.banos} onChange={v => u("banos",v)} placeholder="2" /></F>
+                <F label="Estac."><NI value={form.estacionamientos} onChange={v => u("estacionamientos",v)} placeholder="2" /></F>
+              </div>
+            </div>
+          )}
+
+          <div className="avm-card">
+            <div className="card-label">💬 Comentarios adicionales (opcional)</div>
+            <textarea value={form.comentarios} onChange={e => u("comentarios", e.target.value)}
+              placeholder="Ej: esquina, vista panorámica, con bardas, cerca del campo de golf..."
+              style={{ width:"100%", padding:"10px 12px", background:"var(--gray-100)", border:"1px solid rgba(0,0,0,0.1)", borderRadius:10, color:"var(--text)", outline:"none", fontFamily:"'Poppins',sans-serif", fontSize:13, minHeight:72, resize:"vertical" }} />
+          </div>
+
+          {(estado === "error" || errorMsg) && (
+            <div className="alert warn" style={{ marginBottom: 12 }}>{errorMsg}</div>
+          )}
+
+          <button id="btn-analizar-ia" className="btn-primary teal" onClick={analizar}>
+            🔍 Analizar con IA y web
+          </button>
+        </div>
+      );
+
+      // ── ESTADO: CARGANDO ──
+      if (estado === "loading") return (
+        <div className="avm-body">
+          <div className="avm-card">
+            <div className="ia-loading">
+              <div className="ia-loading-icon ia-pulse">🔍</div>
+              <div className="ia-loading-txt">Buscando comparables en el mercado...</div>
+              <div className="ia-loading-sub" style={{ marginTop: 8 }}>Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+              <div className="ia-loading-sub ia-pulse" style={{ marginTop: 16, color: "var(--teal)" }}>Esto puede tomar 20–40 segundos</div>
+            </div>
+          </div>
+        </div>
+      );
+
+      // ── ESTADO: RESULTADO ──
+      if (estado === "result" && resultado) {
+        const confianza = resultado.nivel_confianza || "media";
+        const vpm = resultado.valor_por_m2 || 0;
+        const comparables = resultado.comparables || [];
+        const factores = resultado.factores_ajuste || [];
+        const recs = resultado.recomendaciones || [];
+
+        return (
+          <div className="avm-body">
+
+            <div className="ia-hero">
+              <div className="ia-hero-lbl">Valor comercial estimado</div>
+              <div className="ia-hero-val">{fmtMXN(resultado.valor_estimado)}</div>
+              <div className="ia-hero-range">
+                Rango: {fmtMXN(resultado.valor_minimo)} — {fmtMXN(resultado.valor_maximo)}
+              </div>
+              <span className={confClass(confianza)}>Confianza {confianza}</span>
+              {vpm > 0 && (
+                <div className="ia-uvm">
+                  Valor unitario: <strong>{fmtMXN(vpm)}/m²</strong>
+                </div>
+              )}
+            </div>
+
+            <div className="avm-card">
+              <div className="card-label">📋 Resumen ejecutivo</div>
+              <p style={{ fontSize: 13, color: "var(--gray-600)", lineHeight: 1.7 }}>
+                {resultado.resumen_ejecutivo}
+              </p>
+            </div>
+
+            {comparables.length > 0 && (
+              <div className="avm-card">
+                <div className="card-label">🏘️ Comparables encontrados en el mercado</div>
+                {comparables.map((c, i) => (
+                  <div key={i} className="comp-row">
+                    <div className="comp-row-desc">{c.descripcion}</div>
+                    <div className="comp-row-right">
+                      <div className="comp-row-precio">{fmtMXN(c.precio)}</div>
+                      <div className="comp-row-m2">{c.superficie_m2} m² · {fmtMXN(c.precio_m2)}/m²</div>
+                      <div className="comp-row-src">{c.fuente}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {factores.length > 0 && (
+              <div className="avm-card">
+                <div className="card-label">⚖️ Factores de homologación</div>
+                {factores.map((f, i) => (
+                  <div key={i} className="factor-row-ia">
+                    <div className="factor-dot" style={{ background: dotColor(f.impacto) }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="factor-nombre">{f.factor}</div>
+                      <div className="factor-desc">{f.descripcion}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {resultado.analisis_zona && (
+              <div className="avm-card">
+                <div className="card-label">🗺️ Análisis de zona y plusvalía</div>
+                <p style={{ fontSize: 12, color: "var(--gray-600)", lineHeight: 1.7 }}>{resultado.analisis_zona}</p>
+              </div>
+            )}
+
+            {recs.length > 0 && (
+              <div className="avm-card">
+                <div className="card-label">💡 Recomendaciones</div>
+                {recs.map((r, i) => (
+                  <div key={i} style={{ display:"flex", gap:8, marginBottom:6, fontSize:12, color:"var(--text)", alignItems:"flex-start" }}>
+                    <span style={{ color:"var(--teal)", fontWeight:700, flexShrink:0 }}>→</span>
+                    <span style={{ lineHeight:1.5 }}>{r}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {resultado.advertencias && (
+              <div className="alert warn" style={{ marginBottom: 14 }}>
+                <strong>Nota:</strong> {resultado.advertencias}
+              </div>
+            )}
+
+            <button className="btn-pdf" onClick={descargarPDF} disabled={pdfLoading}>
+              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "⬇️ Descargar opinión de valor en PDF"}
+            </button>
+
+            <button className="btn-primary outline" style={{ marginTop: 10 }}
+              onClick={() => { setEstado("idle"); setResultado(null); }}>
+              ← Nueva valuación
+            </button>
+          </div>
+        );
+      }
+
+      return null;
+    }
+    // ─── FIN COMPONENTE AvmIA ─────────────────────────────────────
+
     function AVM() {
       const [tab,        setTab]        = useState(0);
       const [sujeto,     setSujeto]     = useState({ tipo: "casa", direccion: "", colonia: "", ciudad: "morelia", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", nivel: "", unidades: "", edad: "", conservacion: "bueno", calidad: "medio" });
@@ -460,6 +821,17 @@
         };
         const onMsg = (e) => {
           if (e.data && e.data.tipo === 'llenar_avm') window.__avmFill(e.data);
+          // opinion_valor_web -> activa pestaña IA
+          if (e.data && e.data.tipo === 'opinion_valor_web') {
+            setTab(3);
+            if (window.__avmIAFill) {
+              window.__avmIAFill(e.data);
+              setTimeout(() => {
+                const btn = document.getElementById('btn-analizar-ia');
+                if (btn) btn.click();
+              }, 400);
+            }
+          }
         };
         window.addEventListener('message', onMsg);
         return () => {
@@ -557,7 +929,7 @@
 
       const esTerreno  = sujeto.tipo === "terreno";
       const valorFinal = result.valorMercado > 0 ? Math.round(result.valorMercado / 1000) * 1000 : result.valorFisico > 0 ? Math.round(result.valorFisico / 1000) * 1000 : 0;
-      const tabs       = ["Propiedad", "Comparables", "Resultado"];
+      const tabs       = ["Propiedad", "Comparables", "Resultado", "IA + Web"];
 
       return (
         <div style={{ fontFamily: "'Poppins', sans-serif", background: "var(--screen-bg)", minHeight: "100vh" }}>
@@ -566,7 +938,7 @@
           <div className="avm-tabs">
             {tabs.map((t, i) => (
               <button key={t} className={`avm-tab${tab === i ? " active" : ""}`} onClick={() => setTab(i)}>
-                {i === 2 && valorFinal > 0 ? "Resultado ✓" : t}
+                {i === 2 && valorFinal > 0 ? "Resultado ✓" : i === 3 ? "🤖 IA + Web" : t}
               </button>
             ))}
           </div>
@@ -802,6 +1174,11 @@
 
               <button className="btn-primary outline" onClick={() => setTab(0)}>← Nueva valuación</button>
             </div>
+          )}
+
+          {/* ═══ TAB 3 — IA + WEB ═══ */}
+          {tab === 3 && (
+            <AvmIA />
           )}
 
         </div>

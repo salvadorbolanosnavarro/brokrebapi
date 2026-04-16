@@ -163,7 +163,7 @@ async def chat_proxy(req: ChatRequest):
 # ────────────────────────────────────────────
 # CLAUDE CHAT PROXY — SHAARK IA SUPERINTELIGENTE
 # ────────────────────────────────────────────
-SHAARK_SYSTEM_PROMPT = """Eres Shaark, el asistente de inteligencia artificial de Brokr, la plataforma inmobiliaria más avanzada de México, especializada en Morelia y Michoacán.
+SHAARK_SYSTEM_PROMPT = """Eres Shaark, el asistente de inteligencia artificial de BROKR®, la plataforma inmobiliaria más avanzada de México, especializada en Morelia y Michoacán.
 
 Eres un experto inmobiliario que conoce a fondo:
 - LISR (Ley del Impuesto Sobre la Renta) — artículos de enajenación de inmuebles
@@ -206,22 +206,26 @@ Valores "exencion": "no" | "si" | "nose"
 mes_venta y mes_compra son números 1-12. Datos opcionales desconocidos = 0.
 
 ══════════════════════════════════════════════════
-ACCIÓN 2: OPINIÓN DE VALOR (AVM)
+ACCIÓN 2: OPINIÓN DE VALOR CON BÚSQUEDA WEB
 ══════════════════════════════════════════════════
-Cuando el usuario pide valuar, tasar o dar opinión de valor de un inmueble.
-Datos OBLIGATORIOS:
-1. Colonia (barrio/fraccionamiento)
+Cuando el usuario pide valuar, tasar, dar un precio o dar opinión de valor de un inmueble.
+
+Datos OBLIGATORIOS (pregunta uno por uno si faltan):
+1. Colonia o fraccionamiento
 2. Tipo de inmueble: casa, departamento, terreno, local, oficina, bodega
 3. Operación: venta o renta
-4. m² de construcción (si aplica)
-Datos OPCIONALES: m² de terreno, recámaras, baños, ciudad (default: Morelia)
+4. Superficie: m² de construcción (casas/deptos/locales) o m² de terreno (terrenos)
 
-Cuando tengas colonia + tipo + operación (y m² si los tiene):
-[ACCION]{"tipo":"llenar_avm","colonia":"Chapultepec","tipo_inmueble":"casa","operacion":"venta","m2_construccion":180,"m2_terreno":220,"recamaras":3,"banos":2,"ciudad":"Morelia"}[/ACCION]
+Datos OPCIONALES que si el usuario menciona debes capturar: recámaras, baños, estacionamientos, condición del terreno (plano/pendiente), ciudad (default Morelia).
+
+Cuando tengas los datos OBLIGATORIOS, emite la acción opinion_valor_web:
+[ACCION]{"tipo":"opinion_valor_web","colonia":"Vistas Altozano","tipo_inmueble":"terreno","operacion":"venta","m2_terreno":183,"m2_construccion":0,"recamaras":0,"banos":0,"ciudad":"Morelia","condicion_terreno":"plano"}[/ACCION]
 
 Valores "tipo_inmueble": "casa" | "departamento" | "terreno" | "local" | "oficina" | "bodega"
 Valores "operacion": "venta" | "renta"
-Omite los campos opcionales que no tengas. ciudad default "Morelia".
+Valores "condicion_terreno": "plano" | "pendiente" | "irregular" | "" (solo para terrenos)
+Para casas/deptos: usa m2_construccion. Para terrenos: usa m2_terreno. Ciudad default "Morelia".
+Omite campos opcionales que no tengas (usa 0 o "").
 
 ══════════════════════════════════════════════════
 ACCIÓN 3: GENERAR CONTRATO DE ARRENDAMIENTO
@@ -319,9 +323,18 @@ Shaark: "Perfecto. Generando contrato de arrendamiento."
 [ACCION]{"tipo":"llenar_contrato","subtipo":"arrendamiento","calle_inmueble":"AV. CAMELINAS","num_ext":"123","num_int":"","colonia":"CHAPULTEPEC","cp":"58260","municipio_estado":"MORELIA, MICHOACÁN","arrendador":"SALVADOR BOLAÑOS NAVARRO","arrendatario":"GABRIELA NAVARRO PÉREZ","renta":8500,"deposito":8500,"dia_pago":5,"fecha_inicio":"2026-05-01"}[/ACCION]
 
 EJEMPLO AVM:
-Usuario: "valúa una casa de 180m² en venta en Chapultepec, 3 recámaras"
-Shaark: "Dame una opinión de valor para una casa de 180m², 3 recámaras, en venta en Chapultepec, Morelia."
-[ACCION]{"tipo":"llenar_avm","colonia":"Chapultepec","tipo_inmueble":"casa","operacion":"venta","m2_construccion":180,"recamaras":3,"ciudad":"Morelia"}[/ACCION]
+Usuario: "valúa un terreno plano de 183m² en Vistas Altozano"
+Shaark: "¿Es para venta o renta?"
+Usuario: "venta"
+Shaark: "Perfecto. Buscando comparables en el mercado ahora mismo."
+[ACCION]{"tipo":"opinion_valor_web","colonia":"Vistas Altozano","tipo_inmueble":"terreno","operacion":"venta","m2_terreno":183,"m2_construccion":0,"recamaras":0,"banos":0,"ciudad":"Morelia","condicion_terreno":"plano"}[/ACCION]
+
+EJEMPLO AVM CASA:
+Usuario: "dame el valor de una casa de 180m² construcción, 3 recámaras, 2 baños en Chapultepec"
+Shaark: "¿Operación venta o renta?"
+Usuario: "venta"
+Shaark: "Listo. Analizando el mercado de Chapultepec."
+[ACCION]{"tipo":"opinion_valor_web","colonia":"Chapultepec","tipo_inmueble":"casa","operacion":"venta","m2_construccion":180,"m2_terreno":0,"recamaras":3,"banos":2,"ciudad":"Morelia","condicion_terreno":""}[/ACCION]
 
 EJEMPLO FICHA EB:
 Usuario: "haz la ficha de la propiedad EB-KH4322"
@@ -1054,6 +1067,408 @@ Recuerda: responde ÚNICAMENTE con el JSON, sin ningún texto adicional."""
     resultado["timestamp"] = time.strftime("%Y-%m-%d %H:%M")
     resultado["propiedad_descripcion"] = f"{tipo_labels.get(req.tipo, req.tipo)} en {req.colonia or req.ciudad}, {req.estado}"
     return resultado
+
+
+# ────────────────────────────────────────────
+# AVM — OPINIÓN DE VALOR CON WEB SEARCH
+# ────────────────────────────────────────────
+
+class AvmWebSearchRequest(BaseModel):
+    colonia: str
+    tipo_inmueble: str          # casa | departamento | terreno | local | oficina | bodega
+    operacion: str = "venta"    # venta | renta
+    m2_construccion: float = 0
+    m2_terreno: float = 0
+    recamaras: int = 0
+    banos: float = 0
+    estacionamientos: int = 0
+    condicion_terreno: str = "" # plano | pendiente | irregular
+    ciudad: str = "Morelia"
+    estado: str = "Michoacán"
+    comentarios: str = ""
+
+@app.post("/api/avm-websearch")
+async def avm_websearch(req: AvmWebSearchRequest):
+    """Genera opinión de valor buscando comparables reales en internet con web_search tool de Claude."""
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
+
+    tipo_labels = {
+        "casa": "Casa habitación", "departamento": "Departamento/Condominio",
+        "terreno": "Terreno", "local": "Local comercial",
+        "oficina": "Oficina", "bodega": "Bodega/Nave industrial",
+    }
+    tipo_label = tipo_labels.get(req.tipo_inmueble, req.tipo_inmueble)
+    es_terreno = req.tipo_inmueble == "terreno"
+
+    # Construir descripción del sujeto
+    partes = [f"INMUEBLE A VALUAR: {tipo_label} en {req.operacion.upper()}"]
+    partes.append(f"Ubicación: {req.colonia}, {req.ciudad}, {req.estado}")
+    if req.m2_terreno > 0:
+        cond = f" ({req.condicion_terreno})" if req.condicion_terreno else ""
+        partes.append(f"Superficie de terreno: {req.m2_terreno} m²{cond}")
+    if req.m2_construccion > 0:
+        partes.append(f"Superficie construida: {req.m2_construccion} m²")
+    if req.recamaras > 0: partes.append(f"Recámaras: {req.recamaras}")
+    if req.banos > 0: partes.append(f"Baños: {req.banos}")
+    if req.estacionamientos > 0: partes.append(f"Estacionamientos: {req.estacionamientos}")
+    if req.comentarios: partes.append(f"Comentarios: {req.comentarios}")
+    descripcion_sujeto = "\n".join(partes)
+
+    system_prompt = """Eres el mejor perito valuador de bienes raíces de México, certificado por la Sociedad Hipotecaria Federal, con 30 años de experiencia. Tu opinión de valor es utilizada por bancos, notarías e inversionistas.
+
+METODOLOGÍA OBLIGATORIA:
+1. Usa la herramienta web_search para buscar COMPARABLES REALES en el mercado actual.
+2. Busca en portales como Lamudi, Vivanuncios, Inmuebles24, Trovit para la zona específica.
+3. Recopila mínimo 3 comparables con precio, superficie y precio/m².
+4. Aplica homologación: ajuste por tamaño, topografía, ubicación dentro del fraccionamiento, negociación (-5% sobre precio de oferta).
+5. Concluye un valor puntual y un rango.
+
+FORMATO DE RESPUESTA — responde ÚNICAMENTE con un JSON válido (sin texto antes ni después, sin markdown), con esta estructura exacta:
+{
+  "valor_estimado": <número MXN sin comas>,
+  "valor_minimo": <número>,
+  "valor_maximo": <número>,
+  "valor_por_m2": <número — usar m² de construcción para casas/deptos, m² de terreno para terrenos>,
+  "nivel_confianza": "<alta|media|baja>",
+  "razon_confianza": "<por qué ese nivel>",
+  "resumen_ejecutivo": "<2-3 oraciones concretas sobre el valor y el mercado>",
+  "comparables": [
+    {"descripcion": "<tipo y ubicación>", "superficie_m2": <número>, "precio": <número>, "precio_m2": <número>, "fuente": "<portal>"},
+    ...mínimo 3 comparables...
+  ],
+  "factores_ajuste": [
+    {"factor": "<nombre del factor>", "descripcion": "<explicación breve>", "impacto": "<positivo|negativo|neutro>"},
+    ...
+  ],
+  "analisis_zona": "<análisis del mercado y plusvalía de la zona>",
+  "recomendaciones": ["<rec 1>", "<rec 2>"],
+  "advertencias": "<limitaciones de esta opinión>",
+  "fecha": "<fecha de hoy en formato DD/MM/YYYY>"
+}"""
+
+    user_msg = f"""Genera una opinión de valor profesional para el siguiente inmueble. 
+USA la herramienta web_search para buscar comparables reales ANTES de responder.
+
+{descripcion_sujeto}
+
+Busca: "{req.tipo_inmueble} en venta {req.colonia} {req.ciudad}" y variantes en Lamudi, Vivanuncios, Inmuebles24.
+Luego responde ÚNICAMENTE con el JSON solicitado."""
+
+    # Llamada a Claude con web_search tool
+    async with httpx.AsyncClient(timeout=120) as client:
+        r = await client.post(
+            f"{ANTHROPIC_BASE}/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "claude-sonnet-4-6",
+                "max_tokens": 4000,
+                "temperature": 0.2,
+                "system": system_prompt,
+                "tools": [{"type": "web_search_20250305", "name": "web_search"}],
+                "messages": [{"role": "user", "content": user_msg}],
+            },
+        )
+
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Error de Claude: {r.text[:400]}")
+
+    # Extraer el texto final de la respuesta (puede venir después de tool_use blocks)
+    content_blocks = r.json().get("content", [])
+    raw = ""
+    for block in content_blocks:
+        if block.get("type") == "text":
+            raw = block.get("text", "")
+
+    if not raw:
+        raise HTTPException(status_code=502, detail="Claude no devolvió respuesta de texto")
+
+    # Limpiar posibles markdown wrappers
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+    raw = raw.strip()
+
+    try:
+        resultado = json.loads(raw)
+    except Exception:
+        # Intentar extraer JSON si viene con texto extra
+        import re as _re
+        match = _re.search(r'\{.*\}', raw, _re.DOTALL)
+        if match:
+            try:
+                resultado = json.loads(match.group())
+            except Exception:
+                raise HTTPException(status_code=502, detail=f"Claude no devolvió JSON válido: {raw[:500]}")
+        else:
+            raise HTTPException(status_code=502, detail=f"Claude no devolvió JSON válido: {raw[:500]}")
+
+    # Enriquecer con metadata de la solicitud
+    resultado["tipo_inmueble"] = tipo_label
+    resultado["operacion"] = req.operacion
+    resultado["colonia"] = req.colonia
+    resultado["ciudad"] = req.ciudad
+    resultado["m2_construccion"] = req.m2_construccion
+    resultado["m2_terreno"] = req.m2_terreno
+    resultado["recamaras"] = req.recamaras
+    resultado["banos"] = req.banos
+    resultado["condicion_terreno"] = req.condicion_terreno
+    resultado["timestamp"] = time.strftime("%Y-%m-%d %H:%M")
+
+    return resultado
+
+
+# ────────────────────────────────────────────
+# AVM — PDF DE OPINIÓN DE VALOR
+# ────────────────────────────────────────────
+
+@app.post("/avm-pdf")
+async def generar_avm_pdf(p: dict):
+    """Recibe el resultado del AVM websearch y genera un PDF profesional con Playwright."""
+    from playwright.async_api import async_playwright
+
+    resultado = p.get("resultado", {})
+    agente = p.get("agente", "Agente BROKR®")
+
+    if not resultado:
+        raise HTTPException(status_code=400, detail="Resultado vacío")
+
+    def fmt_mx(n):
+        try:
+            return "${:,.0f}".format(float(n))
+        except Exception:
+            return str(n)
+
+    # Comparables HTML
+    comps_html = ""
+    for c in resultado.get("comparables", []):
+        comps_html += f"""
+        <tr>
+          <td>{c.get('descripcion','—')}</td>
+          <td class="num">{c.get('superficie_m2','—')} m²</td>
+          <td class="num">{fmt_mx(c.get('precio',0))}</td>
+          <td class="num">{fmt_mx(c.get('precio_m2',0))}/m²</td>
+          <td class="src">{c.get('fuente','—')}</td>
+        </tr>"""
+
+    # Factores HTML
+    factores_html = ""
+    for f in resultado.get("factores_ajuste", []):
+        imp = f.get("impacto", "neutro")
+        color = "#1D9E75" if imp == "positivo" else "#E24B4A" if imp == "negativo" else "#888"
+        dot = f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:6px;"></span>'
+        factores_html += f"""
+        <tr>
+          <td>{dot}{f.get('factor','—')}</td>
+          <td>{f.get('descripcion','—')}</td>
+        </tr>"""
+
+    # Recomendaciones HTML
+    recs_html = "".join(f"<li>{r}</li>" for r in resultado.get("recomendaciones", []))
+
+    # Superficie display
+    m2c = resultado.get("m2_construccion", 0)
+    m2t = resultado.get("m2_terreno", 0)
+    sup_parts = []
+    if m2t: sup_parts.append(f"{m2t} m² terreno")
+    if m2c: sup_parts.append(f"{m2c} m² construcción")
+    superficie_str = " · ".join(sup_parts) if sup_parts else "—"
+
+    confianza = resultado.get("nivel_confianza", "media")
+    conf_color = "#1D9E75" if confianza == "alta" else "#EF9F27" if confianza == "media" else "#E24B4A"
+    conf_bg    = "#E1F5EE" if confianza == "alta" else "#FAEEDA" if confianza == "media" else "#FCEBEB"
+
+    fecha_hoy = resultado.get("fecha", time.strftime("%d/%m/%Y"))
+
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2035; background: white; font-size: 13px; }}
+  .page {{ padding: 32px 36px; max-width: 760px; margin: 0 auto; }}
+
+  /* HEADER */
+  .hdr {{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f1829; padding-bottom: 16px; margin-bottom: 24px; }}
+  .hdr-logo {{ font-size: 26px; font-weight: 900; color: #0f1829; letter-spacing: 2px; }}
+  .hdr-logo span {{ color: #2a9db5; }}
+  .hdr-right {{ text-align: right; }}
+  .hdr-right .doc-title {{ font-size: 15px; font-weight: 700; color: #0f1829; }}
+  .hdr-right .doc-sub {{ font-size: 11px; color: #9aa0ad; margin-top: 2px; }}
+
+  /* HERO VALOR */
+  .hero {{ background: #0f1829; border-radius: 14px; padding: 24px 28px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
+  .hero-left .hero-lbl {{ font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }}
+  .hero-left .hero-val {{ font-size: 38px; font-weight: 900; color: #2a9db5; line-height: 1; }}
+  .hero-left .hero-range {{ font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; }}
+  .hero-right {{ text-align: right; }}
+  .hero-right .conf-badge {{ display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: {conf_bg}; color: {conf_color}; }}
+  .hero-right .vpm {{ font-size: 18px; font-weight: 700; color: white; margin-top: 8px; }}
+  .hero-right .vpm-lbl {{ font-size: 10px; color: rgba(255,255,255,0.4); }}
+
+  /* INFO PROPIEDAD */
+  .prop-grid {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }}
+  .prop-cell {{ background: #f5f6f8; border-radius: 10px; padding: 10px 12px; }}
+  .prop-cell .lbl {{ font-size: 10px; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }}
+  .prop-cell .val {{ font-size: 13px; font-weight: 600; color: #1a2035; }}
+
+  /* SECCIONES */
+  .section {{ margin-bottom: 20px; }}
+  .section-title {{ font-size: 10px; font-weight: 700; color: #2a9db5; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e8eaee; padding-bottom: 6px; margin-bottom: 12px; }}
+  .resumen {{ background: #f5f6f8; border-left: 3px solid #2a9db5; border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13px; line-height: 1.7; color: #1a2035; }}
+
+  /* TABLA COMPARABLES */
+  table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
+  th {{ background: #f5f6f8; font-weight: 600; color: #5a6070; text-align: left; padding: 7px 10px; border-bottom: 1px solid #e8eaee; font-size: 11px; }}
+  td {{ padding: 8px 10px; border-bottom: 1px solid #f0f2f7; color: #1a2035; vertical-align: top; }}
+  td.num {{ text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }}
+  td.src {{ color: #9aa0ad; font-size: 11px; }}
+  tr:last-child td {{ border-bottom: none; }}
+
+  /* FACTORES */
+  .factores-table td {{ padding: 6px 10px; }}
+
+  /* RECOMENDACIONES */
+  .recs ul {{ padding-left: 18px; }}
+  .recs li {{ margin-bottom: 5px; line-height: 1.5; color: #1a2035; }}
+
+  /* ZONA */
+  .zona-txt {{ font-size: 12px; line-height: 1.7; color: #5a6070; }}
+
+  /* ADVERTENCIA */
+  .advertencia {{ background: #FAEEDA; border-left: 3px solid #EF9F27; border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: 11px; color: #633806; line-height: 1.6; margin-bottom: 20px; }}
+
+  /* FOOTER */
+  .footer {{ border-top: 1px solid #e8eaee; padding-top: 12px; margin-top: 8px; display: flex; justify-content: space-between; font-size: 10px; color: #9aa0ad; }}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <div>
+      <div class="hdr-logo">BROKR<span>®</span></div>
+      <div style="font-size:10px;color:#9aa0ad;margin-top:2px;">Tu Co-Piloto Inmobiliario</div>
+    </div>
+    <div class="hdr-right">
+      <div class="doc-title">Opinión de Valor</div>
+      <div class="doc-sub">Análisis de Mercado con IA · {fecha_hoy}</div>
+      <div class="doc-sub" style="margin-top:3px;">{agente}</div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-lbl">Valor comercial estimado</div>
+      <div class="hero-val">{fmt_mx(resultado.get('valor_estimado',0))}</div>
+      <div class="hero-range">Rango: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
+    </div>
+    <div class="hero-right">
+      <div class="conf-badge">Confianza {confianza}</div>
+      <div class="vpm">{fmt_mx(resultado.get('valor_por_m2',0))}/m²</div>
+      <div class="vpm-lbl">Valor unitario</div>
+    </div>
+  </div>
+
+  <div class="prop-grid">
+    <div class="prop-cell"><div class="lbl">Inmueble</div><div class="val">{resultado.get('tipo_inmueble','—')}</div></div>
+    <div class="prop-cell"><div class="lbl">Operación</div><div class="val">{resultado.get('operacion','venta').upper()}</div></div>
+    <div class="prop-cell"><div class="lbl">Superficie</div><div class="val">{superficie_str}</div></div>
+    <div class="prop-cell"><div class="lbl">Colonia</div><div class="val">{resultado.get('colonia','—')}</div></div>
+    <div class="prop-cell"><div class="lbl">Ciudad</div><div class="val">{resultado.get('ciudad','Morelia')}, {resultado.get('estado','Michoacán') if resultado.get('estado') else 'Michoacán'}</div></div>
+    <div class="prop-cell"><div class="lbl">Fecha de análisis</div><div class="val">{fecha_hoy}</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Resumen ejecutivo</div>
+    <div class="resumen">{resultado.get('resumen_ejecutivo','—')}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Comparables de mercado utilizados</div>
+    <table>
+      <thead><tr><th>Comparable</th><th>Superficie</th><th style="text-align:right">Precio</th><th style="text-align:right">$/m²</th><th>Fuente</th></tr></thead>
+      <tbody>{comps_html}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Factores de homologación aplicados</div>
+    <table class="factores-table">
+      <thead><tr><th>Factor</th><th>Descripción</th></tr></thead>
+      <tbody>{factores_html}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Análisis de zona y plusvalía</div>
+    <div class="zona-txt">{resultado.get('analisis_zona','—')}</div>
+  </div>
+
+  <div class="section recs">
+    <div class="section-title">Recomendaciones</div>
+    <ul>{recs_html}</ul>
+  </div>
+
+  <div class="advertencia">
+    <strong>Nota importante:</strong> {resultado.get('advertencias','Esta opinión de valor tiene fines informativos y se basa en oferta activa de mercado. No sustituye un avalúo pericial certificado para efectos notariales o fiscales.')}
+  </div>
+
+  <div class="footer">
+    <span>BROKR® — Tu Co-Piloto Inmobiliario · app.navarroai.com.mx</span>
+    <span>Generado con IA · {fecha_hoy}</span>
+  </div>
+
+</div>
+</body>
+</html>"""
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+        page = await browser.new_page()
+        await page.set_content(html, wait_until="domcontentloaded")
+        await page.wait_for_timeout(400)
+        pdf_bytes = await page.pdf(
+            format="A4",
+            print_background=True,
+            margin={"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"}
+        )
+        await browser.close()
+
+    token = str(_uuid.uuid4()).replace("-", "")[:16]
+    colonia_slug = resultado.get("colonia", "propiedad").replace(" ", "_")[:20]
+    filename = f"Opinion_Valor_{colonia_slug}_{time.strftime('%Y%m%d')}.pdf"
+    _pdf_store[token] = (pdf_bytes, filename)
+    if len(_pdf_store) > 50:
+        oldest = list(_pdf_store.keys())[0]
+        del _pdf_store[oldest]
+
+    from fastapi.responses import JSONResponse
+    return JSONResponse({"token": token, "filename": filename})
+
+
+@app.get("/avm-pdf/{token}")
+async def descargar_avm_pdf(token: str):
+    from fastapi.responses import StreamingResponse
+    import io as _io
+    if token not in _pdf_store:
+        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
+    pdf_bytes, filename = _pdf_store[token]
+    return StreamingResponse(
+        _io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/pdf",
+        }
+    )
 
 
 # ────────────────────────────────────────────
