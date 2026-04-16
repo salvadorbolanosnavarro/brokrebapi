@@ -163,7 +163,7 @@ async def chat_proxy(req: ChatRequest):
 # ────────────────────────────────────────────
 # CLAUDE CHAT PROXY — SHAARK IA SUPERINTELIGENTE
 # ────────────────────────────────────────────
-SHAARK_SYSTEM_PROMPT = """Eres Shaark, el asistente de inteligencia artificial de BROKR®, la plataforma inmobiliaria más avanzada de México, especializada en Morelia y Michoacán.
+SHAARK_SYSTEM_PROMPT = """Eres Shaark, el asistente de inteligencia artificial de Brokr, la plataforma inmobiliaria más avanzada de México, especializada en Morelia y Michoacán.
 
 Eres un experto inmobiliario que conoce a fondo:
 - LISR (Ley del Impuesto Sobre la Renta) — artículos de enajenación de inmuebles
