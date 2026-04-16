@@ -862,6 +862,10 @@ async def calcular_avm(req: AVMRequest):
             pm2_list.append(c["precio_ajustado"] / m2)
     pm2_prom = round(sum(pm2_list) / len(pm2_list)) if pm2_list else None
 
+    nivel_labels = {
+        1: f"Alta confianza — {len(ajustados)} comparables en {req.colonia}",
+        2: f"Confianza media — {len(ajustados)} comparables en {req.ciudad} (filtrado por precio/m²)",
+    }
 
     return {
         "colonia":            req.colonia,
@@ -1007,6 +1011,8 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido (sin texto antes ni 
   "valor_maximo": <número>,
   "valor_por_m2_construccion": <número o 0 si no aplica>,
   "valor_por_m2_terreno": <número o 0 si no aplica>,
+  "nivel_confianza": "<alta|media|baja>",
+  "razon_confianza": "<por qué ese nivel>",
   "resumen_ejecutivo": "<2-3 oraciones concretas sobre el valor>",
   "analisis_ubicacion": "<análisis del valor de la zona y su impacto>",
   "analisis_propiedad": "<análisis de las características físicas y su impacto>",
@@ -1160,6 +1166,11 @@ d) Redondea al millar más cercano
 e) Valor mínimo = valor estimado × 0.92 (precio mínimo negociable)
 f) Valor máximo = valor estimado × 1.08 (techo de mercado)
 
+PASO 7 — NIVEL DE CONFIANZA
+- ALTA: 5+ comparables directos en el mismo fraccionamiento, mercado activo
+- MEDIA: 3-4 comparables, algunos de zonas adyacentes
+- BAJA: menos de 3 comparables o todos de zonas diferentes
+
 FORMATO DE RESPUESTA — responde ÚNICAMENTE con un JSON válido (sin texto antes ni después, sin markdown, sin ```json), con esta estructura exacta:
 {
   "valor_estimado": <número MXN entero sin comas>,
@@ -1167,6 +1178,8 @@ FORMATO DE RESPUESTA — responde ÚNICAMENTE con un JSON válido (sin texto ant
   "valor_maximo": <número entero>,
   "valor_por_m2": <número entero — precio/m² ajustado final>,
   "precio_m2_base": <número entero — promedio de comparables ANTES de ajustes>,
+  "nivel_confianza": "<alta|media|baja>",
+  "razon_confianza": "<explica cuántos comparables directos encontraste y de qué fuentes>",
   "resumen_ejecutivo": "<3 oraciones: (1) valor con rango, (2) precio/m² de mercado y cuántos comparables, (3) factor más importante que afecta el valor>",
   "comparables": [
     {
@@ -1342,6 +1355,10 @@ async def generar_avm_pdf(p: dict):
     if m2c: sup_parts.append(f"{m2c} m² construcción")
     superficie_str = " · ".join(sup_parts) if sup_parts else "—"
 
+    confianza = resultado.get("nivel_confianza", "media")
+    conf_color = "#1D9E75" if confianza == "alta" else "#EF9F27" if confianza == "media" else "#E24B4A"
+    conf_bg    = "#E1F5EE" if confianza == "alta" else "#FAEEDA" if confianza == "media" else "#FCEBEB"
+
     fecha_hoy = resultado.get("fecha", time.strftime("%d/%m/%Y"))
 
     html = f"""<!DOCTYPE html>
@@ -1427,6 +1444,7 @@ async def generar_avm_pdf(p: dict):
       <div class="hero-range">Rango: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
     </div>
     <div class="hero-right">
+      <div class="conf-badge">Confianza {confianza}</div>
       <div class="vpm">{fmt_mx(resultado.get('valor_por_m2',0))}/m²</div>
       <div class="vpm-lbl">Valor unitario</div>
     </div>
