@@ -561,7 +561,7 @@ async function generarDescripcion(){
   if(!desc){ alert('ERROR: campo descripción no encontrado'); return; }
 
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Generando...'; }
-  if(hint){ hint.textContent = 'Conectando con IA...'; hint.style.color = 'var(--mut)'; }
+  if(hint){ hint.textContent = desc.value.trim() ? 'Mejorando tu texto con IA...' : 'Conectando con IA...'; hint.style.color = 'var(--mut)'; }
 
   const datos = getDatos();
   const lineas = [
@@ -577,7 +577,10 @@ async function generarDescripcion(){
     datos.amen    ? '- Amenidades: '     + datos.amen    : '',
   ].filter(Boolean).join('\n');
 
-  const prompt = 'Eres un agente inmobiliario experto en Morelia, Michoacán. Redacta una descripción comercial atractiva y profesional para esta propiedad. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos:\n' + lineas + '\n\nRedacta solo la descripción:';
+  const textoUsuario = desc.value.trim();
+  const prompt = textoUsuario
+    ? 'Eres un agente inmobiliario experto en Morelia, Michoacán. El usuario ha redactado la siguiente descripción para una propiedad. Mejórala: hazla más atractiva, profesional y fluida, conservando fielmente las ideas y detalles que el usuario mencionó. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos de la propiedad:\n' + lineas + '\n\nTexto original del usuario:\n' + textoUsuario + '\n\nRedacta solo la descripción mejorada:'
+    : 'Eres un agente inmobiliario experto en Morelia, Michoacán. Redacta una descripción comercial atractiva y profesional para esta propiedad. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos:\n' + lineas + '\n\nRedacta solo la descripción:';
 
   try{
     const r = await fetch(API + '/chat', {
