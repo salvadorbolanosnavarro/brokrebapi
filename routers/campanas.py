@@ -1,0 +1,214 @@
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import Optional
+import httpx
+import os
+
+router = APIRouter()
+
+TIPO_CAMBIO_MXN_USD = 17.5
+META_APP_ID     = os.environ.get("META_APP_ID", "")
+META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
+META_GRAPH      = "https://graph.facebook.com/v19.0"
+
+OBJETIVO_MAP = {
+    "Conseguir leads":         "OUTCOME_LEADS",
+    "Llevar tráfico a mi web": "OUTCOME_TRAFFIC",
+    "Dar a conocer mi marca":  "OUTCOME_AWARENESS",
+}
+
+OPTIM_MAP = {
+    "OUTCOME_LEADS":     "LEAD_GENERATION",
+    "OUTCOME_TRAFFIC":   "LINK_CLICKS",
+    "OUTCOME_AWARENESS": "REACH",
+}
+
+ERRORES_META = {
+    100:     "Los datos enviados no son válidos. Revisa el presupuesto y las fechas.",
+    190:     "Tu sesión de Meta Ads expiró. Vuelve a conectar tu cuenta de Facebook.",
+    200:     "No tienes permisos suficientes en esta cuenta de anuncios.",
+    273:     "Esta cuenta de anuncios no está activa o fue deshabilitada por Meta.",
+    2635:    "El texto del anuncio fue rechazado por las políticas de Meta.",
+    1487297: "La imagen no cumple los requisitos: mínimo 600×314 px, máximo 30 MB.",
+    17:      "Límite de llamadas a la API alcanzado. Espera unos minutos e intenta de nuevo.",
+}
+
+def _meta_error(data: dict) -> str:
+    err = data.get("error", {})
+    code = err.get("code", 0)
+    return ERRORES_META.get(code, err.get("message", "Error desconocido de Meta Ads. Intenta de nuevo."))
+
+
+class CampanaRequest(BaseModel):
+    nombre: str
+    objetivo: str
+    presupuesto_diario_mxn: float
+    fecha_inicio: str       # YYYY-MM-DD
+    fecha_fin: Optional[str] = None
+    ciudad: str
+    edad_min: int = 25
+    edad_max: int = 55
+    texto_anuncio: str
+    url_destino: str
+    imagen_base64: Optional[str] = None
+    page_id: Optional[str] = None
+    meta_access_token: str
+    meta_ad_account_id: str  # act_XXXXXXXXX
+
+
+@router.post("/api/campanas/crear")
+async def crear_campana(req: CampanaRequest):
+    token   = req.meta_access_token
+    account = req.meta_ad_account_id
+    if not account.startswith("act_"):
+        account = f"act_{account}"
+
+    # MXN → centavos USD
+    daily_budget_cents = int((req.presupuesto_diario_mxn / TIPO_CAMBIO_MXN_USD) * 100)
+
+    objetivo_api = req.objetivo if req.objetivo.startswith("OUTCOME_") else OBJETIVO_MAP.get(req.objetivo, req.objetivo)
+    optim_goal   = OPTIM_MAP.get(objetivo_api, "LINK_CLICKS")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+
+        # 1. Buscar geo key de la ciudad
+        geo_targeting: dict = {"countries": ["MX"]}
+        r_geo = await client.get(f"{META_GRAPH}/search", params={
+            "type": "adgeolocation", "q": req.ciudad,
+            "location_types": '["city"]', "access_token": token, "limit": 1,
+        })
+        if r_geo.is_success:
+            geos = r_geo.json().get("data", [])
+            if geos:
+                geo_targeting = {"cities": [{"key": geos[0]["key"], "radius": 25, "distance_unit": "kilometer"}]}
+
+        # 2. Crear campaña (siempre PAUSED)
+        r = await client.post(
+            f"{META_GRAPH}/{account}/campaigns",
+            params={"access_token": token},
+            json={"name": req.nombre, "objective": objetivo_api, "status": "PAUSED", "special_ad_categories": []},
+        )
+        d = r.json()
+        if not r.is_success or "id" not in d:
+            raise HTTPException(status_code=400, detail=_meta_error(d))
+        campaign_id = d["id"]
+
+        # 3. Crear ad set
+        adset_payload: dict = {
+            "name":              f"Conjunto - {req.nombre}",
+            "campaign_id":       campaign_id,
+            "billing_event":     "IMPRESSIONS",
+            "optimization_goal": optim_goal,
+            "daily_budget":      daily_budget_cents,
+            "targeting":         {"geo_locations": geo_targeting, "age_min": req.edad_min, "age_max": req.edad_max},
+            "status":            "PAUSED",
+            "start_time":        req.fecha_inicio + "T00:00:00-0600",
+        }
+        if req.fecha_fin:
+            adset_payload["end_time"] = req.fecha_fin + "T23:59:59-0600"
+
+        r = await client.post(f"{META_GRAPH}/{account}/adsets", params={"access_token": token}, json=adset_payload)
+        d = r.json()
+        if not r.is_success or "id" not in d:
+            raise HTTPException(status_code=400, detail=_meta_error(d))
+        adset_id = d["id"]
+
+        # 4. Subir imagen si viene
+        image_hash: Optional[str] = None
+        if req.imagen_base64:
+            img_b64 = req.imagen_base64
+            if "," in img_b64:
+                img_b64 = img_b64.split(",", 1)[1]
+            r = await client.post(
+                f"{META_GRAPH}/{account}/adimages",
+                params={"access_token": token},
+                json={"bytes": img_b64},
+            )
+            d = r.json()
+            if r.is_success and "images" in d:
+                image_hash = list(d["images"].values())[0].get("hash")
+
+        # 5. Crear ad creative
+        link_data: dict = {
+            "message":         req.texto_anuncio,
+            "link":            req.url_destino,
+            "call_to_action":  {"type": "LEARN_MORE"},
+        }
+        if image_hash:
+            link_data["image_hash"] = image_hash
+
+        creative_spec: dict = {"link_data": link_data}
+        if req.page_id:
+            creative_spec["page_id"] = req.page_id
+
+        r = await client.post(
+            f"{META_GRAPH}/{account}/adcreatives",
+            params={"access_token": token},
+            json={"name": f"Anuncio - {req.nombre}", "object_story_spec": creative_spec},
+        )
+        d = r.json()
+        if not r.is_success or "id" not in d:
+            raise HTTPException(status_code=400, detail=_meta_error(d))
+        creative_id = d["id"]
+
+        # 6. Crear anuncio (siempre PAUSED)
+        r = await client.post(
+            f"{META_GRAPH}/{account}/ads",
+            params={"access_token": token},
+            json={"name": req.nombre, "adset_id": adset_id, "creative": {"creative_id": creative_id}, "status": "PAUSED"},
+        )
+        d = r.json()
+        if not r.is_success or "id" not in d:
+            raise HTTPException(status_code=400, detail=_meta_error(d))
+        ad_id = d["id"]
+
+    account_num = account.replace("act_", "")
+    return {
+        "campaign_id":    campaign_id,
+        "adset_id":       adset_id,
+        "ad_id":          ad_id,
+        "nombre":         req.nombre,
+        "estado":         "pausada",
+        "ads_manager_url": f"https://www.facebook.com/adsmanager/manage/campaigns?act={account_num}&selected_campaign_ids={campaign_id}",
+    }
+
+
+# ── Meta Ads OAuth helpers ──────────────────────────────────────────────────────
+
+@router.get("/meta-ads/callback")
+async def meta_ads_callback(code: str, redirect_uri: str):
+    if not META_APP_ID or not META_APP_SECRET:
+        raise HTTPException(status_code=500, detail="META_APP_ID o META_APP_SECRET no están configurados en el servidor.")
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(f"{META_GRAPH}/oauth/access_token", params={
+            "client_id":     META_APP_ID,
+            "client_secret": META_APP_SECRET,
+            "redirect_uri":  redirect_uri,
+            "code":          code,
+        })
+        d = r.json()
+        if not r.is_success or "access_token" not in d:
+            msg = d.get("error", {}).get("message", "No se pudo completar la autorización con Meta.")
+            raise HTTPException(status_code=400, detail=msg)
+        return {"access_token": d["access_token"]}
+
+
+@router.get("/meta-ads/accounts")
+async def meta_ads_accounts(access_token: str):
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(f"{META_GRAPH}/me/adaccounts", params={
+            "access_token": access_token,
+            "fields": "id,name,account_status",
+        })
+        d = r.json()
+        if not r.is_success:
+            msg = d.get("error", {}).get("message", "No se pudieron obtener las cuentas de anuncios.")
+            raise HTTPException(status_code=400, detail=msg)
+        accounts = [
+            {"id": a["id"], "name": a.get("name", a["id"])}
+            for a in d.get("data", [])
+            if a.get("account_status", 1) == 1  # 1 = cuenta activa
+        ]
+        if not accounts:
+            raise HTTPException(status_code=400, detail="No encontramos cuentas de anuncios activas en esta cuenta de Facebook. Asegúrate de tener una cuenta de Meta Ads Business.")
+        return {"accounts": accounts}
