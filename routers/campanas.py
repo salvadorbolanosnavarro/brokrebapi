@@ -74,10 +74,20 @@ def _meta_credentials() -> tuple[str, str, dict]:
 
     return app_id, app_secret, status
     
-def _meta_error(data: dict) -> str:
+def _meta_error(data: dict, paso: str = "") -> str:
     err = data.get("error", {})
     code = err.get("code", 0)
-    return ERRORES_META.get(code, err.get("message", "Error desconocido de Meta Ads. Intenta de nuevo."))
+    message = err.get("message", "Error desconocido de Meta Ads.")
+    subcode = err.get("error_subcode")
+    user_msg = err.get("error_user_msg")
+
+    partes = []
+    if paso:
+        partes.append(f"Paso: {paso}")
+    partes.append(f"Meta error {code}" + (f" / subcode {subcode}" if subcode else ""))
+    partes.append(user_msg or message)
+
+    return " — ".join(partes)
 
 
 class CampanaRequest(BaseModel):
@@ -131,7 +141,7 @@ async def crear_campana(req: CampanaRequest):
         )
         d = r.json()
         if not r.is_success or "id" not in d:
-            raise HTTPException(status_code=400, detail=_meta_error(d))
+            raise HTTPException(status_code=400, detail=_meta_error(d, "crear campaña"))
         campaign_id = d["id"]
 
         # 3. Crear ad set
@@ -151,7 +161,7 @@ async def crear_campana(req: CampanaRequest):
         r = await client.post(f"{META_GRAPH}/{account}/adsets", params={"access_token": token}, json=adset_payload)
         d = r.json()
         if not r.is_success or "id" not in d:
-            raise HTTPException(status_code=400, detail=_meta_error(d))
+            raise HTTPException(status_code=400, detail=_meta_error(d, "crear conjunto de anuncios"))
         adset_id = d["id"]
 
         # 4. Subir imagen si viene
@@ -189,7 +199,7 @@ async def crear_campana(req: CampanaRequest):
         )
         d = r.json()
         if not r.is_success or "id" not in d:
-            raise HTTPException(status_code=400, detail=_meta_error(d))
+            raise HTTPException(status_code=400, detail=_meta_error(d, "crear creativo"))
         creative_id = d["id"]
 
         # 6. Crear anuncio (siempre PAUSED)
@@ -200,7 +210,7 @@ async def crear_campana(req: CampanaRequest):
         )
         d = r.json()
         if not r.is_success or "id" not in d:
-            raise HTTPException(status_code=400, detail=_meta_error(d))
+            raise HTTPException(status_code=400, detail=_meta_error(d, "crear anuncio"))
         ad_id = d["id"]
 
     account_num = account.replace("act_", "")
