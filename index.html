@@ -1321,6 +1321,57 @@ html, body {
 .delete-btn.red { background: #ef4444; color: white; }
 .delete-btn.navy { background: var(--navy); color: white; }
 
+/* ══ CAMPAÑAS META ADS ══ */
+.cat-blue .cat-mod-icon { color: #1877f2; }
+.camp-connect-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; padding:32px 20px; text-align:center; }
+.camp-connect-icon { width:72px; height:72px; border-radius:24px; background:linear-gradient(135deg,#1877f2,#0a5dc7); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; box-shadow:0 8px 24px rgba(24,119,242,.3); }
+.camp-connect-title { font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.camp-connect-sub { font-size:13px; color:var(--gray-600); line-height:1.6; margin-bottom:28px; max-width:280px; }
+.camp-fb-btn { width:100%; max-width:320px; padding:16px; background:#1877f2; color:white; border:none; border-radius:14px; font-size:15px; font-weight:700; font-family:'Poppins',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 4px 16px rgba(24,119,242,.35); transition:opacity .15s; }
+.camp-fb-btn:active { opacity:.85; }
+.camp-account-selector { width:100%; max-width:340px; }
+.camp-account-option { background:white; border:2px solid var(--gray-200); border-radius:14px; padding:14px 16px; margin-bottom:10px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:12px; transition:border-color .15s; }
+.camp-account-option:hover { border-color:var(--teal); }
+.camp-account-name { font-size:14px; font-weight:600; color:var(--text); }
+.camp-account-id { font-size:11px; color:var(--gray-400); margin-top:2px; }
+.camp-form-card { background:white; border-radius:18px; padding:18px; margin-bottom:14px; border:1px solid rgba(0,0,0,0.07); box-shadow:0 1px 8px rgba(0,0,0,.04); }
+.camp-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--teal); margin-bottom:10px; display:flex; align-items:center; justify-content:between; gap:6px; }
+.camp-input { width:100%; padding:12px 14px; border:1.5px solid var(--gray-200); border-radius:12px; font-size:14px; font-family:'Poppins',sans-serif; color:var(--text); outline:none; background:var(--gray-100); transition:border-color .15s; }
+.camp-input:focus { border-color:var(--teal); background:white; }
+.camp-select { width:100%; padding:12px 14px; border:1.5px solid var(--gray-200); border-radius:12px; font-size:14px; font-family:'Poppins',sans-serif; color:var(--text); outline:none; background:var(--gray-100); appearance:none; cursor:pointer; }
+.camp-select:focus { border-color:var(--teal); background:white; }
+.camp-row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.camp-counter { font-size:11px; color:var(--gray-400); text-align:right; margin-top:4px; }
+.camp-counter.over { color:#ef4444; }
+.camp-drop { border:2px dashed var(--gray-200); border-radius:14px; padding:24px; text-align:center; cursor:pointer; transition:border-color .15s; background:var(--gray-100); }
+.camp-drop.dragover { border-color:var(--teal); background:var(--teal-glow); }
+.camp-drop-preview { width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:10px; }
+.camp-age-row { display:flex; align-items:center; gap:10px; }
+.camp-age-val { font-size:14px; font-weight:700; color:var(--teal); min-width:28px; text-align:center; }
+.camp-submit-btn { width:100%; padding:16px; background:var(--teal); color:white; border:none; border-radius:14px; font-size:15px; font-weight:700; font-family:'Poppins',sans-serif; cursor:pointer; margin-top:4px; transition:opacity .15s; }
+.camp-submit-btn:disabled { opacity:.5; cursor:not-allowed; }
+.camp-submit-btn:active:not(:disabled) { opacity:.85; }
+.camp-success-card { background:white; border-radius:18px; padding:24px; text-align:center; border:1px solid rgba(16,185,129,.2); box-shadow:0 4px 16px rgba(16,185,129,.12); }
+.camp-success-icon { font-size:40px; margin-bottom:12px; }
+.camp-success-title { font-size:17px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.camp-success-sub { font-size:13px; color:var(--gray-600); margin-bottom:20px; }
+.camp-ads-link { display:inline-flex; align-items:center; gap:8px; padding:12px 20px; background:#1877f2; color:white; border-radius:12px; font-size:13px; font-weight:700; text-decoration:none; }
+.camp-connected-badge { display:flex; align-items:center; gap:8px; padding:10px 14px; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.2); border-radius:12px; margin-bottom:16px; font-size:13px; color:#065f46; font-weight:500; }
+.camp-disconnect-btn { font-size:11px; color:var(--gray-400); background:none; border:none; cursor:pointer; margin-left:auto; padding:2px 6px; border-radius:6px; }
+.camp-disconnect-btn:hover { background:var(--gray-100); color:var(--gray-600); }
+.camp-status-box { padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:12px; }
+.camp-status-load { background:rgba(42,157,181,.08); border:1px solid rgba(42,157,181,.2); color:#0e7490; }
+.camp-status-err { background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; }
+/* Shaark confirmation card for campaigns */
+.scw-camp-card { background:white; border:1.5px solid var(--gray-200); border-radius:14px; padding:14px; margin-top:8px; }
+.scw-camp-card-row { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; border-bottom:1px solid var(--gray-100); }
+.scw-camp-card-row:last-of-type { border-bottom:none; }
+.scw-camp-card-lbl { color:var(--gray-600); }
+.scw-camp-card-val { font-weight:600; color:var(--text); }
+.scw-camp-btns { display:flex; gap:8px; margin-top:12px; }
+.scw-camp-btn-ok { flex:1; padding:10px; background:var(--teal); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; font-family:'Poppins',sans-serif; cursor:pointer; }
+.scw-camp-btn-cancel { flex:1; padding:10px; background:var(--gray-100); color:var(--gray-600); border:none; border-radius:10px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; }
+
 </style>
 <!-- Facebook JS SDK (solo como fallback) -->
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/es_LA/sdk.js" onload="if(window.FB)FB.init({appId:'1709238933850389',cookie:true,xfbml:false,version:'v21.0'})"></script>
@@ -1415,6 +1466,9 @@ html, body {
             </div>
             <div class="cat-module cat-green" onclick="setPanel('verificador')">
               <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="cat-mod-name">Verificador de Docs</div>
+            </div>
+            <div class="cat-module cat-blue" onclick="setPanel('campanas')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46"/></svg></div><div class="cat-mod-name">Campañas Meta Ads</div>
             </div>
           </div>
         </div>
@@ -1731,6 +1785,129 @@ html, body {
       <iframe src="verificador.html" class="iframe-panel" style="flex:1" id="iframe-verificador"></iframe>
     </div>
 
+    <!-- ══ CAMPAÑAS META ADS ══ -->
+    <div id="panel-campanas" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Campañas Meta Ads</span></div>
+      <div class="panel-scroll" id="camp-scroll">
+
+        <!-- PANTALLA A: No conectado -->
+        <div id="camp-connect-screen" class="camp-connect-screen" style="display:none">
+          <div class="camp-connect-icon">
+            <svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </div>
+          <div class="camp-connect-title">Conecta tu cuenta de Facebook</div>
+          <div class="camp-connect-sub">Para crear anuncios necesitas conectar tu cuenta de Facebook con acceso a Meta Ads.</div>
+          <button class="camp-fb-btn" onclick="startMetaAdsOAuth()">
+            <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Conectar con Facebook
+          </button>
+          <!-- Selector de cuentas (se muestra después de OAuth) -->
+          <div id="camp-account-selector" style="display:none;width:100%;max-width:340px;margin-top:20px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;text-align:left">¿Con cuál cuenta de anuncios quieres trabajar?</div>
+            <div id="camp-account-list"></div>
+          </div>
+          <div id="camp-oauth-status" class="camp-status-box" style="display:none;margin-top:16px;width:100%;max-width:340px"></div>
+        </div>
+
+        <!-- PANTALLA B: Conectado — formulario -->
+        <div id="camp-form-screen" style="display:none">
+          <div class="camp-connected-badge">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span id="camp-account-name-badge">Meta Ads conectado</span>
+            <button class="camp-disconnect-btn" onclick="disconnectMetaAds()">Desconectar</button>
+          </div>
+
+          <div id="camp-result-area"></div>
+
+          <div id="camp-form-wrap">
+            <div class="camp-form-card">
+              <div class="camp-lbl">Nombre de la campaña</div>
+              <input class="camp-input" id="camp-nombre" type="text" placeholder="Campaña - Mi propiedad"/>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">Objetivo</div>
+              <select class="camp-select" id="camp-objetivo">
+                <option value="OUTCOME_LEADS">Conseguir leads</option>
+                <option value="OUTCOME_TRAFFIC">Llevar tráfico a mi web</option>
+                <option value="OUTCOME_AWARENESS">Dar a conocer mi marca</option>
+              </select>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">Presupuesto diario (MXN)</div>
+              <input class="camp-input" id="camp-presupuesto" type="number" min="50" placeholder="150" style="margin-bottom:6px"/>
+              <div style="font-size:11px;color:var(--gray-400)">Mínimo $50 MXN por día</div>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">Fechas</div>
+              <div class="camp-row2">
+                <div>
+                  <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px">Inicio</div>
+                  <input class="camp-input" id="camp-fecha-inicio" type="date"/>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px">Fin (opcional)</div>
+                  <input class="camp-input" id="camp-fecha-fin" type="date"/>
+                </div>
+              </div>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">Ciudad donde se publicará</div>
+              <input class="camp-input" id="camp-ciudad" type="text" placeholder="Morelia"/>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">Rango de edad</div>
+              <div class="camp-age-row">
+                <span style="font-size:12px;color:var(--gray-400)">De</span>
+                <input class="camp-input" id="camp-edad-min" type="number" min="18" max="65" value="25" style="width:70px;text-align:center"/>
+                <span style="font-size:12px;color:var(--gray-400)">a</span>
+                <input class="camp-input" id="camp-edad-max" type="number" min="18" max="65" value="55" style="width:70px;text-align:center"/>
+                <span style="font-size:12px;color:var(--gray-400)">años</span>
+              </div>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl" style="justify-content:space-between">
+                Texto del anuncio
+                <span id="camp-char-counter" class="camp-counter">0 / 125</span>
+              </div>
+              <textarea class="camp-input" id="camp-texto" rows="4" maxlength="125" placeholder="Ej: Casa en venta en Chapultepec, 3 recámaras, excelente ubicación. ¡Contáctanos!" style="resize:vertical" oninput="campUpdateCounter()"></textarea>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">URL de destino</div>
+              <input class="camp-input" id="camp-url" type="url" placeholder="https://"/>
+            </div>
+
+            <div class="camp-form-card">
+              <div class="camp-lbl">Imagen del anuncio (opcional)</div>
+              <div class="camp-drop" id="camp-drop-zone" onclick="document.getElementById('camp-img-input').click()"
+                   ondragover="event.preventDefault();this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="campHandleDrop(event)">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--gray-400)" stroke-width="1.5" style="margin:0 auto 8px;display:block"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                <div style="font-size:12px;color:var(--gray-400)">Arrastra o toca para subir</div>
+                <div style="font-size:10px;color:var(--gray-400);margin-top:2px">JPG, PNG o WEBP · Recomendado 1200×628 px</div>
+                <img id="camp-img-preview" class="camp-drop-preview" style="display:none"/>
+              </div>
+              <input type="file" id="camp-img-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="campHandleFile(this.files[0])"/>
+            </div>
+
+            <div id="camp-submit-status" class="camp-status-box" style="display:none"></div>
+
+            <button class="camp-submit-btn" id="camp-submit-btn" onclick="submitCampana()">
+              Crear campaña
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /screens-container -->
 </div><!-- /app -->
 
@@ -1836,6 +2013,7 @@ html, body {
       <div class="scw-chip" onclick="shaarkChip('Calcular ISR')">💰 Calc. ISR</div>
       <div class="scw-chip" onclick="shaarkChip('Crear ficha técnica')">🏷️ Fichas téc.</div>
       <div class="scw-chip" onclick="shaarkChip('Ver mis propiedades')">🏠 Mis inmuebles</div>
+      <div class="scw-chip" onclick="shaarkChip('Crear un anuncio en Meta Ads')">📣 Meta Ads</div>
     </div>
     <!-- chips se actualizan dinámicamente con refreshShaarkChips() al abrir el popup -->
     <div class="scw-input-row">
@@ -1989,6 +2167,7 @@ async function shaarkFabFetch(text) {
         if(ac.tipo === 'crear_ficha')            crearFicha(ac);
         if(ac.tipo === 'crear_ficha_manual')     crearFichaManual(ac);
         if(ac.tipo === 'buscar_propiedad')       buscarPropiedad(ac);
+        if(ac.tipo === 'confirmar_campana')      shaarkMostrarConfirmCampana(ac, typing);
       } catch(e){}
     }
     const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
@@ -2530,6 +2709,7 @@ const PANEL_MAP = {
   'image-cleaner':  'panel-image-cleaner',
   'contactos':      'panel-contactos',
   'verificador':    'panel-verificador',
+  'campanas':       'panel-campanas',
 };
 
 function setPanel(name) {
@@ -2541,6 +2721,7 @@ function setPanel(name) {
     if(el) el.classList.add('active');
   }
   if(name === 'props') loadProps();
+  if(name === 'campanas') initCampanasPanel();
   document.getElementById('close-bar').style.display = 'block';
 }
 
@@ -2598,6 +2779,7 @@ function getCurrentContext() {
       'panel-ficha':       'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
       'panel-contratos':   'Contratos — arrendamiento y promesa de compraventa',
       'panel-avm':         'Opinión de Valor AVM — avalúo de mercado automatizado',
+      'panel-campanas':    'Campañas Meta Ads — crear y gestionar anuncios en Facebook e Instagram',
     };
     return idMap[activePanel.id] || activePanel.id;
   }
@@ -2754,6 +2936,7 @@ function applyUserPermissions(){
     'props':        "setPanel('props')",
     'contactos':    "setPanel('contactos')",
     'verificador':  "setPanel('verificador')",
+    'campanas':     "setPanel('campanas')",
   };
 
   // Ocultar tarjetas del home (.module-card)
@@ -3155,6 +3338,7 @@ async function send(){
         if(ac.tipo === 'crear_ficha')            crearFicha(ac);
         if(ac.tipo === 'crear_ficha_manual')     crearFichaManual(ac);
         if(ac.tipo === 'buscar_propiedad')       buscarPropiedad(ac);
+        if(ac.tipo === 'confirmar_campana')      shaarkMostrarConfirmCampana(ac, null);
       } catch(e){}
     }
     clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
@@ -3439,8 +3623,431 @@ async function tryPublishToFacebook(propiedad) {
 
 document.addEventListener('DOMContentLoaded', () => {
   refreshFbRow();
-  handleFbOAuthCallback(); // procesa ?code= si venimos de Facebook
+  handleMetaAdsOAuthCallback(); // procesa ?code= si venimos de Meta Ads OAuth
+  handleFbOAuthCallback();      // procesa ?code= si venimos de Facebook Pages OAuth
 });
+
+// ══════════════════════════════════════════
+// CAMPAÑAS META ADS
+// ══════════════════════════════════════════
+const META_ADS_APP_ID      = '1709238933850389'; // mismo app que Facebook Pages
+const META_ADS_REDIRECT_URI = 'https://app.navarroai.com.mx/';
+
+let _metaAdsToken    = null;
+let _metaAdsAcctId   = null;
+let _metaAdsAcctName = null;
+
+function initCampanasPanel() {
+  // Cargar estado de conexión desde userProfile
+  const tok  = userProfile?.meta_access_token   || '';
+  const acct = userProfile?.meta_ad_account_id  || '';
+  const name = userProfile?.meta_account_name   || 'Cuenta de anuncios';
+  _metaAdsToken  = tok  || null;
+  _metaAdsAcctId = acct || null;
+  _metaAdsAcctName = name;
+
+  const connectScreen = document.getElementById('camp-connect-screen');
+  const formScreen    = document.getElementById('camp-form-screen');
+  if (!connectScreen || !formScreen) return;
+
+  if (_metaAdsToken && _metaAdsAcctId) {
+    connectScreen.style.display = 'none';
+    formScreen.style.display    = 'block';
+    const badge = document.getElementById('camp-account-name-badge');
+    if (badge) badge.textContent = name;
+    campPrefillForm();
+  } else {
+    connectScreen.style.display = 'flex';
+    formScreen.style.display    = 'none';
+    document.getElementById('camp-account-selector').style.display = 'none';
+    document.getElementById('camp-oauth-status').style.display     = 'none';
+  }
+}
+
+function campPrefillForm() {
+  const today = new Date().toISOString().split('T')[0];
+  const startInput = document.getElementById('camp-fecha-inicio');
+  if (startInput && !startInput.value) startInput.value = today;
+
+  // Pre-rellenar ciudad del perfil
+  const cityInput = document.getElementById('camp-ciudad');
+  if (cityInput && !cityInput.value) {
+    cityInput.value = userProfile?.ciudad || '';
+  }
+
+  // Pre-rellenar nombre con fecha
+  const nameInput = document.getElementById('camp-nombre');
+  if (nameInput && !nameInput.value) {
+    const d = new Date();
+    const mes = String(d.getMonth()+1).padStart(2,'0');
+    nameInput.value = `Campaña - ${d.getDate()}/${mes}/${d.getFullYear()}`;
+  }
+}
+
+function campUpdateCounter() {
+  const ta = document.getElementById('camp-texto');
+  const counter = document.getElementById('camp-char-counter');
+  if (!ta || !counter) return;
+  const len = ta.value.length;
+  counter.textContent = `${len} / 125`;
+  counter.classList.toggle('over', len > 125);
+}
+
+function campHandleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('camp-img-preview');
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+    document.getElementById('camp-drop-zone')?.classList.remove('dragover');
+  };
+  reader.readAsDataURL(file);
+}
+
+function campHandleDrop(e) {
+  e.preventDefault();
+  const dz = document.getElementById('camp-drop-zone');
+  if (dz) dz.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    document.getElementById('camp-img-input').files = e.dataTransfer.files;
+    campHandleFile(file);
+  }
+}
+
+// ── Meta Ads OAuth ─────────────────────────────────────────────────────────────
+function startMetaAdsOAuth() {
+  const state = 'meta_ads_' + Math.random().toString(36).slice(2);
+  localStorage.setItem('meta_ads_oauth_state', state);
+  const params = new URLSearchParams({
+    client_id:     META_ADS_APP_ID,
+    redirect_uri:  META_ADS_REDIRECT_URI,
+    scope:         'ads_management,ads_read',
+    response_type: 'code',
+    state:         state,
+  });
+  window.location.href = 'https://www.facebook.com/v19.0/dialog/oauth?' + params.toString();
+}
+
+async function handleMetaAdsOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  const state  = params.get('state');
+  const error  = params.get('error');
+
+  if (!code && !error) return;
+  const savedState = localStorage.getItem('meta_ads_oauth_state');
+  if (!savedState || !state?.startsWith('meta_ads_')) return;
+
+  // Este callback es nuestro — limpiar URL para que el handler de FB Pages no lo procese
+  history.replaceState({}, '', window.location.pathname);
+
+  if (error) {
+    localStorage.removeItem('meta_ads_oauth_state');
+    return;
+  }
+  if (state !== savedState) return;
+  localStorage.removeItem('meta_ads_oauth_state');
+
+  // Abre el panel y muestra loading
+  setPanel('campanas');
+  const statusBox = document.getElementById('camp-oauth-status');
+  if (statusBox) {
+    statusBox.className = 'camp-status-box camp-status-load';
+    statusBox.style.display = 'block';
+    statusBox.textContent = 'Conectando con Meta Ads…';
+  }
+  const connectScreen = document.getElementById('camp-connect-screen');
+  if (connectScreen) connectScreen.style.display = 'flex';
+
+  try {
+    // Intercambiar code por access_token
+    const r1 = await fetch(API_BASE + '/meta-ads/callback?code=' + encodeURIComponent(code)
+      + '&redirect_uri=' + encodeURIComponent(META_ADS_REDIRECT_URI));
+    const d1 = await r1.json();
+    if (!r1.ok || !d1.access_token) throw new Error(d1.detail || 'No se obtuvo el token.');
+    const token = d1.access_token;
+
+    // Obtener cuentas de anuncios
+    const r2 = await fetch(API_BASE + '/meta-ads/accounts?access_token=' + encodeURIComponent(token));
+    const d2 = await r2.json();
+    if (!r2.ok) throw new Error(d2.detail || 'No se pudieron obtener las cuentas.');
+    const accounts = d2.accounts || [];
+
+    if (statusBox) statusBox.style.display = 'none';
+
+    if (accounts.length === 1) {
+      await saveMetaAdsConnection(token, accounts[0].id, accounts[0].name);
+    } else {
+      // Mostrar selector de cuentas
+      const selector = document.getElementById('camp-account-selector');
+      const list     = document.getElementById('camp-account-list');
+      if (list) {
+        list.innerHTML = accounts.map(a =>
+          `<div class="camp-account-option" onclick="selectMetaAdsAccount('${token}','${a.id}','${(a.name||a.id).replace(/'/g,'\\u0027')}')">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008z"/></svg>
+            <div>
+              <div class="camp-account-name">${a.name || a.id}</div>
+              <div class="camp-account-id">${a.id}</div>
+            </div>
+          </div>`
+        ).join('');
+      }
+      if (selector) selector.style.display = 'block';
+    }
+  } catch(e) {
+    if (statusBox) {
+      statusBox.className = 'camp-status-box camp-status-err';
+      statusBox.style.display = 'block';
+      statusBox.textContent = '❌ ' + e.message;
+    }
+  }
+}
+
+async function selectMetaAdsAccount(token, acctId, acctName) {
+  await saveMetaAdsConnection(token, acctId, acctName);
+}
+
+async function saveMetaAdsConnection(token, acctId, acctName) {
+  const sbToken = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  const userId  = currentUser?.id;
+  if (!userId || !sbToken) return;
+
+  try {
+    await fetch(`${SB_URL_AUTH}/rest/v1/usuarios?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: { 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + sbToken, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        meta_access_token:  token,
+        meta_ad_account_id: acctId,
+        meta_account_name:  acctName,
+        meta_connected_at:  new Date().toISOString(),
+      }),
+    });
+  } catch(e) { console.warn('No se pudo guardar Meta Ads en Supabase:', e.message); }
+
+  // Actualizar perfil en memoria y localStorage
+  if (userProfile) {
+    userProfile.meta_access_token  = token;
+    userProfile.meta_ad_account_id = acctId;
+    userProfile.meta_account_name  = acctName;
+    const storage = localStorage.getItem('sb_token') ? localStorage : sessionStorage;
+    storage.setItem('sb_user_profile', JSON.stringify(userProfile));
+  }
+
+  _metaAdsToken  = token;
+  _metaAdsAcctId = acctId;
+  _metaAdsAcctName = acctName;
+
+  // Mostrar formulario
+  const connectScreen = document.getElementById('camp-connect-screen');
+  const formScreen    = document.getElementById('camp-form-screen');
+  if (connectScreen) connectScreen.style.display = 'none';
+  if (formScreen)    formScreen.style.display = 'block';
+  const badge = document.getElementById('camp-account-name-badge');
+  if (badge) badge.textContent = acctName;
+  campPrefillForm();
+  showToastIndex('✅ Meta Ads conectado: ' + acctName);
+}
+
+async function disconnectMetaAds() {
+  if (!confirm('¿Desconectar tu cuenta de Meta Ads?')) return;
+  _metaAdsToken = _metaAdsAcctId = _metaAdsAcctName = null;
+  if (userProfile) {
+    delete userProfile.meta_access_token;
+    delete userProfile.meta_ad_account_id;
+    delete userProfile.meta_account_name;
+    const storage = localStorage.getItem('sb_token') ? localStorage : sessionStorage;
+    storage.setItem('sb_user_profile', JSON.stringify(userProfile));
+  }
+  const sbToken = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  if (currentUser?.id && sbToken) {
+    fetch(`${SB_URL_AUTH}/rest/v1/usuarios?id=eq.${currentUser.id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + sbToken, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ meta_access_token: null, meta_ad_account_id: null, meta_account_name: null }),
+    }).catch(()=>{});
+  }
+  initCampanasPanel();
+}
+
+// ── Formulario ─────────────────────────────────────────────────────────────────
+async function submitCampana() {
+  const btn    = document.getElementById('camp-submit-btn');
+  const status = document.getElementById('camp-submit-status');
+  const result = document.getElementById('camp-result-area');
+
+  const nombre     = document.getElementById('camp-nombre')?.value.trim();
+  const objetivo   = document.getElementById('camp-objetivo')?.value;
+  const presupuesto = parseFloat(document.getElementById('camp-presupuesto')?.value || '0');
+  const fechaInicio = document.getElementById('camp-fecha-inicio')?.value;
+  const fechaFin    = document.getElementById('camp-fecha-fin')?.value || null;
+  const ciudad      = document.getElementById('camp-ciudad')?.value.trim();
+  const edadMin     = parseInt(document.getElementById('camp-edad-min')?.value || '25');
+  const edadMax     = parseInt(document.getElementById('camp-edad-max')?.value || '55');
+  const texto       = document.getElementById('camp-texto')?.value.trim();
+  const url         = document.getElementById('camp-url')?.value.trim();
+
+  if (!nombre || !objetivo || !presupuesto || !fechaInicio || !ciudad || !texto) {
+    if (status) { status.className='camp-status-box camp-status-err'; status.style.display='block'; status.textContent='Por favor completa todos los campos obligatorios.'; }
+    return;
+  }
+  if (presupuesto < 50) {
+    if (status) { status.className='camp-status-box camp-status-err'; status.style.display='block'; status.textContent='El presupuesto mínimo es $50 MXN por día.'; }
+    return;
+  }
+
+  // Obtener imagen base64 si hay
+  let imagenBase64 = null;
+  const imgInput = document.getElementById('camp-img-input');
+  if (imgInput?.files?.[0]) {
+    imagenBase64 = await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsDataURL(imgInput.files[0]);
+    });
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creando tu campaña en Meta Ads…';
+  if (status) { status.className='camp-status-box camp-status-load'; status.style.display='block'; status.textContent='Enviando a Meta Ads, esto puede tardar unos segundos…'; }
+  if (result) result.innerHTML = '';
+
+  const payload = {
+    nombre, objetivo, presupuesto_diario_mxn: presupuesto,
+    fecha_inicio: fechaInicio, fecha_fin: fechaFin,
+    ciudad, edad_min: edadMin, edad_max: edadMax,
+    texto_anuncio: texto, url_destino: url || 'https://app.navarroai.com.mx/',
+    imagen_base64: imagenBase64,
+    page_id: _fbPageId || null,
+    meta_access_token: _metaAdsToken,
+    meta_ad_account_id: _metaAdsAcctId,
+  };
+
+  try {
+    const r = await fetch(API_BASE + '/api/campanas/crear', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Error desconocido.');
+
+    if (status) status.style.display = 'none';
+    btn.textContent = 'Crear campaña';
+    btn.disabled = false;
+
+    // Mostrar éxito
+    if (result) result.innerHTML = `
+      <div class="camp-success-card">
+        <div class="camp-success-icon">🎯</div>
+        <div class="camp-success-title">${data.nombre}</div>
+        <div class="camp-success-sub">Campaña creada en estado pausado · $${presupuesto}/día MXN</div>
+        <a class="camp-ads-link" href="${data.ads_manager_url}" target="_blank" rel="noopener">
+          <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          Ver en Meta Ads Manager
+        </a>
+      </div>`;
+    document.getElementById('camp-scroll')?.scrollTo({top:0, behavior:'smooth'});
+
+    // Limpiar form
+    document.getElementById('camp-form-wrap').querySelectorAll('input,textarea,select').forEach(el => {
+      if (el.type === 'date') el.value = '';
+      else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+      else if (el.id !== 'camp-ciudad' && el.id !== 'camp-edad-min' && el.id !== 'camp-edad-max') el.value = '';
+    });
+    const preview = document.getElementById('camp-img-preview');
+    if (preview) { preview.style.display='none'; preview.src=''; }
+
+  } catch(e) {
+    btn.textContent = 'Crear campaña';
+    btn.disabled = false;
+    if (status) { status.className='camp-status-box camp-status-err'; status.style.display='block'; status.textContent='❌ ' + e.message; }
+  }
+}
+
+// ── Shaark confirmar campaña ────────────────────────────────────────────────────
+const _OBJETIVO_LABEL = {
+  OUTCOME_LEADS:     'Conseguir leads',
+  OUTCOME_TRAFFIC:   'Tráfico a web',
+  OUTCOME_AWARENESS: 'Reconocimiento de marca',
+};
+
+function shaarkMostrarConfirmCampana(ac, typingEl) {
+  const container = typingEl
+    ? typingEl.parentNode
+    : document.querySelector('#scw-msgs') || document.querySelector('.scw-messages');
+  if (!container) return;
+
+  const card = document.createElement('div');
+  card.className = 'scw-bubble bot';
+  card.style.padding = '0';
+  card.innerHTML = `
+    <div class="scw-camp-card">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">📣 Resumen de campaña</div>
+      <div class="scw-camp-card-row"><span class="scw-camp-card-lbl">Nombre</span><span class="scw-camp-card-val">${ac.nombre || '—'}</span></div>
+      <div class="scw-camp-card-row"><span class="scw-camp-card-lbl">Objetivo</span><span class="scw-camp-card-val">${_OBJETIVO_LABEL[ac.objetivo] || ac.objetivo}</span></div>
+      <div class="scw-camp-card-row"><span class="scw-camp-card-lbl">Presupuesto</span><span class="scw-camp-card-val">$${ac.presupuesto_diario_mxn}/día MXN</span></div>
+      <div class="scw-camp-card-row"><span class="scw-camp-card-lbl">Ciudad</span><span class="scw-camp-card-val">${ac.ciudad || '—'}</span></div>
+      <div class="scw-camp-card-row"><span class="scw-camp-card-lbl">Edad</span><span class="scw-camp-card-val">${ac.edad_min || 25}–${ac.edad_max || 55} años</span></div>
+      <div class="scw-camp-btns">
+        <button class="scw-camp-btn-ok" onclick="shaarkEjecutarCampana(this, ${JSON.stringify(ac).replace(/"/g,'&quot;')})">✓ Crear campaña</button>
+        <button class="scw-camp-btn-cancel" onclick="this.closest('.scw-bubble').remove()">✗ Cancelar</button>
+      </div>
+    </div>`;
+
+  if (typingEl) {
+    typingEl.insertAdjacentElement('afterend', card);
+    typingEl.style.display = 'none'; // ocultar burbuja "..."
+  } else {
+    container.appendChild(card);
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+async function shaarkEjecutarCampana(btn, ac) {
+  const card = btn.closest('.scw-camp-card');
+  btn.disabled = true;
+  btn.textContent = 'Creando…';
+
+  if (!_metaAdsToken || !_metaAdsAcctId) {
+    btn.closest('.scw-bubble').insertAdjacentHTML('afterend',
+      '<div class="scw-bubble bot">Para crear la campaña primero conecta tu cuenta de Meta Ads en el módulo Campañas.</div>');
+    setPanel('campanas');
+    btn.closest('.scw-bubble').remove();
+    return;
+  }
+
+  try {
+    const payload = {
+      nombre:               ac.nombre || 'Campaña Brokr',
+      objetivo:             ac.objetivo || 'OUTCOME_LEADS',
+      presupuesto_diario_mxn: ac.presupuesto_diario_mxn || 150,
+      fecha_inicio:         new Date().toISOString().split('T')[0],
+      ciudad:               ac.ciudad || userProfile?.ciudad || 'Morelia',
+      edad_min:             ac.edad_min || 25,
+      edad_max:             ac.edad_max || 55,
+      texto_anuncio:        ac.texto_anuncio || ac.nombre || 'Conoce esta propiedad',
+      url_destino:          ac.url_destino || 'https://app.navarroai.com.mx/',
+      page_id:              _fbPageId || null,
+      meta_access_token:    _metaAdsToken,
+      meta_ad_account_id:   _metaAdsAcctId,
+    };
+    const r = await fetch(API_BASE + '/api/campanas/crear', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Error desconocido.');
+
+    const bubble = btn.closest('.scw-bubble');
+    bubble.insertAdjacentHTML('afterend',
+      `<div class="scw-bubble bot">✅ Campaña "${data.nombre}" creada en Meta Ads en estado pausado. <a href="${data.ads_manager_url}" target="_blank" rel="noopener" style="color:var(--teal);font-weight:600">Abrirla en Ads Manager →</a></div>`);
+    bubble.remove();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '✓ Crear campaña';
+    card.insertAdjacentHTML('beforebegin', `<div style="color:#b91c1c;font-size:12px;padding:6px 0">❌ ${e.message}</div>`);
+  }
+}
 
 // ══════════════════════════════════════════
 // PROPERTIES
