@@ -7,8 +7,6 @@ import os
 router = APIRouter()
 
 TIPO_CAMBIO_MXN_USD = 17.5
-META_APP_ID     = os.environ.get("META_APP_ID", "")
-META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
 META_GRAPH      = "https://graph.facebook.com/v19.0"
 
 OBJETIVO_MAP = {
@@ -177,12 +175,14 @@ async def crear_campana(req: CampanaRequest):
 
 @router.get("/meta-ads/callback")
 async def meta_ads_callback(code: str, redirect_uri: str):
-    if not META_APP_ID or not META_APP_SECRET:
+    app_id     = os.environ.get("META_APP_ID", "")
+    app_secret = os.environ.get("META_APP_SECRET", "")
+    if not app_id or not app_secret:
         raise HTTPException(status_code=500, detail="META_APP_ID o META_APP_SECRET no están configurados en el servidor.")
     async with httpx.AsyncClient(timeout=20) as client:
         r = await client.get(f"{META_GRAPH}/oauth/access_token", params={
-            "client_id":     META_APP_ID,
-            "client_secret": META_APP_SECRET,
+            "client_id":     app_id,
+            "client_secret": app_secret,
             "redirect_uri":  redirect_uri,
             "code":          code,
         })
