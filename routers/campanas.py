@@ -133,21 +133,22 @@ async def crear_campana(req: CampanaRequest):
             if geos:
                 geo_targeting = {"cities": [{"key": geos[0]["key"], "radius": 25, "distance_unit": "kilometer"}]}
 
-        # 2. Crear campaña (siempre PAUSED)
-        r = await client.post(
-            f"{META_GRAPH}/{account}/campaigns",
-            params={"access_token": token},
-           json={
-    "name": req.nombre,
-    "objective": objetivo_api,
-    "status": "PAUSED",
-    "special_ad_categories": [],
-    "is_adset_budget_sharing_enabled": False,
-},
-        d = r.json()
-        if not r.is_success or "id" not in d:
-            raise HTTPException(status_code=400, detail=_meta_error(d, "crear campaña"))
-        campaign_id = d["id"]
+       # 2. Crear campaña (siempre PAUSED)
+r = await client.post(
+    f"{META_GRAPH}/{account}/campaigns",
+    params={"access_token": token},
+    json={
+        "name": req.nombre,
+        "objective": objetivo_api,
+        "status": "PAUSED",
+        "special_ad_categories": [],
+        "is_adset_budget_sharing_enabled": False,
+    },
+)
+d = r.json()
+if not r.is_success or "id" not in d:
+    raise HTTPException(status_code=400, detail=_meta_error(d, "crear campaña"))
+campaign_id = d["id"]
 
         # 3. Crear ad set
         adset_payload: dict = {
